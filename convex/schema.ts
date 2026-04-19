@@ -486,9 +486,12 @@ export default defineSchema({
     claimed: v.boolean(), // if prize was added to coins balance
     foilCount: v.optional(v.number()),       // foil cards in this spin
     triggeredBonus: v.optional(v.boolean()), // did this spin trigger bonus free spins
+    sessionId: v.optional(v.string()),       // groups trigger + bonus spins for share replay
+    finalGrid: v.optional(v.array(v.string())), // final grid after combos (baccarat[:f] per cell)
   })
     .index("by_player_time", ["playerAddress", "timestamp"])
-    .index("by_date", ["timestamp"]),
+    .index("by_date", ["timestamp"])
+    .index("by_session", ["sessionId"]),
 
   // Slot Machine - Daily Stats
   slotDailyStats: defineTable({

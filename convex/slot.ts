@@ -169,6 +169,7 @@ export const spinSlot = mutation({
     betMultiplier: v.optional(v.number()),
     isBonusMode: v.optional(v.boolean()),
     bonusState: v.optional(bonusStateValidator),
+    sessionId: v.optional(v.string()),
   },
   handler: async (
     ctx,
@@ -179,6 +180,7 @@ export const spinSlot = mutation({
       betMultiplier = 1,
       isBonusMode = false,
       bonusState,
+      sessionId,
     },
   ) => {
     const profile = await getProfileByAddress(ctx, address);
@@ -338,6 +340,8 @@ export const spinSlot = mutation({
       claimed: finalWin > 0,
       foilCount: resolution.finalFoilCount,
       triggeredBonus: resolution.triggeredBonus,
+      sessionId: sessionId ?? undefined,
+      finalGrid: resolution.finalGrid.map((c) => c.baccarat + (c.hasFoil ? ":f" : "")),
     });
 
     return {
@@ -367,12 +371,37 @@ export const getSpinById = query({
     return {
       spinId: spin._id,
       reels: spin.reels,
+      finalGrid: spin.finalGrid ?? [],
       winAmount: spin.winAmount,
       foilCount: spin.foilCount ?? 0,
       triggeredBonus: spin.triggeredBonus ?? false,
       timestamp: spin.timestamp,
       spinType: spin.spinType,
+      sessionId: spin.sessionId ?? null,
     };
+  },
+});
+
+/**
+ * Get all spins for a session (trigger + bonus spins) — public, for share replay
+ */
+export const getSpinsBySession = query({
+  args: { sessionId: v.string() },
+  handler: async (ctx, { sessionId }) => {
+    const spins = await ctx.db
+      .query("slotSpins")
+      .withIndex("by_session", (q) => q.eq("sessionId", sessionId))
+      .order("asc")
+      .take(20);
+    return spins.map((spin) => ({
+      spinId: spin._id,
+      spinType: spin.spinType,
+      finalGrid: spin.finalGrid ?? [],
+      winAmount: spin.winAmount,
+      foilCount: spin.foilCount ?? 0,
+      triggeredBonus: spin.triggeredBonus ?? false,
+      timestamp: spin.timestamp,
+    }));
   },
 });
 

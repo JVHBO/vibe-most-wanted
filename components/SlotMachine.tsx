@@ -745,6 +745,9 @@ export default function SlotMachine({
   const foilsFoundRef = useRef(0);
   const lockedGifRef  = useRef<number|null>(null);
   const spinSequenceRef = useRef(0);
+  const sessionIdRef = useRef<string | null>(null);
+  const turboRef = useRef(false);
+  const [turbo, setTurbo] = useState(false);
   const bonusStateRef = useRef<SlotBonusState>({ persistentWildcards: [], spinsRemaining: 0 });
   const stripStopMetaRef = useRef<Record<number, { cards: SlotCard[]; onDone?: () => void }>>({});
   // Células com dragukka persistente — não animam durante bonus spins
@@ -873,7 +876,7 @@ export default function SlotMachine({
     setTimeout(tick, slowSteps[step++]);
   }, [columnHasLockedCells]);
 
-  const sleep = (ms: number) => new Promise<void>(res => setTimeout(res, ms));
+  const sleep = (ms: number) => new Promise<void>(res => setTimeout(res, turboRef.current ? Math.min(ms, 40) : ms));
 
   const waitForTrackedAudio = useCallback(async (audio: HTMLAudioElement | null, fallbackMs: number) => {
     if (!audio) {
@@ -967,11 +970,12 @@ export default function SlotMachine({
       });
 
       await sleep(140);
-      // Resolve audio client-side (fallback garante que funciona mesmo sem redeploy do Convex)
-      const comboAudio = step.combo.audioPath
-        ? { audioPath: step.combo.audioPath, audioVolume: step.combo.audioVolume ?? 0.7 }
-        : resolveComboAudio(step.combo.id);
-      await playNarration(comboAudio.audioPath, "combo", comboAudio.audioVolume);
+      if (!turboRef.current) {
+        const comboAudio = step.combo.audioPath
+          ? { audioPath: step.combo.audioPath, audioVolume: step.combo.audioVolume ?? 0.7 }
+          : resolveComboAudio(step.combo.id);
+        await playNarration(comboAudio.audioPath, "combo", comboAudio.audioVolume);
+      }
 
       runningWin += step.reward;
       details.push(`${step.combo.name} -> +${step.reward}`);
@@ -1040,6 +1044,7 @@ export default function SlotMachine({
 
     // BUY BONUS: primeira rodada é spin normal com foils forçados (isBonusMode=false, buyBonusEntry=true)
     // O backend força 4 foils → dispara o bonus. Rodadas seguintes são isBonusMode=true.
+    sessionIdRef.current = crypto.randomUUID();
     let bonusMode = false;            // começa false — bonus entra depois do trigger
     let isBuyBonusEntry = forceBonusMode; // true só na primeira rodada do buy bonus
     let bonusEntryPaid = false;
@@ -1090,6 +1095,7 @@ export default function SlotMachine({
         betMultiplier: betMult,
         isBonusMode: bonusMode,
         ...(bonusMode ? { bonusState: currentBonusState } : {}),
+        sessionId: sessionIdRef.current ?? undefined,
       }) as SpinResult;
 
       // Salvar spinId imediatamente — permite recuperação se o player recarregar a página
@@ -1109,7 +1115,7 @@ export default function SlotMachine({
       // NÃO atualiza bonusState ainda — o contador apareceria antes das foils animarem
       await refreshProfile();
 
-      const MIN_SPIN_MS = 1600;
+      const MIN_SPIN_MS = turboRef.current ? 200 : 1600;
       const elapsed = Date.now() - spinStartTime;
       const baseDelay = Math.max(0, MIN_SPIN_MS - elapsed);
 
@@ -1232,7 +1238,7 @@ export default function SlotMachine({
               playTick(220, 0.09, 0.12);
             }
 
-            setTimeout(() => stopSequential(col + 1), 80);
+            setTimeout(() => stopSequential(col + 1), turboRef.current ? 10 : 80);
           });
         };
 
@@ -1678,7 +1684,7 @@ export default function SlotMachine({
         const playerName = userProfile?.username ?? (address ? address.slice(0, 6) + '…' : '');
         const bonusMultX = betMult > 0 ? Math.round(bonusSummaryAmount / betMult) : 0;
         const winType = bonusMultX >= 100 ? 'max' : bonusMultX >= 20 ? 'big' : bonusMultX >= 5 ? 'great' : 'nice';
-        const ogParams = new URLSearchParams({ amount: String(bonusSummaryAmount), x: String(bonusMultX), type: winType, ...(playerName ? { user: playerName } : {}) });
+        const ogParams = new URLSearchParams({ amount: String(bonusSummaryAmount), x: String(bonusMultX), type: winType, ...(playerName ? { user: playerName } : {}), ...(sessionIdRef.current ? { sid: sessionIdRef.current } : {}) });
         const castText = `🎰 Bonus Round: +${bonusSummaryAmount.toLocaleString()} coins${bonusMultX >= 2 ? ` (${bonusMultX}×)` : ''}${playerName ? ` by @${playerName}` : ''} on Tukka Slots!\n\nPlay at vibemostwanted.xyz/slot 🎴`;
         return (
           <div className="fixed inset-0 z-[650] flex items-center justify-center" style={{ background:'rgba(0,0,0,0.92)', backdropFilter:`blur(${getBaseAppBlur(8)}px)` }}>
@@ -1722,7 +1728,7 @@ export default function SlotMachine({
           nice:  { label: 'NICE WIN!',  color: '#38bdf8', shadow: '0 0 16px #38bdf8, 0 0 30px #0ea5e9', size: 34 },
         }[bigWinType];
         const playerName = userProfile?.username ?? (address ? address.slice(0, 6) + '…' : '');
-        const ogParams = new URLSearchParams({ amount: String(bigWinAmount), x: String(bigWinMultX), type: bigWinType, ...(playerName ? { user: playerName } : {}) });
+        const ogParams = new URLSearchParams({ amount: String(bigWinAmount), x: String(bigWinMultX), type: bigWinType, ...(playerName ? { user: playerName } : {}), ...(sessionIdRef.current ? { sid: sessionIdRef.current } : {}) });
         const castText = `🎰 ${cfg.label} +${bigWinAmount.toLocaleString()} coins${bigWinMultX >= 2 ? ` (${bigWinMultX}×)` : ''}${playerName ? ` by @${playerName}` : ''} on Tukka Slots!\n\nPlay at vibemostwanted.xyz/slot 🎴`;
         return (
           <div
@@ -2348,6 +2354,22 @@ export default function SlotMachine({
               >
                 <span className="text-[9px]">{t.deposit}</span>
                 <span className="text-[8px] font-bold" style={{ color: "#c87941" }}>{t.withdraw}</span>
+              </button>
+
+              {/* TURBO toggle */}
+              <button
+                onClick={() => { const next = !turbo; setTurbo(next); turboRef.current = next; }}
+                className="w-10 h-10 rounded-full border-2 border-black font-black flex-none flex items-center justify-center active:scale-95 transition-transform text-[9px] leading-none tracking-widest uppercase"
+                style={{
+                  background: turbo
+                    ? 'linear-gradient(180deg,#f59e0b,#b45309)'
+                    : 'linear-gradient(180deg,#374151,#1f2937)',
+                  color: turbo ? '#000' : '#9ca3af',
+                  boxShadow: turbo ? '0 3px 0 #000, 0 0 12px rgba(245,158,11,0.6)' : '0 2px 0 #000',
+                }}
+                title={turbo ? 'Turbo ON' : 'Turbo OFF'}
+              >
+                ⚡
               </button>
 
               {/* SPIN — center */}

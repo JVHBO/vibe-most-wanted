@@ -1,4 +1,5 @@
 import { Metadata } from 'next';
+import SlotReplay from './SlotReplay';
 
 const BASE_URL = 'https://vibemostwanted.xyz';
 
@@ -8,6 +9,7 @@ type Props = {
     x?: string;
     type?: string;
     user?: string;
+    sid?: string;
   }>;
 };
 
@@ -83,19 +85,45 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
   };
 }
 
-export default function ShareSlotPage() {
+async function fetchSessionSpins(sessionId: string) {
+  try {
+    const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL_PROD || process.env.NEXT_PUBLIC_CONVEX_URL;
+    if (!convexUrl) return [];
+    const res = await fetch(`${convexUrl}/api/query`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ path: 'slot:getSpinsBySession', args: { sessionId }, format: 'json' }),
+      cache: 'no-store',
+    });
+    if (!res.ok) return [];
+    const data = await res.json();
+    return data.value ?? [];
+  } catch {
+    return [];
+  }
+}
+
+export default async function ShareSlotPage({ searchParams }: Props) {
+  const p = await searchParams;
+  const amount = parseInt(p.amount ?? '0');
+  const multX  = parseInt(p.x ?? '0');
+  const type   = p.type ?? 'nice';
+  const user   = p.user ?? '';
+  const sid    = p.sid ?? '';
+
+  const spins = sid ? await fetchSessionSpins(sid) : [];
+  const totalWin = spins.length > 0
+    ? spins.reduce((acc: number, s: { winAmount: number }) => acc + s.winAmount, 0)
+    : amount;
+
   return (
-    <div className="min-h-screen bg-vintage-deep-black text-vintage-ice flex items-center justify-center p-4">
-      <div className="text-center">
-        <h1 className="text-4xl font-display font-bold text-vintage-gold mb-4">
-          Tukka Slots
-        </h1>
-        <p className="text-vintage-burnt-gold mb-4">🎰 Opening slot machine...</p>
-        <div className="animate-pulse text-6xl">🎴</div>
-        <script dangerouslySetInnerHTML={{
-          __html: `setTimeout(() => { window.location.href = '/slot'; }, 1500);`
-        }} />
-      </div>
-    </div>
+    <SlotReplay
+      spins={spins}
+      totalWin={totalWin}
+      username={user}
+      winType={type}
+      amount={amount}
+      multX={multX}
+    />
   );
 }
