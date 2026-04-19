@@ -12,25 +12,8 @@ export const increment = mutation({
     key: v.string(), // e.g., "gift_nfts_total", "gift_nfts_cache_hit", "rpc_failed"
     amount: v.optional(v.number()),
   },
-  handler: async (ctx, args) => {
-    const amount = args.amount || 1;
-    const existing = await ctx.db
-      .query("apiStats")
-      .withIndex("by_key", (q) => q.eq("key", args.key))
-      .first();
-
-    if (existing) {
-      await ctx.db.patch(existing._id, {
-        value: existing.value + amount,
-        lastUpdated: Date.now(),
-      });
-    } else {
-      await ctx.db.insert("apiStats", {
-        key: args.key,
-        value: amount,
-        lastUpdated: Date.now(),
-      });
-    }
+  handler: async (_ctx, _args) => {
+    // disabled — api stats tracking removed
   },
 });
 
