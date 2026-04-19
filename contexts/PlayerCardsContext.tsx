@@ -450,14 +450,6 @@ export function PlayerCardsProvider({ children }: { children: ReactNode }) {
             if (!wieldData && contractAddr) {
               if (isVibeFID) {
                 collection = 'vibefid';
-              } else if (contractAddr === getCollectionContract('gmvbrs')?.toLowerCase()) {
-                collection = 'gmvbrs';
-              } else if (contractAddr === getCollectionContract('viberotbangers')?.toLowerCase()) {
-                collection = 'viberotbangers';
-              } else if (contractAddr === getCollectionContract('cumioh')?.toLowerCase()) {
-                collection = 'cumioh';
-              } else if (contractAddr === getCollectionContract('meowverse')?.toLowerCase()) {
-                collection = 'meowverse';
               } else if (contractAddr === getCollectionContract('viberuto')?.toLowerCase()) {
                 collection = 'viberuto';
               }

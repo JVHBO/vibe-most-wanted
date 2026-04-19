@@ -90,7 +90,7 @@ export async function POST(request: NextRequest) {
             { headers: { 'x-api-key': NEYNAR_API_KEY } }
           ).catch(() => ({ ok: false } as any));
         }
-        if (lookupResponse.ok) {
+        if (lookupResponse && lookupResponse.ok) {
           const lookupData = await lookupResponse.json();
           if (lookupData.user) {
             targetFid = lookupData.user.fid;
