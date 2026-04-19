@@ -2356,42 +2356,41 @@ export default function SlotMachine({
                 <span className="text-[8px] font-bold" style={{ color: "#c87941" }}>{t.withdraw}</span>
               </button>
 
-              {/* TURBO toggle */}
-              <button
-                onClick={() => { const next = !turbo; setTurbo(next); turboRef.current = next; }}
-                className="w-10 h-10 rounded-full border-2 border-black font-black flex-none flex items-center justify-center active:scale-95 transition-transform text-[9px] leading-none tracking-widest uppercase"
-                style={{
-                  background: turbo
-                    ? 'linear-gradient(180deg,#f59e0b,#b45309)'
-                    : 'linear-gradient(180deg,#374151,#1f2937)',
-                  color: turbo ? '#000' : '#9ca3af',
-                  boxShadow: turbo ? '0 3px 0 #000, 0 0 12px rgba(245,158,11,0.6)' : '0 2px 0 #000',
-                }}
-                title={turbo ? 'Turbo ON' : 'Turbo OFF'}
-              >
-                ⚡
-              </button>
-
-              {/* SPIN — center */}
-              <button
-                onClick={() => {
-                  spin(true);
-                }}
-                disabled={isSpinning}
-                className="w-14 h-14 rounded-full border-4 border-black font-black flex-none flex items-center justify-center disabled:opacity-40 active:scale-95 transition-transform"
-                style={{
-                  background: isSpinning
-                    ? "linear-gradient(180deg,#6b7280,#4b5563)"
-                    : "linear-gradient(180deg,#34d399 0%,#059669 50%,#047857 100%)",
-                  boxShadow: isSpinning ? "0 2px 0 #000" : "0 5px 0 #000, 0 0 18px rgba(251,191,36,0.55)",
-                  color: "#000",
-                  transform: isSpinning ? "translateY(3px)" : undefined,
-                }}
-              >
-                <span className={`text-[10px] font-black leading-none tracking-widest ${isSpinning ? "animate-spin" : ""}`}>
-                  {t.spin}
-                </span>
-              </button>
+              {/* SPIN — center (with turbo badge) */}
+              <div className="relative flex-none">
+                <button
+                  onClick={() => {
+                    spin(true);
+                  }}
+                  disabled={isSpinning}
+                  className="w-14 h-14 rounded-full border-4 border-black font-black flex items-center justify-center disabled:opacity-40 active:scale-95 transition-transform"
+                  style={{
+                    background: isSpinning
+                      ? "linear-gradient(180deg,#6b7280,#4b5563)"
+                      : "linear-gradient(180deg,#34d399 0%,#059669 50%,#047857 100%)",
+                    boxShadow: isSpinning ? "0 2px 0 #000" : "0 5px 0 #000, 0 0 18px rgba(251,191,36,0.55)",
+                    color: "#000",
+                    transform: isSpinning ? "translateY(3px)" : undefined,
+                  }}
+                >
+                  <span className={`text-[10px] font-black leading-none tracking-widest ${isSpinning ? "animate-spin" : ""}`}>
+                    {t.spin}
+                  </span>
+                </button>
+                {/* Turbo badge — bottom center of spin button */}
+                <button
+                  onClick={() => { const next = !turbo; setTurbo(next); turboRef.current = next; }}
+                  className="absolute left-1/2 -translate-x-1/2 -bottom-2 rounded-full border border-black font-black flex items-center justify-center active:scale-95 transition-all"
+                  style={{
+                    width: 18, height: 18, fontSize: 9,
+                    background: turbo ? 'linear-gradient(180deg,#f59e0b,#b45309)' : 'linear-gradient(180deg,#374151,#1f2937)',
+                    color: turbo ? '#000' : '#6b7280',
+                    boxShadow: turbo ? '0 1px 0 #000, 0 0 6px rgba(245,158,11,0.7)' : '0 1px 0 #000',
+                    zIndex: 10,
+                  }}
+                  title={turbo ? 'Turbo ON' : 'Turbo OFF'}
+                >⚡</button>
+              </div>
 
               {/* BUY BONUS */}
               <button
