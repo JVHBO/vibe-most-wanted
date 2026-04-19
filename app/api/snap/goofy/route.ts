@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://vibemostwanted.xyz";
-const TOTAL_FRAMES = 39; // goofy romero
+const TOTAL_FRAMES = 39;
 
 const HEADERS = {
   "Content-Type": "application/vnd.farcaster.snap+json",
