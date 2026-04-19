@@ -92,11 +92,6 @@ crons.cron(
   internal.cleanup.wipeAccessTablesBatch,
 );
 
-crons.cron(
-  "clean-neynar-history",
-  "0 4 * * *",
-  internal.cleanup.cleanNeynarHistoryBatch,
-);
 
 crons.cron(
   "clean-roulette-spins",
