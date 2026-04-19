@@ -36,6 +36,26 @@ function buildSnap(frame: number) {
     };
   }
 
+  const INTERSTITIAL_FRAME = 19;
+
+  // Interstitial text-only screen
+  if (frame === INTERSTITIAL_FRAME) {
+    return {
+      version: "2.0",
+      theme: { accent: "purple" },
+      ui: {
+        root: "root",
+        elements: {
+          root: { type: "stack", props: { direction: "vertical", gap: "16", padding: "16" }, children: ["msg", "btns"] },
+          msg: { type: "text", props: { content: "You're still here? 👀 Keep going...", weight: "bold", size: "xl", alignment: "center" } },
+          btns: { type: "stack", props: { direction: "horizontal", gap: "8" }, children: ["btn_back", "btn_next"] },
+          btn_back: { type: "button", props: { label: "◀ Back", variant: "secondary" }, on: { press: { action: "submit", params: { target: snapUrl(INTERSTITIAL_FRAME - 1) } } } },
+          btn_next: { type: "button", props: { label: "Next ▶", variant: "primary" }, on: { press: { action: "submit", params: { target: snapUrl(INTERSTITIAL_FRAME + 1) } } } },
+        },
+      },
+    };
+  }
+
   const img = frameUrl(frame);
   const hasPrev = frame > 0;
   const hasNext = frame < TOTAL_FRAMES - 1;
