@@ -193,12 +193,12 @@ const RS: Record<string, {
   border: string; glow: string; bg: string; labelBg: string; label: string;
   borderW: number; icon: string; cornerGrad: string;
 }> = {
-  Special:   { border:"#FACC15", glow:"#FACC15", bg:"#111827", labelBg:"#4C1D95", label:"SPECIAL",   borderW:3, icon:"S", cornerGrad:"linear-gradient(135deg,#FACC15 0%,transparent 60%)" },
-  Mythic:    { border:"#a855f7", glow:"#a855f7", bg:"#111827", labelBg:"#4C1D95", label:"MYTHIC",    borderW:3, icon:"M", cornerGrad:"linear-gradient(135deg,#a855f7 0%,transparent 60%)" },
-  Legendary: { border:"#f59e0b", glow:"#f59e0b", bg:"#111827", labelBg:"#4C1D95", label:"LEGEND",    borderW:3, icon:"L", cornerGrad:"linear-gradient(135deg,#f59e0b 0%,transparent 60%)" },
-  Epic:      { border:"#ec4899", glow:"#ec4899", bg:"#111827", labelBg:"#4C1D95", label:"EPIC",      borderW:2, icon:"E", cornerGrad:"linear-gradient(135deg,#ec4899 0%,transparent 60%)" },
-  Rare:      { border:"#3b82f6", glow:"#3b82f6", bg:"#111827", labelBg:"#4C1D95", label:"RARE",      borderW:2, icon:"R", cornerGrad:"linear-gradient(135deg,#3b82f6 0%,transparent 60%)" },
-  Common:    { border:"#6b7280", glow:"#6b7280", bg:"#111827", labelBg:"#4C1D95", label:"COMMON",    borderW:1, icon:"C", cornerGrad:"linear-gradient(135deg,#6b7280 0%,transparent 60%)" },
+  Special:   { border:"#FACC15", glow:"#FACC15", bg:"#111827", labelBg:"#4C1D95", label:"SPECIAL",   borderW:3, icon:"★", cornerGrad:"linear-gradient(135deg,#FACC15 0%,transparent 60%)" },
+  Mythic:    { border:"#a855f7", glow:"#a855f7", bg:"#111827", labelBg:"#4C1D95", label:"MYTHIC",    borderW:3, icon:"♦", cornerGrad:"linear-gradient(135deg,#a855f7 0%,transparent 60%)" },
+  Legendary: { border:"#f59e0b", glow:"#f59e0b", bg:"#111827", labelBg:"#4C1D95", label:"LEGEND",    borderW:3, icon:"♥", cornerGrad:"linear-gradient(135deg,#f59e0b 0%,transparent 60%)" },
+  Epic:      { border:"#ec4899", glow:"#ec4899", bg:"#111827", labelBg:"#4C1D95", label:"EPIC",      borderW:2, icon:"♠", cornerGrad:"linear-gradient(135deg,#ec4899 0%,transparent 60%)" },
+  Rare:      { border:"#3b82f6", glow:"#3b82f6", bg:"#111827", labelBg:"#4C1D95", label:"RARE",      borderW:2, icon:"♣", cornerGrad:"linear-gradient(135deg,#3b82f6 0%,transparent 60%)" },
+  Common:    { border:"#6b7280", glow:"#6b7280", bg:"#111827", labelBg:"#1f2937", label:"COMMON",    borderW:1, icon:"·", cornerGrad:"linear-gradient(135deg,#6b7280 0%,transparent 60%)" },
 };
 
 const LABELS = SLOT_CARD_LABELS;
@@ -1685,7 +1685,7 @@ export default function SlotMachine({
         const bonusMultX = betMult > 0 ? Math.round(bonusSummaryAmount / betMult) : 0;
         const winType = bonusMultX >= 100 ? 'max' : bonusMultX >= 20 ? 'big' : bonusMultX >= 5 ? 'great' : 'nice';
         const ogParams = new URLSearchParams({ amount: String(bonusSummaryAmount), x: String(bonusMultX), type: winType, ...(playerName ? { user: playerName } : {}), ...(sessionIdRef.current ? { sid: sessionIdRef.current } : {}) });
-        const castText = `🎰 Bonus Round: +${bonusSummaryAmount.toLocaleString()} coins${bonusMultX >= 2 ? ` (${bonusMultX}×)` : ''}${playerName ? ` by @${playerName}` : ''} on Tukka Slots!\n\nPlay at vibemostwanted.xyz/slot 🎴`;
+        const castText = `🎰 Bonus Round: +${bonusSummaryAmount.toLocaleString()} coins${bonusMultX >= 2 ? ` (${bonusMultX}×)` : ''}${playerName ? ` by @${playerName}` : ''} on Tukka Slots!`;
         return (
           <div className="fixed inset-0 z-[650] flex items-center justify-center" style={{ background:'rgba(0,0,0,0.92)', backdropFilter:`blur(${getBaseAppBlur(8)}px)` }}>
             <div className="flex flex-col items-center gap-5 text-center px-8 max-w-[320px]">
@@ -1697,7 +1697,7 @@ export default function SlotMachine({
               {bonusSummaryAmount > 0 && (
                 <button
                   onClick={() => {
-                    const embedUrl = `https://vibemostwanted.xyz/share/slot?${ogParams}`;
+                    const embedUrl = sessionIdRef.current ? `https://vibemostwanted.xyz/slot/replay/${sessionIdRef.current}?${ogParams}` : `https://vibemostwanted.xyz/share/slot?${ogParams}`;
                     const composeUrl = `https://warpcast.com/~/compose?text=${encodeURIComponent(castText)}&embeds[]=${encodeURIComponent(embedUrl)}`;
                     sdk.actions.openUrl(composeUrl).catch(() => window.open(composeUrl, '_blank'));
                   }}
@@ -1729,7 +1729,7 @@ export default function SlotMachine({
         }[bigWinType];
         const playerName = userProfile?.username ?? (address ? address.slice(0, 6) + '…' : '');
         const ogParams = new URLSearchParams({ amount: String(bigWinAmount), x: String(bigWinMultX), type: bigWinType, ...(playerName ? { user: playerName } : {}), ...(sessionIdRef.current ? { sid: sessionIdRef.current } : {}) });
-        const castText = `🎰 ${cfg.label} +${bigWinAmount.toLocaleString()} coins${bigWinMultX >= 2 ? ` (${bigWinMultX}×)` : ''}${playerName ? ` by @${playerName}` : ''} on Tukka Slots!\n\nPlay at vibemostwanted.xyz/slot 🎴`;
+        const castText = `🎰 ${cfg.label} +${bigWinAmount.toLocaleString()} coins${bigWinMultX >= 2 ? ` (${bigWinMultX}×)` : ''}${playerName ? ` by @${playerName}` : ''} on Tukka Slots!`;
         return (
           <div
             className="fixed inset-0 z-[640] flex flex-col items-center justify-center gap-3"
@@ -1768,7 +1768,7 @@ export default function SlotMachine({
               <button
                 onClick={e => {
                   e.stopPropagation();
-                  const embedUrl = `https://vibemostwanted.xyz/share/slot?${ogParams}`;
+                  const embedUrl = sessionIdRef.current ? `https://vibemostwanted.xyz/slot/replay/${sessionIdRef.current}?${ogParams}` : `https://vibemostwanted.xyz/share/slot?${ogParams}`;
                   const composeUrl = `https://warpcast.com/~/compose?text=${encodeURIComponent(castText)}&embeds[]=${encodeURIComponent(embedUrl)}`;
                   sdk.actions.openUrl(composeUrl).catch(() => window.open(composeUrl, '_blank'));
                   setBigWinType(null);
@@ -2145,7 +2145,7 @@ export default function SlotMachine({
 
           {/* REEL AREA — flex-1 preenche o espaço disponível */}
           <div
-            className="flex-1 min-h-0 relative overflow-hidden"
+            className="flex-1 min-h-[270px] relative overflow-hidden"
             style={{
               background: isBonusActive
                 ? "linear-gradient(180deg,#1a0040 0%,#0d001f 40%,#050010 70%,#000 100%)"

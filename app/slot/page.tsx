@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useQuery, useMutation, useConvex } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import { useAccount, useChainId, useReadContract, useWriteContract } from "wagmi";
+import { useAccount, useBalance, useChainId, useReadContract, useWriteContract } from "wagmi";
 import { useReconnectTimeout } from "@/hooks/useReconnectTimeout";
 import { WalletGateScreen } from "@/components/WalletGateScreen";
 import LoadingSpinner, { PageLoadingSpinner } from "@/components/LoadingSpinner";
@@ -276,6 +276,25 @@ export default function SlotPage() {
   // price per 100 coins in human units
   const per100ETH    = per100ETHRaw    ? Number(per100ETHRaw    as bigint) / 1e18 : 0;
   const per100Stable = per100StableRaw ? Number(per100StableRaw as bigint) / 1e6  : 0;
+
+  // wallet balances for the selected buy option
+  const { data: ethBalData } = useBalance({
+    address: address as `0x${string}` | undefined,
+    chainId: buyChainId,
+    query: { enabled: !!address && buyIsETH && buyOption !== 'vbms-deposit', staleTime: 15_000 },
+  });
+  const { data: stableBalRaw } = useReadContract({
+    address: buyStableAddr,
+    abi: [{ name: 'balanceOf', type: 'function', stateMutability: 'view', inputs: [{ name: '', type: 'address' }], outputs: [{ name: '', type: 'uint256' }] }] as const,
+    functionName: 'balanceOf',
+    args: [address as `0x${string}`],
+    chainId: buyChainId,
+    query: { enabled: !!address && !buyIsETH && buyOption !== 'vbms-deposit', staleTime: 15_000 },
+  });
+  const walletBalDisplay = buyOption === 'vbms-deposit' ? null
+    : buyIsETH
+      ? (ethBalData ? `${parseFloat(ethBalData.formatted).toFixed(4)} ETH` : null)
+      : (stableBalRaw != null ? `${(Number(stableBalRaw as bigint) / 1e6).toFixed(2)} ${buyStableSym}` : null);
 
   const { writeContractAsync } = useWriteContract();
 
@@ -635,34 +654,22 @@ export default function SlotPage() {
             ← {tr("back")}
           </Link>
           <div className="flex-1 text-center">
-            <div className="relative inline-block">
-              <img
-                src="/slot-gifs/casino-slot-animation.gif"
-                alt=""
-                aria-hidden="true"
-                style={{
-                  position: 'absolute',
-                  inset: '-8px -16px',
-                  width: 'calc(100% + 32px)',
-                  height: 'calc(100% + 16px)',
-                  objectFit: 'cover',
-                  opacity: 0.85,
-                  borderRadius: 4,
-                  pointerEvents: 'none',
-                  zIndex: 0,
-                }}
-              />
-              <h1 className="relative text-2xl font-extrabold tracking-tighter" style={{
-                fontFamily: 'var(--font-cinzel)',
-                color: '#FFD400',
-                letterSpacing: '-0.05em',
-                textShadow: '0 0 8px rgba(0,0,0,0.9), 0 0 2px rgba(0,0,0,1)',
-                zIndex: 1,
-                mixBlendMode: 'screen',
-              }}>
-                {tr("title")}
-              </h1>
-            </div>
+            <h1 className="text-2xl font-extrabold tracking-tighter" style={{
+              fontFamily: 'var(--font-cinzel)',
+              letterSpacing: '-0.05em',
+              color: 'transparent',
+              WebkitBackgroundClip: 'text',
+              backgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundImage: 'url("/slot-gifs/casino-slot-animation.gif")',
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              backgroundRepeat: 'no-repeat',
+              transform: 'scaleY(1.2)',
+              display: 'inline-block',
+            }}>
+              {tr("title")}
+            </h1>
           </div>
           <div className="flex items-center gap-2">
             {/* Slot Settings */}
@@ -1107,7 +1114,7 @@ export default function SlotPage() {
                           )}
                           {/* Exchange rate */}
                           {buyOption !== "vbms-deposit" && (
-                            <div className="text-xs text-gray-500 mt-1.5 pl-1">
+                            <div className="text-xs text-gray-500 mt-1.5 pl-1 flex items-center gap-2 flex-wrap">
                               {per100ETH > 0 || per100Stable > 0 ? (
                                 <>
                                   <span>100K coins ≈ </span>
@@ -1117,10 +1124,15 @@ export default function SlotPage() {
                                       : `$${(per100Stable * 1000).toFixed(4)}`}
                                   </span>
                                   {buyIsETH && per100Stable > 0 && (
-                                    <span className="text-gray-600 ml-1">(≈ ${(per100Stable * 1000).toFixed(2)})</span>
+                                    <span className="text-gray-600">(≈ ${(per100Stable * 1000).toFixed(2)})</span>
                                   )}
                                 </>
                               ) : <span>carregando taxa...</span>}
+                              {walletBalDisplay && (
+                                <span className="ml-auto text-gray-400">
+                                  saldo: <span className="text-blue-400 font-bold">{walletBalDisplay}</span>
+                                </span>
+                              )}
                             </div>
                           )}
                         </div>
