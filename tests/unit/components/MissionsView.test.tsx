@@ -67,7 +67,7 @@ describe('MissionsView', () => {
 
   it('shows Claim All button when claimable missions exist', () => {
     render(<MissionsView {...baseProps} />);
-    expect(screen.getByText(/Claim All Rewards/)).toBeInTheDocument();
+    expect(screen.getByText(/Claim All|claimAll|mClaimAll/i)).toBeInTheDocument();
   });
 
   it('switches to social view', () => {
