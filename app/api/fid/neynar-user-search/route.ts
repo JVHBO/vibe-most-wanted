@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 
 const NEYNAR_API_KEY = process.env.NEYNAR_API_KEY || "";
-const HAATZ_BASE = "https://haatz.quilibrium.com/v2";
+const HAATZ = "https://haatz.quilibrium.com/v2";
+const CACHE = { headers: { "Cache-Control": "public, s-maxage=120, stale-while-revalidate=300" } };
 
 function mapUsers(raw: any[]) {
   return raw.map((u: any) => ({
@@ -13,49 +14,47 @@ function mapUsers(raw: any[]) {
   }));
 }
 
+async function haatzGet(path: string) {
+  const r = await fetch(`${HAATZ}${path}`, {
+    headers: { accept: "application/json" },
+    signal: AbortSignal.timeout(5000),
+  });
+  if (!r.ok) return null;
+  return r.json();
+}
+
 export async function GET(request: NextRequest) {
   const q = request.nextUrl.searchParams.get("q")?.trim();
   if (!q || q.length < 2) return NextResponse.json({ users: [] });
 
   const isFid = /^\d+$/.test(q);
 
-  // For FID lookups: try Haatz first (free), fallback to Neynar
   if (isFid) {
-    try {
-      const haatzResp = await fetch(`${HAATZ_BASE}/farcaster/user/bulk?fids=${q}`, {
-        headers: { accept: "application/json" },
-        signal: AbortSignal.timeout(5000),
-      });
-      if (haatzResp.ok) {
-        const data = await haatzResp.json();
-        const raw = data.users || [];
-        if (raw.length > 0) {
-          return NextResponse.json({ users: mapUsers(raw) }, {
-            headers: { "Cache-Control": "public, s-maxage=120, stale-while-revalidate=300" },
-          });
-        }
-      }
-    } catch { /* fallthrough to Neynar */ }
+    // FID lookup — Haatz primary
+    const data = await haatzGet(`/farcaster/user/bulk?fids=${q}`).catch(() => null);
+    const users = mapUsers(data?.users || []);
+    if (users.length) return NextResponse.json({ users }, CACHE);
 
-    const resp = await fetch(`https://api.neynar.com/v2/farcaster/user/bulk?fids=${q}`, {
+    // Fallback: Neynar
+    const r = await fetch(`https://api.neynar.com/v2/farcaster/user/bulk?fids=${q}`, {
       headers: { accept: "application/json", api_key: NEYNAR_API_KEY },
-    });
-    if (!resp.ok) return NextResponse.json({ users: [] });
-    const data = await resp.json();
-    return NextResponse.json({ users: mapUsers(data.users || []) }, {
-      headers: { "Cache-Control": "public, s-maxage=120, stale-while-revalidate=300" },
-    });
+    }).catch(() => null);
+    if (!r?.ok) return NextResponse.json({ users: [] });
+    const nd = await r.json();
+    return NextResponse.json({ users: mapUsers(nd.users || []) }, CACHE);
   }
 
-  // Text search: Neynar only
-  const resp = await fetch(
+  // Text search — Haatz primary
+  const data = await haatzGet(`/farcaster/user/search?q=${encodeURIComponent(q)}&limit=5`).catch(() => null);
+  const users = mapUsers(data?.users || []);
+  if (users.length) return NextResponse.json({ users }, CACHE);
+
+  // Fallback: Neynar
+  const r = await fetch(
     `https://api.neynar.com/v2/farcaster/user/search?q=${encodeURIComponent(q)}&limit=5`,
     { headers: { accept: "application/json", api_key: NEYNAR_API_KEY } }
-  );
-  if (!resp.ok) return NextResponse.json({ users: [] });
-  const data = await resp.json();
-
-  return NextResponse.json({ users: mapUsers(data.result?.users || []) }, {
-    headers: { "Cache-Control": "public, s-maxage=120, stale-while-revalidate=300" },
-  });
+  ).catch(() => null);
+  if (!r?.ok) return NextResponse.json({ users: [] });
+  const nd = await r.json();
+  return NextResponse.json({ users: mapUsers(nd.result?.users || []) }, CACHE);
 }

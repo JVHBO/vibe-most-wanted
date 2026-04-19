@@ -76,16 +76,20 @@ export default async function Image({ params }: { params: Promise<{ address: str
 
     if (neynarScore === null) {
       try {
+        // Haatz primary (free), Neynar fallback
+        let r = await fetch(`https://haatz.quilibrium.com/v2/farcaster/user/bulk?fids=${fid}`, {
+          headers: { accept: 'application/json' }, signal: AbortSignal.timeout(5000),
+        }).catch(() => null);
         const neynarKey = process.env.NEYNAR_API_KEY;
-        if (neynarKey) {
-          const r = await fetch(`https://api.neynar.com/v2/farcaster/user/bulk?fids=${fid}`, {
+        if (!r?.ok && neynarKey) {
+          r = await fetch(`https://api.neynar.com/v2/farcaster/user/bulk?fids=${fid}`, {
             headers: { 'x-api-key': neynarKey },
-          });
-          if (r.ok) {
-            const d = await r.json();
-            const score = d.users?.[0]?.experimental?.neynar_user_score;
-            if (typeof score === 'number') neynarScore = score;
-          }
+          }).catch(() => null);
+        }
+        if (r?.ok) {
+          const d = await r.json();
+          const score = d.users?.[0]?.experimental?.neynar_user_score;
+          if (typeof score === 'number') neynarScore = score;
         }
       } catch (_) {}
     }

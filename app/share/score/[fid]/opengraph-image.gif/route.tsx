@@ -195,15 +195,20 @@ export async function GET(
       console.log('OpenRank API fetch failed');
     }
 
-    // Always fetch current score from Neynar API
+    // Fetch user — Haatz primary (free), Neynar fallback for neynar_user_score
     let neynarData: any = null;
-    if (neynarApiKey) {
-      try {
-        const neynarResponse = await fetch(
+    try {
+      let neynarResponse = await fetch(
+        `https://haatz.quilibrium.com/v2/farcaster/user/bulk?fids=${fid}`,
+        { headers: { accept: 'application/json' }, signal: AbortSignal.timeout(5000) }
+      ).catch(() => null);
+      if ((!neynarResponse?.ok) && neynarApiKey) {
+        neynarResponse = await fetch(
           `https://api.neynar.com/v2/farcaster/user/bulk?fids=${fid}`,
           { headers: { api_key: neynarApiKey } }
-        );
-        if (neynarResponse.ok) {
+        ).catch(() => null);
+      }
+      if (neynarResponse?.ok) {
           const data = await neynarResponse.json();
           const user = data.users?.[0];
           if (user) {
@@ -227,9 +232,8 @@ export async function GET(
             }
           }
         }
-      } catch (e) {
-        console.log('Neynar API fetch failed');
-      }
+    } catch (e) {
+      console.log('Neynar API fetch failed');
     }
 
     const hasMinted = !!cardData;

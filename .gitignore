@@ -233,3 +233,9 @@ contracts/cache/
 contracts/typechain-types/
 contracts/node_modules/
 contracts/package-lock.json
+
+# Local API cache files
+neynar_fid.json
+vbms_dex.json
+wield_eth.json
+wield_price.json

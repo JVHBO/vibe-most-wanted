@@ -2,7 +2,7 @@
 
 import { Modal } from '@/app/(game)/components/ui/Modal';
 
-export const CHANGELOG_VERSION = '0.3.9';
+export const CHANGELOG_VERSION = '0.4.0';
 export const CHANGELOG_STORAGE_KEY = 'vmw_changelog_seen';
 
 interface ChangelogEntry {
@@ -14,9 +14,22 @@ interface ChangelogEntry {
 
 const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '0.4.0',
+    date: 'Apr 18, 2026',
+    isNew: true,
+    features: [
+      { emoji: '🎨', text: 'UI overhaul — all page headers standardized with consistent back button & gold title' },
+      { emoji: '🚨', text: 'Error modal with automatic bug report — tap to send details instantly' },
+      { emoji: '🏠', text: 'Home button decorations + flag emojis restored on language selector' },
+      { emoji: '⚡', text: 'Base App — faster load with page spinner, prefetched routes & webview optimization' },
+      { emoji: '📱', text: 'Mobile — TXs now use Farcaster SDK or REST+wagmi depending on context' },
+      { emoji: '🎰', text: 'Tukka Slots — in development (70% complete)' },
+    ],
+  },
+  {
     version: '0.3.9',
     date: 'Apr 4, 2026',
-    isNew: true,
+    isNew: false,
     features: [
       { emoji: '🧹', text: 'App streamlined — only VBMS, VibeFID and Nothing collections active' },
       { emoji: '🛡️', text: 'Defense deck, Raid Boss, and Mecha Arena updated to active collections only' },

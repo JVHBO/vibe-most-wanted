@@ -14,7 +14,7 @@ async function verifyFollowMe(creatorFid: number, completerFid: number): Promise
   // Check if completer follows creator
   const resp = await fetch(
     `${NEYNAR_BASE}/farcaster/user/bulk?fids=${creatorFid}&viewer_fid=${completerFid}`,
-    { headers: { accept: "application/json", api_key: NEYNAR_API_KEY } }
+    { headers: { accept: "application/json", 'x-api-key': NEYNAR_API_KEY } }
   );
   if (!resp.ok) return false;
   const data = await resp.json();
@@ -25,7 +25,7 @@ async function verifyJoinChannel(channelId: string, completerFid: number): Promi
   // Check channel membership
   const resp = await fetch(
     `${NEYNAR_BASE}/farcaster/channel/member/list?channel_id=${encodeURIComponent(channelId)}&fid=${completerFid}&limit=1`,
-    { headers: { accept: "application/json", api_key: NEYNAR_API_KEY } }
+    { headers: { accept: "application/json", 'x-api-key': NEYNAR_API_KEY } }
   );
   if (!resp.ok) return false;
   const data = await resp.json();
@@ -39,7 +39,7 @@ async function fetchCastViewerContext(castUrl: string, completerFid: number): Pr
   const encoded = isUrl ? encodeURIComponent(castUrl) : castUrl;
   const resp = await fetch(
     `${NEYNAR_BASE}/farcaster/cast?identifier=${encoded}&type=${identifierType}&viewer_fid=${completerFid}`,
-    { headers: { accept: "application/json", api_key: NEYNAR_API_KEY } }
+    { headers: { accept: "application/json", 'x-api-key': NEYNAR_API_KEY } }
   );
   if (!resp.ok) return null;
   const data = await resp.json();

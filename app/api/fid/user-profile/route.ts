@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 const NEYNAR_API_KEY = process.env.NEYNAR_API_KEY || "";
+const HAATZ = "https://haatz.quilibrium.com/v2";
 const cache = new Map<string, { data: any; expiresAt: number }>();
 
 export async function GET(request: NextRequest) {
@@ -10,14 +11,25 @@ export async function GET(request: NextRequest) {
   const cached = cache.get(fid);
   if (cached && cached.expiresAt > Date.now()) return NextResponse.json(cached.data);
 
-  const resp = await fetch(
-    `https://api.neynar.com/v2/farcaster/user/bulk?fids=${fid}`,
-    { headers: { accept: "application/json", api_key: NEYNAR_API_KEY } }
-  );
-  if (!resp.ok) return NextResponse.json({ error: "Neynar error" }, { status: 502 });
+  // Haatz primary (free)
+  let u: any = null;
+  try {
+    const r = await fetch(`${HAATZ}/farcaster/user/bulk?fids=${fid}`, {
+      headers: { accept: "application/json" },
+      signal: AbortSignal.timeout(5000),
+    });
+    if (r.ok) u = ((await r.json()).users || [])[0] ?? null;
+  } catch {}
 
-  const data = await resp.json();
-  const u = (data.users || [])[0];
+  // Fallback: Neynar
+  if (!u) {
+    const r = await fetch(`https://api.neynar.com/v2/farcaster/user/bulk?fids=${fid}`, {
+      headers: { accept: "application/json", api_key: NEYNAR_API_KEY },
+    }).catch(() => null);
+    if (!r?.ok) return NextResponse.json({ error: "User not found" }, { status: 502 });
+    u = ((await r.json()).users || [])[0];
+  }
+
   if (!u) return NextResponse.json({});
 
   const result = {

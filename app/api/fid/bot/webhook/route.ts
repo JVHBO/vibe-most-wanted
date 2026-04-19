@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-// Neynar API key for posting
-const NEYNAR_API_KEY = process.env.NEYNAR_API_KEY!;
+// Neynar API key for posting — uses dedicated bot key (VibeFID account)
+const NEYNAR_API_KEY = process.env.NEYNAR_BOT_API_KEY || process.env.NEYNAR_API_KEY!;
 const BOT_SIGNER_UUID = process.env.BOT_SIGNER_UUID!;
+const HAATZ = 'https://haatz.quilibrium.com/v2';
 
 // 🚀 BANDWIDTH FIX: Rate limit bot responses per user+target window
 // Prevents same user from triggering bot multiple times for same target in short window
@@ -78,10 +79,17 @@ export async function POST(request: NextRequest) {
     if (otherMentions.length > 0) {
       const targetMention = otherMentions[0].substring(1); // Remove @
       try {
-        const lookupResponse = await fetch(
-          `https://api.neynar.com/v2/farcaster/user/by_username?username=${targetMention}`,
-          { headers: { api_key: NEYNAR_API_KEY } }
-        );
+        // Haatz primary (free), Neynar fallback
+        let lookupResponse = await fetch(
+          `${HAATZ}/farcaster/user/by-username?username=${targetMention}`,
+          { headers: { accept: 'application/json' }, signal: AbortSignal.timeout(4000) }
+        ).catch(() => null);
+        if (!lookupResponse?.ok) {
+          lookupResponse = await fetch(
+            `https://api.neynar.com/v2/farcaster/user/by_username?username=${targetMention}`,
+            { headers: { 'x-api-key': NEYNAR_API_KEY } }
+          ).catch(() => ({ ok: false } as any));
+        }
         if (lookupResponse.ok) {
           const lookupData = await lookupResponse.json();
           if (lookupData.user) {
@@ -125,15 +133,19 @@ export async function POST(request: NextRequest) {
       // Cache hit — skip Neynar call
       console.log(`[Bot] Score cache HIT for FID ${targetFid}: ${score}`);
     } else {
-      // Cache miss — fetch from Neynar
+      // Cache miss — fetch user (Haatz primary, Neynar fallback for score)
       const ac = new AbortController();
       const timeout = setTimeout(() => ac.abort(), 5000);
       const [userResponse, rankResponse, openRankResponse] = await Promise.all([
-        // Neynar score
-        fetch(`https://api.neynar.com/v2/farcaster/user/bulk?fids=${targetFid}`, {
-          headers: { api_key: NEYNAR_API_KEY },
+        // Haatz primary (free), Neynar fallback for neynar_user_score
+        fetch(`${HAATZ}/farcaster/user/bulk?fids=${targetFid}`, {
+          headers: { accept: 'application/json' },
           signal: ac.signal,
-        }),
+        }).then(r => r.ok ? r : fetch(`https://api.neynar.com/v2/farcaster/user/bulk?fids=${targetFid}`, {
+          headers: { 'x-api-key': NEYNAR_API_KEY },
+        })).catch(() => fetch(`https://api.neynar.com/v2/farcaster/user/bulk?fids=${targetFid}`, {
+          headers: { 'x-api-key': NEYNAR_API_KEY },
+        })),
         // VibeFID rank from Convex
         fetch("https://scintillating-mandrill-101.convex.cloud/api/query", {
           method: 'POST',
@@ -217,7 +229,7 @@ export async function POST(request: NextRequest) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'api_key': NEYNAR_API_KEY,
+        'x-api-key': NEYNAR_API_KEY,
       },
       body: JSON.stringify({
         signer_uuid: BOT_SIGNER_UUID,

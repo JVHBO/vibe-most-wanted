@@ -272,19 +272,20 @@ function ProfilePageContent() {
 
         setProfile(profileData);
 
-        // Busca username do Farcaster se tiver FID (usando Neynar API)
-        if (profileData.fid && NEYNAR_API_KEY) {
+        // Busca username do Farcaster se tiver FID — Haatz primary, Neynar fallback
+        if (profileData.fid) {
           try {
-            const fcResponse = await fetch(
-              `https://api.neynar.com/v2/farcaster/user/bulk?fids=${profileData.fid}`,
-              {
-                headers: {
-                  'accept': 'application/json',
-                  'api_key': NEYNAR_API_KEY,
-                },
-              }
-            );
-            if (fcResponse.ok) {
+            let fcResponse = await fetch(
+              `https://haatz.quilibrium.com/v2/farcaster/user/bulk?fids=${profileData.fid}`,
+              { headers: { accept: 'application/json' }, signal: AbortSignal.timeout(5000) }
+            ).catch(() => null);
+            if (!fcResponse?.ok && NEYNAR_API_KEY) {
+              fcResponse = await fetch(
+                `https://api.neynar.com/v2/farcaster/user/bulk?fids=${profileData.fid}`,
+                { headers: { 'accept': 'application/json', 'api_key': NEYNAR_API_KEY } }
+              ).catch(() => null);
+            }
+            if (fcResponse?.ok) {
               const fcData = await fcResponse.json();
               const fcUser = fcData.users?.[0];
               if (fcUser) {

@@ -1089,6 +1089,20 @@ export default function RafflePage() {
                   })}
                 </div>
 
+                {/* Countdown */}
+                {endsAt && (
+                  <div className="border-t-2 border-black px-3 py-1.5 flex items-center justify-between bg-black/30">
+                    <span className="text-white/50 text-[10px] font-bold uppercase tracking-widest">
+                      {ended ? 'Raffle ended' : 'Closes in'}
+                    </span>
+                    {!ended && (
+                      <span className="font-black text-xs text-[#FFD700] tabular-nums">
+                        {d}d {String(h).padStart(2,'0')}h {String(m).padStart(2,'0')}m {String(s).padStart(2,'0')}s
+                      </span>
+                    )}
+                  </div>
+                )}
+
                 {/* Tier milestones */}
                 <div className="border-t-2 border-black px-3 py-2 space-y-1.5">
                   {TIER_MILESTONES.map((tier, i) => {

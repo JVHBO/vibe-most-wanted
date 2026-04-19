@@ -634,36 +634,22 @@ export default function SlotPage() {
           <Link href="/" className="px-2 py-1 bg-[#CC2222] hover:bg-[#AA1111] text-white text-[11px] font-black uppercase tracking-widest transition-all z-10">
             ← {tr("back")}
           </Link>
-          <div className="flex-1 text-center relative">
-            <div className="relative inline-block">
-              {/* GIF behind the title text */}
-              <img
-                src="/slot-gifs/casino-slot-animation.gif"
-                alt=""
-                aria-hidden="true"
-                style={{
-                  position: 'absolute',
-                  inset: '-8px -16px',
-                  width: 'calc(100% + 32px)',
-                  height: 'calc(100% + 16px)',
-                  objectFit: 'cover',
-                  opacity: 0.85,
-                  borderRadius: 4,
-                  pointerEvents: 'none',
-                  zIndex: 0,
-                }}
-              />
-              <h1 className="relative text-2xl font-extrabold tracking-tighter" style={{
-                fontFamily: 'var(--font-cinzel)',
-                color: '#FFD400',
-                letterSpacing: '-0.05em',
-                textShadow: '0 0 8px rgba(0,0,0,0.9), 0 0 2px rgba(0,0,0,1)',
-                zIndex: 1,
-                mixBlendMode: 'screen',
-              }}>
-                {tr("title")}
-              </h1>
-            </div>
+          <div className="flex-1 text-center">
+            <h1 className="text-2xl font-extrabold tracking-tighter" style={{
+              fontFamily: 'var(--font-cinzel)',
+              color: 'transparent',
+              letterSpacing: '-0.05em',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundImage: 'url("/slot-gifs/gen4-turbo-idle-breathing.gif")',
+              backgroundSize: '120% 120%',
+              backgroundPosition: 'center 20%',
+              backgroundRepeat: 'no-repeat',
+              transform: 'scaleY(1.15)',
+              display: 'inline-block',
+            }}>
+              {tr("title")}
+            </h1>
           </div>
           <div className="flex items-center gap-2">
             {/* Slot Settings */}
