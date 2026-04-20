@@ -180,7 +180,7 @@ export const VIBEFID_BOSSES: Record<CardRarity, BossCard> = {
  * All other external collections removed for VMW ecosystem purity.
  */
 
-export const ALL_BOSS_CARDS: Record<CollectionId, Record<CardRarity, BossCard>> = {
+export const ALL_BOSS_CARDS: Partial<Record<CollectionId, Record<CardRarity, BossCard>>> = {
   vibe: VBMS_BOSSES,
   vibefid: VIBEFID_BOSSES,
   nothing: {} as Record<CardRarity, BossCard>,
