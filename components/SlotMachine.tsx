@@ -11,6 +11,7 @@ import { getVbmsBaccaratImageUrl } from "@/lib/tcg/images";
 import { playTrackedAudio } from "@/lib/tcg/audio";
 import { sdk } from "@farcaster/miniapp-sdk";
 import type { SlotCard } from "@/lib/slot/config";
+import { SLOT_CARD_SUIT_RANK } from "@/lib/slot/config";
 import {
   SLOT_BET_OPTIONS,
   SLOT_BONUS_COST_MULT,
@@ -65,6 +66,14 @@ const BET_OPTIONS = [...SLOT_BET_OPTIONS];
 const BONUS_COST_MULT = SLOT_BONUS_COST_MULT;
 const BONUS_FREE_SPINS = SLOT_BONUS_FREE_SPINS;
 const REEL_ROW_GAP_PX = 3;
+
+const SUIT_SYM: Record<string, string> = { hearts: "♥", diamonds: "♦", clubs: "♣", spades: "♠" };
+function getCardSuitRank(baccarat: string): { sym: string; rank: string } | null {
+  const key = baccarat.toLowerCase();
+  const sr = SLOT_CARD_SUIT_RANK[key];
+  if (!sr) return null;
+  return { sym: SUIT_SYM[sr.suit] ?? "", rank: sr.rank };
+}
 const REEL_LOOP_CARD_COUNT = 12;
 const REEL_LOOP_REPEAT_COUNT = 3;
 const REEL_SETTLE_LEAD_COUNT = 5;
@@ -73,6 +82,17 @@ const REEL_SETTLE_BUFFER_COUNT = 4;
 // GIF de cassino para VBMS Special (slot animation)
 // Coloque os arquivos em public/slot-gifs/
 const CASINO_SLOT_GIF = "/slot-gifs/casino-slot-animation.gif"; // GIF de cassino para a carta especial
+const CASINO_SLOT_POSTER = "/slot-gifs/casino-slot-poster.png";
+
+function getSlotCardImage(baccarat: string, useLiteAsset = false): string | null {
+  return baccarat === "dragukka"
+    ? (useLiteAsset ? CASINO_SLOT_POSTER : CASINO_SLOT_GIF)
+    : getVbmsBaccaratImageUrl(baccarat);
+}
+
+function getOverlayBackdropFilter(disableBlur: boolean, blurPx: number): string | undefined {
+  return disableBlur ? undefined : `blur(${getBaseAppBlur(blurPx)}px)`;
+}
 
 interface SpinResult {
   spinId: string;
@@ -261,22 +281,25 @@ const SlotGridCard = memo(function SlotGridCard({
   const s = RS[effectiveCard.rarity] ?? RS.Common;
   const isLockedGif = lockedGifIdx === idx && effectiveCard.baccarat === "dragukka";
   const isDragukka = effectiveCard.baccarat === "dragukka";
-  const rawImg = isDragukka ? CASINO_SLOT_GIF : getVbmsBaccaratImageUrl(effectiveCard.baccarat);
+  const rawImg = getSlotCardImage(effectiveCard.baccarat, baseAppLiteMode || stripMode);
+  const imageWidth = stripMode ? (baseAppLiteMode ? 144 : 192) : (baseAppLiteMode ? 216 : 256);
+  const imageQuality = stripMode ? (baseAppLiteMode ? 38 : 50) : (baseAppLiteMode ? 48 : 60);
   const img = rawImg
-    ? getBaseAppImageSrc(rawImg, stripMode ? 192 : 256, stripMode ? 50 : 60)
+    ? getBaseAppImageSrc(rawImg, imageWidth, imageQuality)
     : null;
   const label = LABELS[effectiveCard.baccarat] ?? effectiveCard.baccarat;
+  const cardSR = getCardSuitRank(effectiveCard.baccarat);
   const borderColor = isWin ? "#FFD700" : s.border;
   const borderW = isWin ? 3 : s.borderW;
 
   const foilEffect = effectiveCard.hasFoil ? {
-    animation: "prizeFoilShine 3s linear infinite",
+    animation: baseAppLiteMode ? undefined : "prizeFoilShine 3s linear infinite",
     border: `${borderW}px solid ${isWin ? "#FFD700" : "#FFA500"}`,
     boxShadow: `0 0 15px ${isWin ? "#FFD700" : "#FFA500"}88, inset 0 0 20px ${isWin ? "#FFD70033" : "#FFA50022"}`,
   } : {};
 
   let rarityAnim: string | undefined;
-  if (!stripMode && !spinning && !decelerating && !isWin && !effectiveCard.hasFoil) {
+  if (!baseAppLiteMode && !stripMode && !spinning && !decelerating && !isWin && !effectiveCard.hasFoil) {
     if (effectiveCard.rarity === "Mythic") {
       rarityAnim = "mythic-border 1.6s ease-in-out infinite";
     } else if (effectiveCard.rarity === "Legendary") {
@@ -285,6 +308,7 @@ const SlotGridCard = memo(function SlotGridCard({
   }
 
   const isAnimated = !stripMode && (spinning || decelerating || isNew || isWin);
+  const showStaticFoil = baseAppLiteMode && !spinning && !stripMode && effectiveCard.hasFoil && !isDragukka;
 
   if (stripMode) {
     return (
@@ -301,7 +325,7 @@ const SlotGridCard = memo(function SlotGridCard({
             <img
               src={baseAppLiteMode ? img : rawImg!}
               alt={label}
-              className="w-full h-full object-cover object-center"
+              className="w-full h-full object-contain object-center"
               decoding="async"
               draggable={false}
             />
@@ -332,17 +356,19 @@ const SlotGridCard = memo(function SlotGridCard({
 
   return (
     <div
-      className={`absolute inset-0 flex flex-col overflow-hidden ${stripMode ? "" : isLocked ? (isWin ? "win-flash" : "") : decelerating ? "slot-decel" : spinning ? "slot-spin" : isNew ? "card-fall-in" : isWin ? "win-flash" : "transition-all duration-150"} ${effectiveCard.hasFoil && !stripMode ? "foil-card" : ""}`}
+      className={`absolute inset-0 flex flex-col overflow-hidden ${stripMode ? "" : isLocked ? (isWin ? "win-flash" : "") : decelerating ? "slot-decel" : spinning ? "slot-spin" : isNew ? "card-fall-in" : isWin ? "win-flash" : "transition-all duration-150"} ${effectiveCard.hasFoil && !stripMode && !baseAppLiteMode ? "foil-card" : ""}`}
       style={{
         border: isLocked
           ? "2px solid #FACC15"
           : foilEffect.border || `${borderW}px solid ${borderColor}`,
-        boxShadow: isLocked
-          ? "0 0 12px #FACC1588, inset 0 0 10px #FACC1522"
-          : foilEffect.boxShadow || (isWin ? "0 0 20px #FFD700, 0 0 8px #FFD700, inset 0 0 16px #FFD70033" : undefined),
-        animation: isLocked || stripMode ? undefined : `${rarityAnim || foilEffect.animation || ""}`.trim(),
+        boxShadow: baseAppLiteMode
+          ? (isLocked ? "0 0 6px #FACC1588" : isWin ? "0 0 8px #FFD70088" : effectiveCard.hasFoil ? "0 0 7px #FFA50088, inset 0 0 0 1px #FFD70055" : undefined)
+          : isLocked
+            ? "0 0 12px #FACC1588, inset 0 0 10px #FACC1522"
+            : foilEffect.boxShadow || (isWin ? "0 0 20px #FFD700, 0 0 8px #FFD700, inset 0 0 16px #FFD70033" : undefined),
+        animation: baseAppLiteMode || isLocked || stripMode ? undefined : `${rarityAnim || foilEffect.animation || ""}`.trim(),
         background: s.bg,
-        willChange: isAnimated ? "transform, filter, opacity" : undefined,
+        willChange: isAnimated ? (baseAppLiteMode ? "transform, opacity" : "transform, filter, opacity") : undefined,
         transform: isAnimated ? "translate3d(0,0,0)" : undefined,
         backfaceVisibility: isAnimated ? "hidden" : undefined,
       }}
@@ -355,9 +381,14 @@ const SlotGridCard = memo(function SlotGridCard({
         className="absolute top-0 left-0 w-5 h-5 z-10 pointer-events-none"
         style={{ background: s.cornerGrad }}
       >
-        <span className="absolute top-0 left-0.5 text-[7px] font-black leading-none" style={{ color: s.border }}>
-          {s.icon}
-        </span>
+        {cardSR ? (
+          <>
+            <span className="absolute top-0 left-0.5 text-[6px] font-black leading-none" style={{ color: s.border }}>{cardSR.rank}</span>
+            <span className="absolute top-[7px] left-0.5 text-[6px] font-black leading-none" style={{ color: s.border }}>{cardSR.sym}</span>
+          </>
+        ) : (
+          <span className="absolute top-0 left-0.5 text-[7px] font-black leading-none" style={{ color: s.border }}>{s.icon}</span>
+        )}
       </div>
 
       <div className="relative flex-1 min-h-0 overflow-hidden" style={{ background: "#111" }}>
@@ -381,9 +412,20 @@ const SlotGridCard = memo(function SlotGridCard({
             style={{ background: `linear-gradient(135deg, ${s.glow}22 0%, transparent 50%, ${s.glow}11 100%)` }}
           />
         )}
-        {isWin && <div className="absolute inset-0 bg-yellow-300/20 animate-pulse pointer-events-none" />}
+        {isWin && <div className={`absolute inset-0 bg-yellow-300/20 pointer-events-none ${baseAppLiteMode ? "" : "animate-pulse"}`} />}
         {spinning && !stripMode && <div className="absolute inset-0 bg-black/55 pointer-events-none" />}
-        {!spinning && !stripMode && effectiveCard.hasFoil && !isDragukka && <div className="prize-foil" />}
+        {!baseAppLiteMode && !spinning && !stripMode && effectiveCard.hasFoil && !isDragukka && <div className="prize-foil" />}
+        {showStaticFoil && (
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={{ background: "linear-gradient(135deg, rgba(255,255,255,0.28) 0%, rgba(255,215,0,0.18) 28%, transparent 46%, rgba(34,211,238,0.18) 70%, rgba(255,165,0,0.24) 100%)" }}
+          />
+        )}
+        {showStaticFoil && (
+          <div className="absolute top-0 right-0 z-30 px-1 py-0.5 text-[7px] font-black text-black rounded-bl" style={{ background: "#FFD700" }}>
+            FOIL
+          </div>
+        )}
         {isLockedGif && (
           <div className="absolute top-0 right-0 z-30 px-1 py-0.5 text-[7px] font-black text-black rounded-bl" style={{ background: "#FFD700" }}>
             LOCKED
@@ -400,7 +442,9 @@ const SlotGridCard = memo(function SlotGridCard({
         className="shrink-0 flex items-center gap-0.5 px-0.5 py-[2px]"
         style={{ background: isWin ? "#92400e" : s.labelBg }}
       >
-        <span className="text-[5px] font-black leading-none shrink-0" style={{ color: s.border }}>{s.icon}</span>
+        <span className="text-[6px] font-black leading-none shrink-0" style={{ color: s.border }}>
+          {cardSR ? `${cardSR.rank}${cardSR.sym}` : s.icon}
+        </span>
         <span
           className="text-[5px] font-black text-white truncate leading-none flex-1 text-center"
           style={{ fontSize: label.length > 12 ? "4px" : "5px" }}
@@ -434,12 +478,12 @@ type SlotReelStripProps = {
   onStopComplete: (col: number) => void;
 };
 
-function createLoopStripCards() {
-  return Array.from({ length: REEL_LOOP_CARD_COUNT }, () => pick());
+function createLoopStripCards(count = REEL_LOOP_CARD_COUNT) {
+  return Array.from({ length: count }, () => pick());
 }
 
-function repeatStripCards(cards: SlotCard[]) {
-  return Array.from({ length: REEL_LOOP_REPEAT_COUNT }, () => cards).flat();
+function repeatStripCards(cards: SlotCard[], repeatCount = REEL_LOOP_REPEAT_COUNT) {
+  return Array.from({ length: repeatCount }, () => cards).flat();
 }
 
 const SlotReelStrip = memo(function SlotReelStrip({
@@ -457,10 +501,12 @@ const SlotReelStrip = memo(function SlotReelStrip({
   const stepPxRef = useRef(0);
   const completionRef = useRef(false);
   const [cellHeightPx, setCellHeightPx] = useState(0);
+  const loopCardCount = liteMotion ? 7 : REEL_LOOP_CARD_COUNT;
+  const loopRepeatCount = liteMotion ? 2 : REEL_LOOP_REPEAT_COUNT;
   const [stripCards, setStripCards] = useState<SlotCard[]>(() => {
-    const base = createLoopStripCards();
+    const base = createLoopStripCards(loopCardCount);
     baseCardsRef.current = base;
-    return repeatStripCards(base);
+    return repeatStripCards(base, loopRepeatCount);
   });
 
   const applyOffset = useCallback((offsetPx: number) => {
@@ -504,9 +550,9 @@ const SlotReelStrip = memo(function SlotReelStrip({
     clearTimers();
     completionRef.current = false;
 
-    const base = createLoopStripCards();
+    const base = createLoopStripCards(loopCardCount);
     baseCardsRef.current = base;
-    setStripCards(repeatStripCards(base));
+    setStripCards(repeatStripCards(base, loopRepeatCount));
     offsetRef.current = 0;
 
     const startLoop = () => {
@@ -540,15 +586,17 @@ const SlotReelStrip = memo(function SlotReelStrip({
 
     clearTimers();
 
-    const base = baseCardsRef.current.length ? baseCardsRef.current : createLoopStripCards();
+    const base = baseCardsRef.current.length ? baseCardsRef.current : createLoopStripCards(loopCardCount);
     const stepPx = stepPxRef.current;
     const traveledSteps = stepPx > 0 ? Math.max(0, Math.round(-offsetRef.current / stepPx)) : 0;
     const startIndex = base.length > 0 ? traveledSteps % base.length : 0;
+    const leadCount = liteMotion ? 3 : REEL_SETTLE_LEAD_COUNT;
+    const bufferCount = liteMotion ? 2 : REEL_SETTLE_BUFFER_COUNT;
     const leadCards = Array.from(
-      { length: REEL_SETTLE_LEAD_COUNT },
+      { length: leadCount },
       (_, idx) => base[(startIndex + idx) % base.length] ?? pick(),
     );
-    const settleBuffer = Array.from({ length: REEL_SETTLE_BUFFER_COUNT }, () => pick());
+    const settleBuffer = Array.from({ length: bufferCount }, () => pick());
     const settleCards = [...leadCards, ...settleBuffer, ...stopCards];
 
     setStripCards(settleCards);
@@ -820,9 +868,9 @@ export default function SlotMachine({
     });
 
     delete stripStopMetaRef.current[col];
-    playTick(90 + col * 10, 0.07, 0.08);
+    if (!liteMotion) playTick(90 + col * 10, 0.07, 0.08);
     meta.onDone?.();
-  }, []);
+  }, [liteMotion]);
 
   // Para coluna com desaceleração visual + callback quando termina
   const slowAndStopCol = useCallback((col: number, cards: SlotCard[], onDone?: () => void) => {
@@ -843,7 +891,7 @@ export default function SlotMachine({
     }
 
     // Passos de desaceleração: delays crescentes, cada um mostra carta aleatória
-    const slowSteps = [85, 130, 190, 270, 370];
+    const slowSteps = liteMotion ? [130, 230, 360] : [85, 130, 190, 270, 370];
     let step = 0;
 
     const tick = () => {
@@ -858,7 +906,7 @@ export default function SlotMachine({
         setStopped(prev => new Set([...prev, col]));
         setDeceleratingCols(prev => { const s = new Set(prev); s.delete(col); return s; });
         // Clique suave ao parar coluna
-        playTick(90 + col * 10, 0.07, 0.08);
+        if (!liteMotion) playTick(90 + col * 10, 0.07, 0.08);
         onDone?.();
         return;
       }
@@ -874,7 +922,7 @@ export default function SlotMachine({
     };
 
     setTimeout(tick, slowSteps[step++]);
-  }, [columnHasLockedCells]);
+  }, [columnHasLockedCells, liteMotion]);
 
   const sleep = (ms: number) => new Promise<void>(res => setTimeout(res, turboRef.current ? Math.min(ms, 40) : ms));
 
@@ -922,11 +970,11 @@ export default function SlotMachine({
     setActivePaylines([]);
     setComboDisplay(null);
 
-    if (maxWin) {
+    if (maxWin && !liteMotion) {
       const rarityOrder = ["Special","Mythic","Legendary","Epic","Rare","Common"];
       const topCard = [...finalGrid].sort((a, b) => rarityOrder.indexOf(a.rarity) - rarityOrder.indexOf(b.rarity))[0];
       if (topCard) {
-        const img = topCard.baccarat === "dragukka" ? CASINO_SLOT_GIF : getVbmsBaccaratImageUrl(topCard.baccarat);
+        const img = getSlotCardImage(topCard.baccarat, liteMotion);
         const label = LABELS[topCard.baccarat] ?? topCard.baccarat;
         setTimeout(() => setCard3D({ card: topCard, img: img || "", label, flyIn: true }), 600);
       }
@@ -943,7 +991,7 @@ export default function SlotMachine({
     }
 
     setTimeout(() => setPhase("IDLE"), 80);
-  }, []);
+  }, [liteMotion]);
 
   const playComboResolution = useCallback(async (
     steps: SlotComboStep[],
@@ -969,12 +1017,17 @@ export default function SlotMachine({
         winAmt: step.reward,
       });
 
-      await sleep(140);
+      await sleep(liteMotion ? 60 : 140);
       if (!turboRef.current) {
         const comboAudio = step.combo.audioPath
           ? { audioPath: step.combo.audioPath, audioVolume: step.combo.audioVolume ?? 0.7 }
           : resolveComboAudio(step.combo.id);
-        await playNarration(comboAudio.audioPath, "combo", comboAudio.audioVolume);
+        if (liteMotion) {
+          void playNarration(comboAudio.audioPath, "combo", comboAudio.audioVolume);
+          await sleep(180);
+        } else {
+          await playNarration(comboAudio.audioPath, "combo", comboAudio.audioVolume);
+        }
       }
 
       runningWin += step.reward;
@@ -982,33 +1035,41 @@ export default function SlotMachine({
       setWinAmt(runningWin);
 
       setPhase("CASCADE");
-      playCardFall();
-      await sleep(220);
+      if (!liteMotion) playCardFall();
+      await sleep(liteMotion ? 100 : 220);
       setWinCells(new Set());
       setCells(step.afterGrid);
       setNewCells(new Set(step.fillIndices));
 
       if (step.fillIndices.length > 0) {
         const cascadeFreq = 200 + step.fillIndices.length * 20;
-        playTick(cascadeFreq, 0.15, 0.1);
+        if (!liteMotion) playTick(cascadeFreq, 0.15, 0.1);
       }
 
-      await sleep(520);
+      await sleep(liteMotion ? 220 : 520);
       setNewCells(new Set());
       setComboDisplay(null);
-      await sleep(120);
+      await sleep(liteMotion ? 50 : 120);
     }
 
     setCells(finalGrid);
     setWinAmt(totalWin);
     return details;
-  }, [playNarration]);
+  }, [playNarration, liteMotion]);
 
   const triggerEpicFoil = useCallback(async (
     foilCells: Array<{idx:number;card:SlotCard;img:string;row:number;col:number}>,
   ) => {
     setPhase("BONUS");
     setShowBonusAnimation(true);
+
+    if (liteMotion) {
+      void playNarration("/sounds/evolution.mp3", "bonus", 0.8);
+      await sleep(350);
+      setShowBonusAnimation(false);
+      return;
+    }
+
     setEpicFoilCards(foilCells);
     setEpicFoilPhase("fly");
     window.setTimeout(() => setEpicFoilPhase("spin"), 1400);
@@ -1017,7 +1078,7 @@ export default function SlotMachine({
     setEpicFoilCards(null);
     setEpicFoilPhase(null);
     setShowBonusAnimation(false);
-  }, [playNarration]);
+  }, [playNarration, liteMotion]);
 
   // Detectar categoria de vitória para overlay
   const showBigWinOverlay = useCallback((amount: number, bet: number) => {
@@ -1188,7 +1249,7 @@ export default function SlotMachine({
                     .map((card, idx) => ({
                       idx,
                       card,
-                      img: card.baccarat === "dragukka" ? CASINO_SLOT_GIF : (getVbmsBaccaratImageUrl(card.baccarat) || ""),
+                      img: getSlotCardImage(card.baccarat, liteMotion) || "",
                       row: Math.floor(idx / COLS),
                       col: idx % COLS,
                     }))
@@ -1235,7 +1296,7 @@ export default function SlotMachine({
 
             if (foilsFoundRef.current >= 2 && col + 1 < COLS) {
               setFoilSuspenseCols(prev => new Set([...prev, col + 1]));
-              playTick(220, 0.09, 0.12);
+              if (!liteMotion) playTick(220, 0.09, 0.12);
             }
 
             setTimeout(() => stopSequential(col + 1), turboRef.current ? 10 : 80);
@@ -1329,23 +1390,23 @@ export default function SlotMachine({
           50%  { transform:translateY(3px);  opacity:1; }
           100% { transform:translateY(-3px); opacity:0.85; }
         }
-        .slot-spin { animation: ${liteMotion ? 'slot-blur-lite 0.12s' : 'slot-blur 0.08s'} ease-in-out infinite; will-change: transform, filter; transform: translate3d(0,0,0); backface-visibility: hidden; }
+        .slot-spin { animation: ${liteMotion ? 'slot-blur-lite 0.16s' : 'slot-blur 0.08s'} ease-in-out infinite; will-change: ${liteMotion ? 'transform, opacity' : 'transform, filter'}; transform: translate3d(0,0,0); backface-visibility: hidden; }
         @keyframes slot-blur-slow {
           0%   { transform:translateY(-3px); filter:blur(1px) brightness(1.05); }
           50%  { transform:translateY(3px);  filter:blur(1.5px) brightness(0.9); }
           100% { transform:translateY(-3px); filter:blur(1px) brightness(1.05); }
         }
-        .slot-decel { animation: ${liteMotion ? 'slot-blur-slow-lite 0.22s' : 'slot-blur-slow 0.18s'} ease-in-out infinite; will-change: transform, filter; transform: translate3d(0,0,0); backface-visibility: hidden; }
+        .slot-decel { animation: ${liteMotion ? 'slot-blur-slow-lite 0.28s' : 'slot-blur-slow 0.18s'} ease-in-out infinite; will-change: ${liteMotion ? 'transform, opacity' : 'transform, filter'}; transform: translate3d(0,0,0); backface-visibility: hidden; }
         @keyframes win-pulse {
           0%,100%{ opacity:1; }
           50%    { opacity:0.75; }
         }
-        .win-pulse { animation: win-pulse 0.45s ease-in-out infinite; }
+        .win-pulse { animation: ${liteMotion ? 'win-pulse 0.7s ease-in-out infinite' : 'win-pulse 0.45s ease-in-out infinite'}; }
         @keyframes jackpot-glow {
           0%,100%{ text-shadow:0 0 6px #a855f7,0 0 14px #a855f7; }
           50%    { text-shadow:0 0 20px #a855f7,0 0 40px #a855f7,0 0 60px #c084fc; }
         }
-        .jackpot-text { animation: jackpot-glow 0.7s ease-in-out infinite; }
+        .jackpot-text { animation: ${liteMotion ? 'none' : 'jackpot-glow 0.7s ease-in-out infinite'}; }
         @keyframes mythic-border {
           0%,100%{ box-shadow:0 0 8px #a855f7, 0 0 2px #a855f7, inset 0 0 8px rgba(168,85,247,0.15); }
           50%    { box-shadow:0 0 18px #a855f7, 0 0 6px #c084fc, inset 0 0 14px rgba(168,85,247,0.25); }
@@ -1359,7 +1420,7 @@ export default function SlotMachine({
           50%,95% { opacity:0.25; }
           100%    { opacity:1; }
         }
-        .subtitle-blink { animation: subtitle-blink 1.4s ease-in-out infinite; }
+        .subtitle-blink { animation: ${liteMotion ? 'subtitle-blink 1.8s ease-in-out infinite' : 'subtitle-blink 1.4s ease-in-out infinite'}; }
         /* foil-card usa .prize-foil de globals.css (mais colorido) */
         .foil-card { }
         /* Foil breathing animation */
@@ -1368,7 +1429,7 @@ export default function SlotMachine({
           50% { box-shadow: 0 0 25px #FACC15, inset 0 0 30px #FACC1533; }
         }
         .foil-card {
-          animation: foil-breathe 3s ease-in-out infinite;
+          animation: ${liteMotion ? 'none' : 'foil-breathe 3s ease-in-out infinite'};
         }
         @keyframes combo-reveal {
           0%   { opacity:0; transform:scale(0.4) translateY(30px); }
@@ -1377,59 +1438,59 @@ export default function SlotMachine({
           68%  { opacity:1; transform:scale(1); }
           100% { opacity:0; transform:scale(0.85) translateY(-24px); }
         }
-        .combo-overlay { animation: combo-reveal 2.8s cubic-bezier(.34,1.56,.64,1) forwards; }
+        .combo-overlay { animation: ${liteMotion ? 'combo-reveal 1.8s ease-out forwards' : 'combo-reveal 2.8s cubic-bezier(.34,1.56,.64,1) forwards'}; }
         @keyframes combo-shimmer {
           0%,100% { text-shadow: 0 0 12px var(--cc), 0 0 30px var(--cc); }
           50%     { text-shadow: 0 0 24px var(--cc), 0 0 60px var(--cc), 0 0 90px var(--cc); }
         }
-        .combo-text { animation: combo-shimmer 0.6s ease-in-out infinite; }
+        .combo-text { animation: ${liteMotion ? 'none' : 'combo-shimmer 0.6s ease-in-out infinite'}; }
         @keyframes card-fall-in {
           0%   { transform: translateY(-100%); opacity: 0; }
           60%  { transform: translateY(6px); opacity: 1; }
           80%  { transform: translateY(-3px); }
           100% { transform: translateY(0); opacity: 1; }
         }
-        .card-fall-in { animation: card-fall-in 0.45s cubic-bezier(.34,1.56,.64,1) forwards; }
+        .card-fall-in { animation: ${liteMotion ? 'card-fall-in 0.28s ease-out forwards' : 'card-fall-in 0.45s cubic-bezier(.34,1.56,.64,1) forwards'}; }
         @keyframes win-flash {
           0%,100% { opacity: 1; }
           30%     { opacity: 0.4; }
           60%     { opacity: 1; }
         }
-        .win-flash { animation: win-flash 0.35s ease-in-out 3; }
+        .win-flash { animation: ${liteMotion ? 'win-flash 0.42s ease-in-out 2' : 'win-flash 0.35s ease-in-out 3'}; }
         @keyframes payline-draw {
           0%   { stroke-dashoffset: 350; opacity: 1; }
           65%  { stroke-dashoffset: 0; opacity: 1; }
           85%  { opacity: 1; }
           100% { stroke-dashoffset: 0; opacity: 0; }
         }
-        .payline-draw { stroke-dasharray: 350; stroke-dashoffset: 350; animation: payline-draw 0.85s ease-out forwards; }
+        .payline-draw { stroke-dasharray: 350; stroke-dashoffset: 350; animation: ${liteMotion ? 'payline-draw 0.55s ease-out forwards' : 'payline-draw 0.85s ease-out forwards'}; }
         /* Foil suspense column glow */
         @keyframes foil-suspense-pulse {
           0%,100% { box-shadow: 0 0 8px #FFA500, 0 0 16px #FFD700; filter: brightness(1.15) saturate(1.2); }
           50%     { box-shadow: 0 0 24px #FFD700, 0 0 48px #FF8C00, 0 0 72px #FF6B00; filter: brightness(1.5) saturate(1.6); }
         }
-        .foil-suspense-col { animation: foil-suspense-pulse 0.38s ease-in-out infinite; z-index: 5; }
+        .foil-suspense-col { animation: ${liteMotion ? 'none' : 'foil-suspense-pulse 0.38s ease-in-out infinite'}; z-index: 5; }
         /* Epic foil fly-in from grid position */
         @keyframes epic-fly {
           0%   { transform: translate(var(--sx), var(--sy)) scale(0.5); opacity:0; }
           60%  { opacity:1; }
           100% { transform: translate(0,0) scale(1); opacity:1; }
         }
-        .epic-foil-fly { animation: epic-fly 1.1s cubic-bezier(.34,1.56,.64,1) both; animation-delay: var(--delay); }
+        .epic-foil-fly { animation: ${liteMotion ? 'none' : 'epic-fly 1.1s cubic-bezier(.34,1.56,.64,1) both'}; animation-delay: ${liteMotion ? '0ms' : 'var(--delay)'}; }
         /* Epic foil group spin */
         @keyframes epic-spin {
           0%   { transform: translate(0,0) scale(1) rotateY(0deg); }
           40%  { transform: translate(0,0) scale(1.15) rotateY(180deg); }
           100% { transform: translate(0,0) scale(1) rotateY(360deg); }
         }
-        .epic-foil-spin { animation: epic-spin 1.8s cubic-bezier(.34,1.2,.64,1) both; animation-delay: var(--delay); }
+        .epic-foil-spin { animation: ${liteMotion ? 'none' : 'epic-spin 1.8s cubic-bezier(.34,1.2,.64,1) both'}; animation-delay: ${liteMotion ? '0ms' : 'var(--delay)'}; }
         /* Bonus text pop */
         @keyframes epic-bonus-pop {
           0%   { transform: scale(0); opacity:0; }
           60%  { transform: scale(1.2); opacity:1; }
           100% { transform: scale(1); opacity:1; }
         }
-        .epic-bonus-text { animation: epic-bonus-pop 0.6s cubic-bezier(.34,1.56,.64,1) both; }
+        .epic-bonus-text { animation: ${liteMotion ? 'none' : 'epic-bonus-pop 0.6s cubic-bezier(.34,1.56,.64,1) both'}; }
         @keyframes card-3d-fly-in {
           0%   { opacity:0; transform:perspective(900px) rotateY(-120deg) translateY(-160px) scale(0.4); }
           55%  { opacity:1; transform:perspective(900px) rotateY(18deg) translateY(8px) scale(1.06); }
@@ -1437,7 +1498,7 @@ export default function SlotMachine({
           90%  { transform:perspective(900px) rotateY(4deg) translateY(2px) scale(1.01); }
           100% { opacity:1; transform:perspective(900px) rotateY(0deg) translateY(0) scale(1); }
         }
-        .card-3d-fly-in { animation: card-3d-fly-in 0.95s cubic-bezier(.34,1.2,.64,1) forwards; }
+        .card-3d-fly-in { animation: ${liteMotion ? 'none' : 'card-3d-fly-in 0.95s cubic-bezier(.34,1.2,.64,1) forwards'}; }
       `}</style>
 
 
@@ -1461,7 +1522,7 @@ export default function SlotMachine({
                   </div>
                   <div className="grid gap-1.5" style={{ gridTemplateColumns: "repeat(5, 1fr)" }}>
                     {cards.map(c => {
-                      const cImg = c.baccarat === "dragukka" ? CASINO_SLOT_GIF : getVbmsBaccaratImageUrl(c.baccarat);
+                      const cImg = getSlotCardImage(c.baccarat, liteMotion);
                       const cLabel = LABELS[c.baccarat] ?? c.baccarat;
                       return (
                         <div
@@ -1476,7 +1537,7 @@ export default function SlotMachine({
                           <div className="relative flex-1 overflow-hidden" style={{ background:"#111" }}>
                             {cImg ? (
                               // eslint-disable-next-line @next/next/no-img-element
-                              <img src={getBaseAppImageSrc(cImg, 256, 60)} alt={cLabel} className="w-full h-full object-cover object-center" decoding="async" />
+                              <img src={getBaseAppImageSrc(cImg, liteMotion ? 192 : 256, liteMotion ? 45 : 60)} alt={cLabel} className="w-full h-full object-cover object-center" decoding="async" />
                             ) : (
                               <div className="flex items-center justify-center h-full text-[8px] text-gray-300 text-center px-0.5">{cLabel.toUpperCase()}</div>
                             )}
@@ -1496,14 +1557,19 @@ export default function SlotMachine({
               <div className="text-[10px] font-black uppercase tracking-widest mb-2 px-1 text-orange-400">FOIL EFFECT (preview)</div>
               <div className="grid gap-1.5" style={{ gridTemplateColumns: "repeat(5, 1fr)" }}>
                 {POOL.slice(0, 5).map(c => {
-                  const cImg = getVbmsBaccaratImageUrl(c.baccarat);
+                  const cImg = getSlotCardImage(c.baccarat, liteMotion);
                   const rs = RS[c.rarity as keyof typeof RS] ?? RS.Common;
                   const cLabel = LABELS[c.baccarat] ?? c.baccarat;
                   return (
-                    <div key={c.baccarat+"_foil"} className="relative foil-card flex flex-col overflow-hidden rounded" style={{ border:`${rs.borderW}px solid #FFA500`, background: rs.bg, aspectRatio:"3/4", boxShadow:`0 0 15px #FFA50088` }}>
+                    <div key={c.baccarat+"_foil"} className={`relative ${liteMotion ? "" : "foil-card"} flex flex-col overflow-hidden rounded`} style={{ border:`${rs.borderW}px solid #FFA500`, background: rs.bg, aspectRatio:"3/4", boxShadow: liteMotion ? "0 0 4px #FFA50055" : `0 0 15px #FFA50088` }}>
                       <div className="relative flex-1 overflow-hidden" style={{ background:"#111" }}>
-                        {cImg && <img src={getBaseAppImageSrc(cImg, 256, 60)} alt={cLabel} className="w-full h-full object-cover object-center" decoding="async" />}
-                        <div className="prize-foil" />
+                        {cImg && <img src={getBaseAppImageSrc(cImg, liteMotion ? 192 : 256, liteMotion ? 45 : 60)} alt={cLabel} className="w-full h-full object-cover object-center" decoding="async" />}
+                        {liteMotion ? (
+                          <>
+                            <div className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(135deg, rgba(255,255,255,0.28) 0%, rgba(255,215,0,0.18) 28%, transparent 46%, rgba(34,211,238,0.18) 70%, rgba(255,165,0,0.24) 100%)" }} />
+                            <div className="absolute top-0 right-0 px-1 py-0.5 text-[7px] font-black text-black rounded-bl" style={{ background: "#FFD700" }}>FOIL</div>
+                          </>
+                        ) : <div className="prize-foil" />}
                       </div>
                       <div className="px-0.5 py-0.5 text-center" style={{ background: rs.labelBg }}>
                         <span className="text-[6px] font-black text-white leading-none">✨ FOIL</span>
@@ -1528,7 +1594,7 @@ export default function SlotMachine({
         <div
           key="card3d-viewer"
           className="fixed inset-0 z-[500] flex flex-col items-center justify-center"
-          style={{ background: 'rgba(0,0,0,0.92)', backdropFilter: `blur(${getBaseAppBlur(12)}px)` }}
+          style={{ background: 'rgba(0,0,0,0.92)', backdropFilter: getOverlayBackdropFilter(isBaseApp, 12) }}
         >
           <div className="flex flex-col items-center gap-4">
             {/* Rarity tag + Combos button */}
@@ -1626,9 +1692,9 @@ export default function SlotMachine({
                 }}>
                   {card3D.img && (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={getBaseAppImageSrc(card3D.img, 512, 70)} alt={card3D.label} draggable={false} decoding="async" style={{ width: '100%', height: '100%', objectFit: 'cover', pointerEvents: 'none' }} />
+                    <img src={getBaseAppImageSrc(card3D.img, liteMotion ? 384 : 512, liteMotion ? 50 : 70)} alt={card3D.label} draggable={false} decoding="async" style={{ width: '100%', height: '100%', objectFit: 'cover', pointerEvents: 'none' }} />
                   )}
-                  {card3D.card.hasFoil && <div className="prize-foil" style={{ borderRadius: 12 }} />}
+                  {!liteMotion && card3D.card.hasFoil && <div className="prize-foil" style={{ borderRadius: 12 }} />}
                 </div>
                 {/* BACK — igual ao raffle: scale(1.13) para cobrir bordas do formato */}
                 <div style={{
@@ -1637,7 +1703,7 @@ export default function SlotMachine({
                   boxShadow: '0 0 40px rgba(255,215,0,0.5)',
                 }}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={getBaseAppImageSrc("/images/card-back.png", 512, 70)} alt="Card Back" draggable={false} decoding="async"
+                  <img src={getBaseAppImageSrc("/images/card-back.png", liteMotion ? 384 : 512, liteMotion ? 50 : 70)} alt="Card Back" draggable={false} decoding="async"
                     style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center', transform: 'scale(1.13) translateY(1.3%)', transformOrigin: 'center', pointerEvents: 'none' }}
                     onError={e => { (e.currentTarget as HTMLImageElement).src = '/images/gif-background.png'; }} />
                 </div>
@@ -1655,7 +1721,7 @@ export default function SlotMachine({
 
       {/* PLAY BONUS overlay — aparece após 4 foils, antes de entrar no bonus */}
       {showPlayBonus && (
-        <div className="fixed inset-0 z-[650] flex items-center justify-center" style={{ background:'rgba(0,0,0,0.88)', backdropFilter:`blur(${getBaseAppBlur(8)}px)` }}>
+        <div className="fixed inset-0 z-[650] flex items-center justify-center" style={{ background:'rgba(0,0,0,0.88)', backdropFilter:getOverlayBackdropFilter(isBaseApp, 8) }}>
           <div className="flex flex-col items-center gap-6 text-center px-8">
             <div className="font-black text-5xl" style={{ color:'#FFD700', textShadow:'0 0 30px #FFD700, 0 0 60px #FFA500', animation:'epic-bonus-pop 0.6s cubic-bezier(.34,1.56,.64,1) both' }}>
               BONUS!
@@ -1687,7 +1753,7 @@ export default function SlotMachine({
         const ogParams = new URLSearchParams({ amount: String(bonusSummaryAmount), x: String(bonusMultX), type: winType, ...(playerName ? { user: playerName } : {}), ...(sessionIdRef.current ? { sid: sessionIdRef.current } : {}) });
         const castText = `🎰 Bonus Round: +${bonusSummaryAmount.toLocaleString()} coins${bonusMultX >= 2 ? ` (${bonusMultX}×)` : ''}${playerName ? ` by @${playerName}` : ''} on Tukka Slots!`;
         return (
-          <div className="fixed inset-0 z-[650] flex items-center justify-center" style={{ background:'rgba(0,0,0,0.92)', backdropFilter:`blur(${getBaseAppBlur(8)}px)` }}>
+          <div className="fixed inset-0 z-[650] flex items-center justify-center" style={{ background:'rgba(0,0,0,0.92)', backdropFilter:getOverlayBackdropFilter(isBaseApp, 8) }}>
             <div className="flex flex-col items-center gap-5 text-center px-8 max-w-[320px]">
               <div className="font-black text-2xl uppercase tracking-widest text-yellow-300">Bonus Concluído!</div>
               <div className="font-black leading-none" style={{ fontSize: 52, color: bonusSummaryAmount > 0 ? '#4ade80' : '#6b7280', textShadow: bonusSummaryAmount > 0 ? '0 0 20px #4ade80' : undefined }}>
@@ -1788,7 +1854,7 @@ export default function SlotMachine({
       {/* EPIC FOIL OVERLAY — 4 foil cards flip 3D in-place side by side */}
       {epicFoilCards && epicFoilPhase && (
         <div className="fixed inset-0 z-[600] flex items-center justify-center overflow-hidden pointer-events-none"
-          style={{ background: 'rgba(0,0,0,0.75)', backdropFilter: `blur(${getBaseAppBlur(4)}px)` }}>
+          style={{ background: 'rgba(0,0,0,0.75)', backdropFilter: getOverlayBackdropFilter(isBaseApp, 4) }}>
           <div className="relative" style={{ width: 'min(86vw, 360px)', aspectRatio: '5 / 3' }}>
             {epicFoilCards.map((fc, i) => {
               const rs = RS[fc.card.rarity] ?? RS.Common;
@@ -1816,7 +1882,7 @@ export default function SlotMachine({
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={fc.img} alt="" draggable={false} style={{ width:'100%', height:'100%', objectFit:'cover', pointerEvents:'none' }} />
                   )}
-                  <div className="prize-foil" />
+                  {!liteMotion && <div className="prize-foil" />}
                 </div>
               );
             })}
@@ -2204,7 +2270,7 @@ export default function SlotMachine({
                               onClick={() => {
                                 if (isSpinning || !columnStopped) return;
                                 const c = cells[i];
-                                const img = c.baccarat === "dragukka" ? CASINO_SLOT_GIF : getVbmsBaccaratImageUrl(c.baccarat);
+                                const img = getSlotCardImage(c.baccarat, liteMotion);
                                 card3DRotRef.current = { rotY: 0, rotX: 0, dragging: false, lastX: 0, lastY: 0 };
                                 setCard3D({ card: c, img: img || '', label: LABELS[c.baccarat] ?? c.baccarat, flyIn: true });
                               }}
@@ -2238,7 +2304,7 @@ export default function SlotMachine({
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     className="payline-draw"
-                    style={{ filter: `drop-shadow(0 0 5px ${pl.color})` }}
+                    style={liteMotion ? undefined : { filter: `drop-shadow(0 0 5px ${pl.color})` }}
                   />
                 ))}
               </svg>
@@ -2252,7 +2318,7 @@ export default function SlotMachine({
                 className="combo-overlay flex flex-col items-center gap-1 px-5 py-3 rounded-xl border-4 border-black"
                 style={{
                   background: `linear-gradient(160deg,rgba(0,0,0,0.88) 0%,rgba(0,0,0,0.95) 100%)`,
-                  boxShadow: `0 0 40px ${comboDisplay.color}88, 0 0 80px ${comboDisplay.color}44, 4px 4px 0 #000`,
+                  boxShadow: liteMotion ? "4px 4px 0 #000" : `0 0 40px ${comboDisplay.color}88, 0 0 80px ${comboDisplay.color}44, 4px 4px 0 #000`,
                 }}
               >
                 <div
@@ -2267,7 +2333,7 @@ export default function SlotMachine({
                 </div>
                 <div
                   className="font-black text-white text-center"
-                  style={{ fontSize: "clamp(12px,3.5vw,18px)", textShadow: `1px 1px 0 #000, 0 0 10px ${comboDisplay.color}` }}
+                  style={{ fontSize: "clamp(12px,3.5vw,18px)", textShadow: liteMotion ? "1px 1px 0 #000" : `1px 1px 0 #000, 0 0 10px ${comboDisplay.color}` }}
                 >
                   +{comboDisplay.winAmt.toLocaleString()} COINS
                 </div>
@@ -2282,7 +2348,7 @@ export default function SlotMachine({
                 style={{ background:"#7c3aed", color:"#fff", borderColor:"#000", boxShadow:"0 2px 0 #000" }}
               >
                 {showBonusAnimation ? (
-                  <span className="animate-pulse">🎰 {t.bonusMode} +{BONUS_FREE_SPINS}!</span>
+                  <span className={liteMotion ? "" : "animate-pulse"}>🎰 {t.bonusMode} +{BONUS_FREE_SPINS}!</span>
                 ) : (
                   <span>🎰 {bonusState.spinsRemaining} {t.bonusRemaining}</span>
                 )}
@@ -2373,7 +2439,7 @@ export default function SlotMachine({
                     transform: isSpinning ? "translateY(3px)" : undefined,
                   }}
                 >
-                  <span className={`text-[10px] font-black leading-none tracking-widest ${isSpinning ? "animate-spin" : ""}`}>
+                  <span className={`text-[10px] font-black leading-none tracking-widest ${isSpinning && !liteMotion ? "animate-spin" : ""}`}>
                     {t.spin}
                   </span>
                 </button>

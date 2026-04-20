@@ -19,6 +19,7 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
   const x      = p.x ?? '0';
   const type   = p.type ?? 'nice';
   const user   = p.user ?? '';
+  const sid    = p.sid ?? '';
 
   const labels: Record<string, string> = {
     max:   'MAX WIN',
@@ -36,8 +37,9 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
   const title       = `🎰 ${label}! +${amountFmt} VBMS${x !== '0' && x !== '1' ? ` (${x}×)` : ''}${user ? ` by @${user}` : ''}`;
   const description = `${user ? `@${user} hit a ` : ''}${label} on Tukka Slots — +${amountFmt} VBMS coins${x !== '0' && x !== '1' ? ` at ${x}×` : ''}! Play now on Vibe Most Wanted.`;
 
-  const ogParams = new URLSearchParams({ amount, x, type, ...(user ? { user } : {}) });
+  const ogParams = new URLSearchParams({ amount, x, type, ...(user ? { user } : {}), ...(sid ? { sid } : {}) });
   const imageUrl = `${BASE_URL}/api/og/slot-win?${ogParams}`;
+  const launchUrl = sid ? `${BASE_URL}/slot/replay/${sid}?${ogParams}` : `${BASE_URL}/slot`;
 
   return {
     title,
@@ -61,11 +63,11 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
         version: '1',
         imageUrl,
         button: {
-          title: 'Play Tukka Slots',
+          title: sid ? 'Watch Replay' : 'Play Tukka Slots',
           action: {
             type: 'launch_miniapp',
             name: '$VBMS',
-            url: BASE_URL + '/slot',
+            url: launchUrl,
           },
         },
       }),
@@ -73,11 +75,11 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
         version: '1',
         imageUrl,
         button: {
-          title: 'Play Tukka Slots',
+          title: sid ? 'Watch Replay' : 'Play Tukka Slots',
           action: {
             type: 'launch_miniapp',
             name: '$VBMS',
-            url: BASE_URL + '/slot',
+            url: launchUrl,
           },
         },
       }),

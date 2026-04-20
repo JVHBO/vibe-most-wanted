@@ -48,7 +48,7 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
   const title = `🎰 ${label}! +${amountFmt} VBMS${x !== '0' && x !== '1' ? ` (${x}×)` : ''}${user ? ` by @${user}` : ''}`;
   const description = `${user ? `@${user} hit a ` : ''}${label} on Tukka Slots — +${amountFmt} VBMS coins${x !== '0' && x !== '1' ? ` at ${x}×` : ''}! Play now on Vibe Most Wanted.`;
 
-  const ogParams = new URLSearchParams({ amount, x, type, ...(user ? { user } : {}) });
+  const ogParams = new URLSearchParams({ amount, x, type, ...(user ? { user } : {}), sid });
   const imageUrl = `${BASE_URL}/api/og/slot-win?${ogParams}`;
   const replayUrl = `${BASE_URL}/slot/replay/${sid}?${ogParams}`;
 

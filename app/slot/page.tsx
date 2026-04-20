@@ -12,7 +12,7 @@ import { useProfile } from "@/contexts/ProfileContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useFarcasterVBMSBalance, useFarcasterTransferVBMS, useFarcasterApproveVBMS } from "@/lib/hooks/useFarcasterVBMS";
 import { useClaimVBMS } from "@/lib/hooks/useVBMSContracts";
-import { getFarcasterProvider as getFarcasterSdkProvider } from "@/lib/utils/miniapp";
+import { getFarcasterProvider as getFarcasterSdkProvider, isBaseAppWebView } from "@/lib/utils/miniapp";
 import { CONTRACTS } from "@/lib/contracts";
 import { parseEther } from "viem";
 import { toast } from "sonner";
@@ -62,7 +62,7 @@ const translations = {
     on: "🔊 On", off: "🔇 Mute",
     addTrack: "MP3 or YouTube URL...", noTracks: "No tracks added",
     trackCount: (n: number) => `${n} track${n !== 1 ? "s" : ""} • plays in sequence`,
-    rulesAndPrizes: "Rules & Prizes", prizes: "Prizes",
+    rulesAndPrizes: "Rules & Prizes", prizes: "Prizes", prizesNote: "Prizes multiply by bet amount",
   },
   "pt-BR": {
     title: "Tukka Slots", back: "Voltar", credits: "Créditos", vbms: "VBMS",
@@ -350,7 +350,9 @@ export default function SlotPage() {
 
   // Altura real do viewport (window.innerHeight é confiável em WebViews/Farcaster)
   const [vh, setVh] = useState(0);
+  const [isBaseApp, setIsBaseApp] = useState(false);
   useEffect(() => {
+    setIsBaseApp(isBaseAppWebView());
     const update = () => setVh(window.innerHeight);
     update();
     window.addEventListener('resize', update);
@@ -646,27 +648,28 @@ export default function SlotPage() {
       >
         {/* Header */}
         <div className="relative shrink-0 z-10 flex items-center px-4" style={{
-          paddingTop: 'max(1rem, env(safe-area-inset-top))',
-          paddingBottom: '0.75rem',
+          paddingTop: 'max(0.25rem, env(safe-area-inset-top))',
+          paddingBottom: '0.25rem',
           borderBottom: '1px solid rgba(255,215,0,0.2)',
         }}>
           <Link href="/" className="px-2 py-1 bg-[#CC2222] hover:bg-[#AA1111] text-white text-[11px] font-black uppercase tracking-widest transition-all z-10">
             ← {tr("back")}
           </Link>
           <div className="flex-1 text-center">
-            <h1 className="text-2xl font-extrabold tracking-tighter" style={{
+            <h1 className="text-4xl font-extrabold tracking-tighter" style={{
               fontFamily: 'var(--font-cinzel)',
               letterSpacing: '-0.05em',
               color: 'transparent',
               WebkitBackgroundClip: 'text',
               backgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
-              backgroundImage: 'url("/slot-gifs/casino-slot-animation.gif")',
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
+              backgroundImage: isBaseApp ? 'linear-gradient(180deg,#fff1a8 0%,#ffd700 45%,#c87941 100%)' : 'url("/slot-gifs/casino-slot-animation.gif")',
+              backgroundSize: isBaseApp ? '100% 100%' : '190px auto',
+              backgroundPosition: isBaseApp ? 'center' : 'center calc(50% + 82px)',
               backgroundRepeat: 'no-repeat',
-              transform: 'scaleY(1.2)',
+              transform: 'scaleY(1.4)',
               display: 'inline-block',
+              lineHeight: 1,
             }}>
               {tr("title")}
             </h1>
