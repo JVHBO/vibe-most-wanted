@@ -33,7 +33,7 @@ import type {
   SlotPhase,
 } from "@/lib/slot/engine";
 import { getSlotComboCatalog, resolveComboAudio } from "@/lib/slot/engine";
-import { getBaseAppBlur, getBaseAppImageSrc, isBaseAppWebView } from "@/lib/utils/miniapp";
+import { getBaseAppBlur, isBaseAppWebView } from "@/lib/utils/miniapp";
 
 const SLOT_UI_TRANSLATIONS: Record<string, {
   spin: string; deposit: string; withdraw: string; buyBonus: string;
@@ -282,11 +282,7 @@ const SlotGridCard = memo(function SlotGridCard({
   const isLockedGif = lockedGifIdx === idx && effectiveCard.baccarat === "dragukka";
   const isDragukka = effectiveCard.baccarat === "dragukka";
   const rawImg = getSlotCardImage(effectiveCard.baccarat, baseAppLiteMode || stripMode);
-  const imageWidth = stripMode ? (baseAppLiteMode ? 144 : 192) : (baseAppLiteMode ? 216 : 256);
-  const imageQuality = stripMode ? (baseAppLiteMode ? 38 : 50) : (baseAppLiteMode ? 48 : 60);
-  const img = rawImg
-    ? getBaseAppImageSrc(rawImg, imageWidth, imageQuality)
-    : null;
+  const img = rawImg;
   const label = LABELS[effectiveCard.baccarat] ?? effectiveCard.baccarat;
   const cardSR = getCardSuitRank(effectiveCard.baccarat);
   const borderColor = isWin ? "#FFD700" : s.border;
@@ -323,8 +319,9 @@ const SlotGridCard = memo(function SlotGridCard({
           {img ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
-              src={baseAppLiteMode ? img : rawImg!}
-              alt={label}
+              src={img}
+              alt=""
+              aria-label={label}
               className="w-full h-full object-contain object-center"
               decoding="async"
               draggable={false}
@@ -395,9 +392,10 @@ const SlotGridCard = memo(function SlotGridCard({
         {img ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
-            src={baseAppLiteMode ? img : rawImg!}
-            alt={label}
-            className="w-full h-full object-cover object-center"
+            src={img}
+            alt=""
+            aria-label={label}
+            className="w-full h-full object-contain object-center"
             decoding="async"
             draggable={false}
           />
@@ -1537,7 +1535,7 @@ export default function SlotMachine({
                           <div className="relative flex-1 overflow-hidden" style={{ background:"#111" }}>
                             {cImg ? (
                               // eslint-disable-next-line @next/next/no-img-element
-                              <img src={getBaseAppImageSrc(cImg, liteMotion ? 192 : 256, liteMotion ? 45 : 60)} alt={cLabel} className="w-full h-full object-cover object-center" decoding="async" />
+                              <img src={cImg} alt="" aria-label={cLabel} className="w-full h-full object-contain object-center" decoding="async" />
                             ) : (
                               <div className="flex items-center justify-center h-full text-[8px] text-gray-300 text-center px-0.5">{cLabel.toUpperCase()}</div>
                             )}
@@ -1563,7 +1561,7 @@ export default function SlotMachine({
                   return (
                     <div key={c.baccarat+"_foil"} className={`relative ${liteMotion ? "" : "foil-card"} flex flex-col overflow-hidden rounded`} style={{ border:`${rs.borderW}px solid #FFA500`, background: rs.bg, aspectRatio:"3/4", boxShadow: liteMotion ? "0 0 4px #FFA50055" : `0 0 15px #FFA50088` }}>
                       <div className="relative flex-1 overflow-hidden" style={{ background:"#111" }}>
-                        {cImg && <img src={getBaseAppImageSrc(cImg, liteMotion ? 192 : 256, liteMotion ? 45 : 60)} alt={cLabel} className="w-full h-full object-cover object-center" decoding="async" />}
+                        {cImg && <img src={cImg} alt="" aria-label={cLabel} className="w-full h-full object-contain object-center" decoding="async" />}
                         {liteMotion ? (
                           <>
                             <div className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(135deg, rgba(255,255,255,0.28) 0%, rgba(255,215,0,0.18) 28%, transparent 46%, rgba(34,211,238,0.18) 70%, rgba(255,165,0,0.24) 100%)" }} />
@@ -1692,7 +1690,7 @@ export default function SlotMachine({
                 }}>
                   {card3D.img && (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={getBaseAppImageSrc(card3D.img, liteMotion ? 384 : 512, liteMotion ? 50 : 70)} alt={card3D.label} draggable={false} decoding="async" style={{ width: '100%', height: '100%', objectFit: 'cover', pointerEvents: 'none' }} />
+                    <img src={card3D.img} alt="" aria-label={card3D.label} draggable={false} decoding="async" style={{ width: '100%', height: '100%', objectFit: 'cover', pointerEvents: 'none' }} />
                   )}
                   {!liteMotion && card3D.card.hasFoil && <div className="prize-foil" style={{ borderRadius: 12 }} />}
                 </div>
@@ -1703,9 +1701,8 @@ export default function SlotMachine({
                   boxShadow: '0 0 40px rgba(255,215,0,0.5)',
                 }}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={getBaseAppImageSrc("/images/card-back.png", liteMotion ? 384 : 512, liteMotion ? 50 : 70)} alt="Card Back" draggable={false} decoding="async"
-                    style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center', transform: 'scale(1.13) translateY(1.3%)', transformOrigin: 'center', pointerEvents: 'none' }}
-                    onError={e => { (e.currentTarget as HTMLImageElement).src = '/images/gif-background.png'; }} />
+                  <img src={"/images/card-back.png"} alt="Card Back" draggable={false} decoding="async"
+                    style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center', transform: 'scale(1.13) translateY(1.3%)', transformOrigin: 'center', pointerEvents: 'none' }} />
                 </div>
               </div>
             </div>

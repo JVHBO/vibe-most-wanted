@@ -57,17 +57,10 @@ export function getBaseAppBlur(blurPx: number): number {
   return isBaseAppWebView() ? Math.max(2, Math.round(blurPx * 0.45)) : blurPx;
 }
 
-export function getBaseAppImageSrc(src: string, width = 256, quality = 60): string {
-  if (!isBaseAppWebView()) return src;
-  if (!src || !src.startsWith('/') || src.toLowerCase().endsWith('.gif')) return src;
-
-  const params = new URLSearchParams({
-    url: src,
-    w: String(width),
-    q: String(quality),
-  });
-
-  return `/_next/image?${params.toString()}`;
+export function getBaseAppImageSrc(src: string, _width = 256, _quality = 60): string {
+  // Base App WebView has been unreliable with Next's /_next/image optimizer for local files.
+  // Return the direct asset URL so cards never degrade into broken-image alt text.
+  return src;
 }
 
 export function shouldSkipHeavyQueries(): boolean {
