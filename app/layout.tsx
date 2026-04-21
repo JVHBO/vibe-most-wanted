@@ -184,8 +184,30 @@ export default function RootLayout({
             .openads-floating,
             .openads-top-banner,
             .openads-banner {
-              display: none !important;
-              pointer-events: none !important;
+              display: block !important;
+              position: fixed !important;
+              pointer-events: auto !important;
+              max-width: calc(100vw - 24px) !important;
+              max-height: calc(100dvh - 120px) !important;
+            }
+            .openads-popup {
+              left: 50% !important;
+              top: 50% !important;
+              transform: translate(-50%, -50%) !important;
+            }
+            .openads-floating {
+              top: 56px !important;
+              right: 12px !important;
+            }
+            .openads-top-banner {
+              top: 48px !important;
+              left: 50% !important;
+              transform: translateX(-50%) !important;
+            }
+            .openads-banner {
+              bottom: 60px !important;
+              left: 50% !important;
+              transform: translateX(-50%) !important;
             }
           }
         `}</style>
