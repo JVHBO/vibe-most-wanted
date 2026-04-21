@@ -301,6 +301,7 @@ export default function HomePage() {
           ? {
               position: 'fixed',
               inset: 0,
+              zIndex: 50,
               overflow: 'hidden',
               padding: '24px 16px',
               display: 'flex',
@@ -311,6 +312,7 @@ export default function HomePage() {
               position: 'fixed',
               top: 48,
               bottom: 60,
+              zIndex: 50,
               left: 0,
               right: 0,
               overflowY: 'hidden',
