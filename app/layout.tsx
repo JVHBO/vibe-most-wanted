@@ -172,6 +172,23 @@ export default function RootLayout({
         <iframe className="openads-floating" src="https://api.openads.world/serve?publisher=0x2a9585da40de004d6ff0f5f12cfe726bd2f98b52&placement=64x64-0x2a9585da40de004d6ff0f5f12cfe726bd2f98b52&position=floating&parent_url=https%3A%2F%2Fvibemostwanted.xyz&app_id=c28f0313-c888-4d31-a8cc-c59fe2666177" title="Advertisement" width="64" height="64" style={{ position: "fixed", top: "20px", right: "20px", width: "64px", height: "64px", border: "none", borderRadius: "50%", zIndex: 999999 }} frameBorder="0" scrolling="no" sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox" allow="clipboard-write"></iframe>
         <iframe className="openads-top-banner" src="https://api.openads.world/serve?publisher=0x2a9585da40de004d6ff0f5f12cfe726bd2f98b52&placement=320x50_top-0x2a9585da40de004d6ff0f5f12cfe726bd2f98b52&position=top&parent_url=https%3A%2F%2Fvibemostwanted.xyz&app_id=c28f0313-c888-4d31-a8cc-c59fe2666177" title="Advertisement" width="320" height="50" style={{ border: "none" }} frameBorder="0" scrolling="no" sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox" allow="clipboard-write"></iframe>
         <iframe className="openads-banner" src="https://api.openads.world/serve?publisher=0x2a9585da40de004d6ff0f5f12cfe726bd2f98b52&placement=320x50-0x2a9585da40de004d6ff0f5f12cfe726bd2f98b52&position=bottom&parent_url=https%3A%2F%2Fvibemostwanted.xyz&app_id=c28f0313-c888-4d31-a8cc-c59fe2666177" title="Advertisement" width="320" height="50" style={{ border: "none" }} frameBorder="0" scrolling="no" sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox" allow="clipboard-write"></iframe>
+        <style>{`
+          .openads-popup,
+          .openads-floating,
+          .openads-top-banner,
+          .openads-banner {
+            z-index: 1 !important;
+          }
+          @media (max-width: 768px) {
+            .openads-popup,
+            .openads-floating,
+            .openads-top-banner,
+            .openads-banner {
+              display: none !important;
+              pointer-events: none !important;
+            }
+          }
+        `}</style>
         </ErrorBoundary>
       </body>
     </html>

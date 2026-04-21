@@ -1364,14 +1364,4 @@ button.rlt-claim-btn:disabled,
   color: rgba(255,255,255,0.45) !important;
   box-shadow: none !important;
 }
-/* OpenAds: keep body snippet from blocking miniapp/mobile UI. */
-@media (max-width: 768px) {
-  .openads-popup,
-  .openads-floating,
-  .openads-top-banner,
-  .openads-banner {
-    display: none !important;
-    pointer-events: none !important;
-  }
-}
 
