@@ -92,8 +92,8 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
     checkFarcasterSDK();
   }, []);
 
-  // Use FC SDK only when wagmi signer is not available
-  const shouldUseFarcasterTx = useFarcasterSDK && !hasWagmiSigner;
+  // Use FC SDK when available - in native Farcaster app, wagmi/Privy can't open popups
+  const shouldUseFarcasterTx = useFarcasterSDK;
 
   const claimInboxAsTESTVBMS = useMutation(api.vbmsClaim.claimInboxAsTESTVBMS);
   const convertTESTVBMS = useAction(api.vbmsClaim.convertTESTVBMStoVBMS);
