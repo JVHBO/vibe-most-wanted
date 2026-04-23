@@ -1259,41 +1259,57 @@ export default function RafflePage() {
           {raffleResult && isRaffleActive && (
             <div className="border-2 border-[#FFD700] bg-[#1a1a1a] shadow-[4px_4px_0px_#FFD700] overflow-hidden">
               <div className="bg-[#FFD700] px-3 py-2 text-center">
-                <span className="text-black font-black text-xs uppercase tracking-widest">🏆 Winner</span>
+                <span className="text-black font-black text-xs uppercase tracking-widest">
+                  🏆 {(raffleResult as any).winners?.length > 1 ? `Winners (${(raffleResult as any).winners.length})` : 'Winner'}
+                </span>
               </div>
-              <div className="px-3 py-3 space-y-2">
-                {/* Name + wallet */}
-                <div className="text-center">
-                  <p className="text-[#FFD700] font-black text-lg leading-tight">
-                    {(raffleResult as any).username ? `@${(raffleResult as any).username}` : `${(raffleResult as any).winner.slice(0,6)}…${(raffleResult as any).winner.slice(-4)}`}
-                  </p>
-                  <p className="text-white/30 font-mono text-[9px] mt-0.5">{(raffleResult as any).winner}</p>
-                </div>
-                {/* Ticket + method */}
-                <div className="flex items-center justify-center gap-3 pt-1">
-                  <div className="text-center">
-                    <p className="text-white font-black text-sm">#{(raffleResult as any).winnerTicket}</p>
-                    <p className="text-white/40 text-[8px] uppercase">ticket</p>
-                  </div>
-                  <div className="w-px h-8 bg-white/10" />
-                  <div className="text-center">
-                    <p className="text-white font-black text-sm">
-                      {entries.find((e: any) => e.address === (raffleResult as any).winner)?.tickets ?? (raffleResult as any).totalEntries}
-                    </p>
-                    <p className="text-white/40 text-[8px] uppercase">tickets</p>
-                  </div>
-                  {(raffleResult as any).winnerChain && (
-                    <>
+              <div className="px-3 py-3 space-y-3">
+                {((raffleResult as any).winners?.length > 1
+                  ? (raffleResult as any).winners.map((addr: string, i: number) => ({
+                      addr,
+                      username: (raffleResult as any).winnerUsernames?.[i],
+                      ticket: (raffleResult as any).winnerTickets?.[i],
+                      chain: (raffleResult as any).winnerChains?.[i],
+                    }))
+                  : [{
+                      addr: (raffleResult as any).winner,
+                      username: (raffleResult as any).username,
+                      ticket: (raffleResult as any).winnerTicket,
+                      chain: (raffleResult as any).winnerChain,
+                    }]
+                ).map((w: any, i: number) => (
+                  <div key={i} className={i > 0 ? "border-t border-white/10 pt-3" : ""}>
+                    <div className="text-center">
+                      <p className="text-[#FFD700] font-black text-lg leading-tight">
+                        {w.username && !w.username.startsWith('user_') ? `@${w.username}` : `${w.addr.slice(0,6)}…${w.addr.slice(-4)}`}
+                      </p>
+                      <p className="text-white/30 font-mono text-[9px] mt-0.5">{w.addr}</p>
+                    </div>
+                    <div className="flex items-center justify-center gap-3 pt-1">
+                      <div className="text-center">
+                        <p className="text-white font-black text-sm">#{w.ticket}</p>
+                        <p className="text-white/40 text-[8px] uppercase">ticket</p>
+                      </div>
                       <div className="w-px h-8 bg-white/10" />
                       <div className="text-center">
-                        <span className={`text-[9px] font-black px-1.5 py-0.5 border-2 border-black ${(raffleResult as any).winnerChain === "base" ? "bg-[#0052FF] text-white" : "bg-[#12AAFF] text-black"}`}>
-                          {((raffleResult as any).winnerChain as string).toUpperCase()}
-                        </span>
-                        <p className="text-white/40 text-[8px] uppercase mt-0.5">{(raffleResult as any).winnerToken}</p>
+                        <p className="text-white font-black text-sm">
+                          {entries.filter((e: any) => e.address === w.addr).reduce((s: number, e: any) => s + (e.tickets ?? 1), 0) || '—'}
+                        </p>
+                        <p className="text-white/40 text-[8px] uppercase">tickets</p>
                       </div>
-                    </>
-                  )}
-                </div>
+                      {w.chain && (
+                        <>
+                          <div className="w-px h-8 bg-white/10" />
+                          <div className="text-center">
+                            <span className={`text-[9px] font-black px-1.5 py-0.5 border-2 border-black ${w.chain === "base" ? "bg-[#0052FF] text-white" : "bg-[#12AAFF] text-black"}`}>
+                              {(w.chain as string).toUpperCase()}
+                            </span>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                ))}
               </div>
 
               {/* VRF On-Chain Proof */}
