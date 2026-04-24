@@ -9,20 +9,22 @@ type Props = {
   searchParams: Promise<{ amount?: string; x?: string; type?: string; user?: string }>;
 };
 
-async function fetchPfp(username: string): Promise<string | undefined> {
-  if (!username) return undefined;
+async function fetchFarcasterUser(userParam: string): Promise<{ pfp?: string; username?: string }> {
+  if (!userParam) return {};
   try {
     const key = process.env.NEYNAR_API_KEY || process.env.NEXT_PUBLIC_NEYNAR_API_KEY;
-    if (!key) return undefined;
-    const res = await fetch(`https://api.neynar.com/v2/farcaster/user/by_username?username=${encodeURIComponent(username)}`, {
-      headers: { 'x-api-key': key },
-      cache: 'no-store',
-    });
-    if (!res.ok) return undefined;
+    if (!key) return {};
+    const isAddress = /^0x[0-9a-fA-F]{10,}/.test(userParam);
+    const url = isAddress
+      ? `https://api.neynar.com/v2/farcaster/user/by_verification?address=${userParam}`
+      : `https://api.neynar.com/v2/farcaster/user/by_username?username=${encodeURIComponent(userParam)}`;
+    const res = await fetch(url, { headers: { 'x-api-key': key }, cache: 'no-store' });
+    if (!res.ok) return {};
     const data = await res.json();
-    return data.user?.pfp_url ?? undefined;
+    const u = isAddress ? data.users?.[0] : data.user;
+    return { pfp: u?.pfp_url ?? undefined, username: u?.username ?? undefined };
   } catch {
-    return undefined;
+    return {};
   }
 }
 
@@ -123,10 +125,11 @@ export default async function SlotReplayPage({ params, searchParams }: Props) {
 
   if (!sid) redirect('/slot');
 
-  const [spins, pfp] = await Promise.all([
+  const [spins, fcUser] = await Promise.all([
     fetchSessionSpins(sid),
-    fetchPfp(user),
+    fetchFarcasterUser(user),
   ]);
+  const resolvedUsername = fcUser.username ?? (user.startsWith('0x') ? undefined : user) ?? user;
   const totalWin = spins.length > 0
     ? spins.reduce((acc: number, s: { winAmount: number }) => acc + s.winAmount, 0)
     : amount;
@@ -135,11 +138,11 @@ export default async function SlotReplayPage({ params, searchParams }: Props) {
     <SlotReplay
       spins={spins}
       totalWin={totalWin}
-      username={user}
+      username={resolvedUsername}
       winType={type}
       amount={amount}
       multX={multX}
-      pfp={pfp}
+      pfp={fcUser.pfp}
       sid={sid}
     />
   );
