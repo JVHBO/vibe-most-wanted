@@ -466,7 +466,14 @@ export default function SlotPage() {
       audio.src = "";
       slotBgmRef.current = null;
     };
-  }, [slotMusicMode, slotPlaylist.join(","), slotMusicEnabled, slotBgmBaseVolume]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [slotMusicMode, slotMusicEnabled, slotBgmBaseVolume]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Atualiza playlist no MusicContext sem reiniciar a track atual
+  useEffect(() => {
+    if (slotMusicMode === "playlist") {
+      setGlobalPlaylist(slotPlaylist);
+    }
+  }, [slotPlaylist]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Sync mute no modo default
   useEffect(() => {

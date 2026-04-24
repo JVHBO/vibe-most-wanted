@@ -383,7 +383,7 @@ export function VibeFidSection({ fid, isOwnProfile, address, hasVibeBadge, onCar
           <div className="text-center py-3">
             <p className="text-vintage-ice/50 text-xs mb-2">FID #{fid}</p>
             <button
-              onClick={handleCheckNeynarScore}
+              onClick={() => handleCheckNeynarScore(false)}
               className="px-4 py-2 bg-vintage-black border border-vintage-gold/40 text-vintage-gold font-bold rounded text-xs hover:bg-vintage-gold/10 transition-colors"
             >
               Ver Score
@@ -515,7 +515,7 @@ export function VibeFidSection({ fid, isOwnProfile, address, hasVibeBadge, onCar
             {/* Action buttons */}
             <div className="flex gap-1.5 mt-auto flex-wrap">
               <button
-                onClick={handleCheckNeynarScore}
+                onClick={() => handleCheckNeynarScore(false)}
                 disabled={loading}
                 className="flex-1 px-2 py-1.5 bg-vintage-black border border-vintage-gold/40 text-vintage-gold font-bold rounded text-xs hover:bg-vintage-gold/10 transition-colors disabled:opacity-50"
               >
