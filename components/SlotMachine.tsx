@@ -2701,7 +2701,35 @@ export default function SlotMachine({
 
           {/* BALANCE BAR — abaixo do grid */}
           <div className="shrink-0 flex items-center justify-between px-4 py-1 border-b-2 border-[#c87941]" style={{ background: dark }}>
-            <span className="text-[8px] font-bold uppercase text-gray-500">{t.balance}</span>
+            <div className="flex items-center gap-2">
+              <span className="text-[8px] font-bold uppercase text-gray-500">{t.balance}</span>
+              {/* Daily boost badge */}
+              {(() => {
+                const spinsToday = statsQ?.totalSpins ?? 0;
+                if (spinsToday < 3) return (
+                  <span className="text-[8px] font-black px-1.5 py-0.5 rounded" style={{ background: 'rgba(250,204,21,0.15)', border: '1px solid #facc15', color: '#facc15' }}>
+                    🔥 BOOST 75%
+                  </span>
+                );
+                if (spinsToday < 6) return (
+                  <span className="text-[8px] font-black px-1.5 py-0.5 rounded" style={{ background: 'rgba(251,146,60,0.15)', border: '1px solid #fb923c', color: '#fb923c' }}>
+                    🔥 BOOST 55%
+                  </span>
+                );
+                if (spinsToday < 10) return (
+                  <span className="text-[8px] font-black px-1.5 py-0.5 rounded" style={{ background: 'rgba(74,222,128,0.1)', border: '1px solid #4ade80', color: '#4ade80' }}>
+                    ✨ BOOST 40%
+                  </span>
+                );
+                return null;
+              })()}
+              {/* Free spins badge */}
+              {freeLeft > 0 && (
+                <span className="text-[8px] font-black px-1.5 py-0.5 rounded" style={{ background: 'rgba(96,165,250,0.15)', border: '1px solid #60a5fa', color: '#60a5fa' }}>
+                  🎰 {freeLeft} FREE
+                </span>
+              )}
+            </div>
             <span className="text-base font-black text-green-400">{coins.toLocaleString()} {t.coins}</span>
           </div>
 
