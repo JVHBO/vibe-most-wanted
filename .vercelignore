@@ -2,7 +2,6 @@
 /contracts/
 
 # Documentation — not needed for deployment
-docs/
 internal-docs/
 backups/
 prints/

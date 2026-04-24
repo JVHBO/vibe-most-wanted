@@ -689,10 +689,10 @@ export function getSlotLabel(name: string): string {
   return SLOT_CARD_LABELS[name] ?? name;
 }
 
-export function getSlotCardRarity(name: string): SlotRarity | null {
+export function getSlotCardRarity(name: string): SlotRarity {
   if (name === SLOT_BONUS_WILDCARD) return "Special";
   const found = SLOT_CARD_POOL.find((card) => card.baccarat === name);
-  return found?.rarity ?? null;
+  return found?.rarity ?? 'Common';
 }
 
 export function pickSlotCard(bonusWeightMultiplier = 1): SlotCardDefinition {
@@ -733,6 +733,13 @@ export function createSlotCard(input: SlotCard): SlotCard {
 
 export function getSlotCardSuit(name: string): SlotSuit | undefined {
   return SLOT_CARD_SUIT_RANK[name]?.suit;
+}
+
+/** Convert stored string format ("baccarat" or "baccarat:f") → SlotCard */
+export function slotCardFromStoredString(s: string): SlotCard {
+  const hasFoil = s.endsWith(':f');
+  const baccarat = s.replace(':f', '').trim() || 'claude';
+  return createSlotCard({ baccarat, rarity: getSlotCardRarity(baccarat), hasFoil });
 }
 
 export function getSlotCardRank(name: string): SlotRank | undefined {

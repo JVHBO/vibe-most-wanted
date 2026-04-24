@@ -9,6 +9,23 @@ type Props = {
   searchParams: Promise<{ amount?: string; x?: string; type?: string; user?: string }>;
 };
 
+async function fetchPfp(username: string): Promise<string | undefined> {
+  if (!username) return undefined;
+  try {
+    const key = process.env.NEYNAR_API_KEY || process.env.NEXT_PUBLIC_NEYNAR_API_KEY;
+    if (!key) return undefined;
+    const res = await fetch(`https://api.neynar.com/v2/farcaster/user/by_username?username=${encodeURIComponent(username)}`, {
+      headers: { 'x-api-key': key },
+      cache: 'no-store',
+    });
+    if (!res.ok) return undefined;
+    const data = await res.json();
+    return data.user?.pfp_url ?? undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 async function fetchSessionSpins(sessionId: string) {
   try {
     const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL_PROD || process.env.NEXT_PUBLIC_CONVEX_URL;
@@ -50,7 +67,7 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
 
   const ogParams = new URLSearchParams({ amount, x, type, ...(user ? { user } : {}), sid });
   const imageUrl = `${BASE_URL}/api/og/slot-win?${ogParams}`;
-  const replayUrl = `${BASE_URL}/slot/replay/${sid}?${ogParams}`;
+  const replayUrl = `${BASE_URL}/slot?replay=${sid}${user ? `&user=${encodeURIComponent(user)}` : ''}`;
 
   return {
     title,
@@ -106,7 +123,10 @@ export default async function SlotReplayPage({ params, searchParams }: Props) {
 
   if (!sid) redirect('/slot');
 
-  const spins = await fetchSessionSpins(sid);
+  const [spins, pfp] = await Promise.all([
+    fetchSessionSpins(sid),
+    fetchPfp(user),
+  ]);
   const totalWin = spins.length > 0
     ? spins.reduce((acc: number, s: { winAmount: number }) => acc + s.winAmount, 0)
     : amount;
@@ -119,6 +139,8 @@ export default async function SlotReplayPage({ params, searchParams }: Props) {
       winType={type}
       amount={amount}
       multX={multX}
+      pfp={pfp}
+      sid={sid}
     />
   );
 }

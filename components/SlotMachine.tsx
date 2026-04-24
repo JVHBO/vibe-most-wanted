@@ -26,6 +26,7 @@ import {
   getSlotPatternForIndices,
   isDeveloperSlotAddress,
   pickSlotCard,
+  slotCardFromStoredString,
 } from "@/lib/slot/config";
 import type {
   SlotBonusState,
@@ -397,6 +398,14 @@ const PAYOUTS: [string, string, string][] = [
   ["Rare",        "20",  "#3b82f6"],["Common",    "10",   "#6b7280"],
 ];
 
+export type ReplaySpinData = {
+  spinId: string;
+  finalGrid: string[]; // "baccarat" or "baccarat:f"
+  winAmount: number;
+  foilCount: number;
+  triggeredBonus: boolean;
+};
+
 type SlotMachineProps = {
   onWalletOpen?: () => void;
   duckBgm?: (reason?: "combo" | "bonus") => void;
@@ -404,6 +413,8 @@ type SlotMachineProps = {
   narrationMuted?: boolean;
   onHelpOpen?: (openFn: () => void) => void;
   isFrameMode?: boolean;
+  replaySpins?: ReplaySpinData[];
+  replayUsername?: string;
 };
 
 type SlotGridCardProps = {
@@ -480,7 +491,7 @@ const SlotGridCard = memo(function SlotGridCard({
               src={img}
               alt=""
               aria-label={label}
-              className="w-full h-full object-contain object-center"
+              className="w-full h-full object-cover object-center"
               decoding="async"
               draggable={false}
             />
@@ -553,7 +564,7 @@ const SlotGridCard = memo(function SlotGridCard({
             src={img}
             alt=""
             aria-label={label}
-            className="w-full h-full object-contain object-center"
+            className="w-full h-full object-cover object-center"
             decoding="async"
             draggable={false}
           />
@@ -860,6 +871,8 @@ export default function SlotMachine({
   narrationMuted = false,
   onHelpOpen,
   isFrameMode = false,
+  replaySpins,
+  replayUsername,
 }: SlotMachineProps) {
   const { isConnected, address } = useAccount();
   const { userProfile, refreshProfile } = useProfile();
@@ -989,8 +1002,16 @@ export default function SlotMachine({
   const [mounted, setMounted] = useState(false);
   useEffect(() => { setMounted(true); }, []);
 
+  // Replay mode state
+  const isReplayMode = Boolean(replaySpins && replaySpins.length > 0);
+  const [replayIndex, setReplayIndex] = useState(0);
+  const [replayDone, setReplayDone] = useState(false);
+  const replayIndexRef = useRef(0);
+
   // Access control (dev-only): allow either connected wallet or linked primary profile wallet.
+  // In replay mode, access is always granted — anyone can watch a shared replay.
   const isAllowedAddress =
+    isReplayMode ||
     isDeveloperSlotAddress(address) ||
     isDeveloperSlotAddress(userProfile?.address);
   const isAllowed = isAllowedAddress;
@@ -1292,6 +1313,94 @@ export default function SlotMachine({
 
     return msg || "Error";
   }
+
+  // ─── REPLAY MODE ────────────────────────────────────────────────────────────
+  // Runs a single stored spin through the SAME animation pipeline as a real spin.
+  // No Convex mutation — uses pre-recorded finalGrid + winAmount.
+  const replaySpin = async (spinData: ReplaySpinData) => {
+    if (isSpinning) return;
+
+    const sequenceId = spinSequenceRef.current + 1;
+    spinSequenceRef.current = sequenceId;
+
+    const finalGrid: SlotCard[] = spinData.finalGrid.map(slotCardFromStoredString);
+
+    // Reset state — identical to real spin setup
+    setIsSpinning(true);
+    setPhase("SPIN");
+    setWinCells(new Set());
+    setNewCells(new Set());
+    setActivePaylines([]);
+    setWinAmt(null);
+    setIsJackpot(false);
+    setStopped(new Set());
+    setShowBonusAnimation(false);
+    setComboDisplay(null);
+    setDeceleratingCols(new Set());
+    setFoilSuspenseCols(new Set());
+    setEpicFoilCards(null);
+    setStripStopTargets(createEmptyStripStopTargets());
+    stripStopMetaRef.current = {};
+    lockedCellsRef.current = new Set();
+    setLockedCells(new Set());
+    setEpicFoilPhase(null);
+    foilsFoundRef.current = 0;
+
+    const MIN_SPIN_MS = turboRef.current ? 200 : 1600;
+
+    await new Promise<void>((resolve) => {
+      const stopSequential = (col: number) => {
+        if (col >= COLS) {
+          const gifInGrid = finalGrid.findIndex(c => c.baccarat === "dragukka");
+          if (gifInGrid >= 0) {
+            lockedGifRef.current = gifInGrid;
+            setLockedGifIdx(gifInGrid);
+          }
+          (async () => {
+            const details = await playComboResolution([], finalGrid, spinData.winAmount, sequenceId);
+            if (spinSequenceRef.current !== sequenceId) { resolve(); return; }
+            finishSpinVisuals(finalGrid, spinData.winAmount, false, details, false);
+            resolve();
+          })().catch(() => resolve());
+          return;
+        }
+        const colCards = Array.from({ length: ROWS }, (_, row) =>
+          finalGrid[row * COLS + col] ?? createSlotCard({ baccarat: 'claude', rarity: 'Common' })
+        );
+        slowAndStopCol(col, colCards, () => {
+          const colFoils = colCards.filter(c => c.hasFoil).length;
+          foilsFoundRef.current += colFoils;
+          if (foilsFoundRef.current >= 2 && col + 1 < COLS) {
+            setFoilSuspenseCols(prev => new Set([...prev, col + 1]));
+          }
+          setTimeout(() => stopSequential(col + 1), turboRef.current ? 10 : 80);
+        });
+      };
+      setTimeout(() => stopSequential(0), MIN_SPIN_MS);
+    });
+  };
+
+  // Auto-play replay spins sequentially
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (!isReplayMode || !mounted) return;
+    if (replayDone) return;
+    if (isSpinning) return;
+    const idx = replayIndexRef.current;
+    if (!replaySpins || idx >= replaySpins.length) {
+      setReplayDone(true);
+      return;
+    }
+    const spinData = replaySpins[idx];
+    if (!spinData) return;
+    replayIndexRef.current = idx + 1;
+    setReplayIndex(idx + 1);
+    const delay = idx === 0 ? 600 : 1200;
+    const t = setTimeout(() => { replaySpin(spinData); }, delay);
+    return () => clearTimeout(t);
+  // trigger after each spin completes (isSpinning goes false)
+  }, [isReplayMode, mounted, isSpinning, replayDone]); // eslint-disable-line react-hooks/exhaustive-deps
+  // ─── END REPLAY MODE ────────────────────────────────────────────────────────
 
   const spin = async (isFree: boolean, forceBonusMode = false) => {
     if (!effectiveAddress) { toast.error(t.connectWallet); return; }
@@ -2601,8 +2710,36 @@ export default function SlotMachine({
             className="shrink-0 px-3 pt-2 pb-2"
             style={{ background: wood, paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}
           >
+            {/* REPLAY MODE — replace controls with badge + progress */}
+            {isReplayMode && (
+              <div className="flex flex-col items-center gap-2 py-1">
+                {replayDone ? (
+                  <div className="flex gap-2 w-full">
+                    <a
+                      href="/slot"
+                      className="flex-1 h-12 rounded-lg border-2 border-black font-black text-sm uppercase tracking-widest flex items-center justify-center"
+                      style={{ background: "linear-gradient(180deg,#4ade80,#15803d)", color: "#020617", boxShadow: "0 4px 0 #000" }}
+                    >
+                      🎰 Jogar
+                    </a>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-3">
+                    <div
+                      className="px-3 py-1 rounded font-black text-xs tracking-widest uppercase"
+                      style={{ background: "rgba(168,85,247,0.2)", border: "1px solid #a855f7", color: "#a855f7" }}
+                    >
+                      🎬 REPLAY {replayIndex}/{replaySpins?.length ?? 0}
+                    </div>
+                    {replayUsername && (
+                      <span className="text-xs text-gray-400 font-bold">@{replayUsername}</span>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
             {/* Row 1: WALLET | SPIN | BUY BONUS */}
-            <div className="flex items-center gap-2 mb-2">
+            {!isReplayMode && <div className="flex items-center gap-2 mb-2">
 
               {/* WALLET (DEP/WIT) */}
               <button
@@ -2675,10 +2812,10 @@ export default function SlotMachine({
                 <span className="text-[9px]">{t.buyBonus}</span>
                 <span className="text-[8px] font-bold" style={{ color: "#c4b5fd" }}>{bonusCost}c · 20×</span>
               </button>
-            </div>
+            </div>}
 
             {/* Row 2: BET SELECTOR + LOG */}
-            <div className="flex items-center gap-2">
+            {!isReplayMode && <div className="flex items-center gap-2">
               <div
                 className="flex-1 flex items-center gap-3 px-3 py-1.5 border-2 border-black rounded"
                 style={{ background: "linear-gradient(180deg,#1e3a5f,#172554)" }}
@@ -2706,7 +2843,7 @@ export default function SlotMachine({
                 style={{ background: "linear-gradient(180deg,#1e3a5f,#172554)", color: "#60a5fa", borderColor: "#3b82f6" }}
                 title={t.spinLog}
               >📋</button>
-            </div>
+            </div>}
 
             {/* Spin Log Modal */}
             {showSpinLog && (

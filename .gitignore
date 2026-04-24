@@ -27,6 +27,13 @@
 # Local private folders
 prints/
 
+# Internal tooling — not for public repo
+progress.md
+skills-lock.json
+.openclaude/
+.agents/skills/
+convex/_generated/ai/
+
 # Dev-only pages (localhost only, never deploy)
 app/device-test/
 

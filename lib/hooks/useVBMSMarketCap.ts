@@ -5,10 +5,6 @@
 
 import { useState, useEffect } from 'react';
 
-const WIELD_API_KEY = process.env.NEXT_PUBLIC_WIELD_API_KEY || '';
-const STATS_API = 'https://build.wield.xyz/vibe/boosterbox/collection/0xf14c1dc8ce5fe65413379f76c43fa1460c31e728/stats';
-const PRICE_API = 'https://build.wield.xyz/vibe/boosterbox/price-chart/0xf14c1dc8ce5fe65413379f76c43fa1460c31e728?timeframe=24h&chainId=8453&includeStats=true';
-const ETH_USD_API = 'https://build.wield.xyz/utils/eth-to-usd?eth=1';
 const CACHE_KEY = 'vbms_market_cap';
 
 export function useVBMSMarketCap() {
@@ -29,25 +25,9 @@ export function useVBMSMarketCap() {
 
     async function fetchMarketCap() {
       try {
-        const headers: Record<string, string> = {
-          'Origin': 'https://vibechain.com',
-          'Referer': 'https://vibechain.com/',
-        };
-        if (WIELD_API_KEY) {
-          headers['API-KEY'] = WIELD_API_KEY;
-        }
-
-        const [statsRes, priceRes, ethRes] = await Promise.all([
-          fetch(STATS_API, { headers }),
-          fetch(PRICE_API, { headers }),
-          fetch(ETH_USD_API),
-        ]);
-
-        if (!statsRes.ok || !priceRes.ok || !ethRes.ok) throw new Error('API error');
-
-        const statsData = await statsRes.json();
-        const priceData = await priceRes.json();
-        const ethData = await ethRes.json();
+        const res = await fetch('/api/vibe/marketcap');
+        if (!res.ok) throw new Error('API error');
+        const { statsData, priceData, ethData } = await res.json();
 
         if (statsData.success === false || priceData.success === false) throw new Error('Rate limited');
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useQuery, useMutation, useConvex } from "convex/react";
 import { api } from "@/convex/_generated/api";
@@ -231,6 +232,9 @@ const translations = {
 export default function SlotPage() {
   const { lang, setLang } = useLanguage();
   const { isConnected, address, status } = useAccount();
+  const searchParams = useSearchParams();
+  const replaySid = searchParams.get("replay");
+  const replayUser = searchParams.get("user") ?? undefined;
   const chainId = useChainId();
   const isReconnecting = useReconnectTimeout(status);
   const { userProfile } = useProfile();
@@ -242,6 +246,18 @@ export default function SlotPage() {
   const { approve } = useFarcasterApproveVBMS();
   const { transfer } = useFarcasterTransferVBMS();
   const { claimVBMS } = useClaimVBMS();
+
+  const replaySpinsRaw = useQuery(
+    api.slot.getSpinsBySession,
+    replaySid ? { sessionId: replaySid } : "skip"
+  );
+  const replaySpins = replaySpinsRaw?.map((s: { spinId: string; finalGrid: string[]; winAmount: number; foilCount: number; triggeredBonus: boolean }) => ({
+    spinId: String(s.spinId),
+    finalGrid: s.finalGrid,
+    winAmount: s.winAmount,
+    foilCount: s.foilCount,
+    triggeredBonus: s.triggeredBonus,
+  }));
 
   // SlotCoinShop state (must be declared before hooks that use them)
   const [buyCoinsAmount, setBuyCoinsAmount] = useState("1000");
@@ -1027,6 +1043,8 @@ export default function SlotPage() {
             narrationMuted={narrationMuted}
             onHelpOpen={(fn) => { slotHelpOpenRef.current = fn; }}
             isFrameMode={isInFrame}
+            replaySpins={replaySpins}
+            replayUsername={replayUser}
           />
         </div>
       </div>
