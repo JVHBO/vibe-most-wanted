@@ -5,7 +5,22 @@
  * Para adicionar uma nova coleção, basta adicionar uma entrada no objeto COLLECTIONS.
  */
 
-export type CollectionId = 'vibe' | 'vibefid' | 'nothing' | 'custom';
+export type CollectionId =
+  | 'vibe'
+  | 'vibefid'
+  | 'nothing'
+  | 'custom'
+  | 'gmvbrs'
+  | 'viberotbangers'
+  | 'cumioh'
+  | 'meowverse'
+  | 'viberuto'
+  | 'poorlydrawnpepes'
+  | 'teampothead'
+  | 'tarot'
+  | 'baseballcabal'
+  | 'vibefx'
+  | 'historyofcomputer';
 
 export interface CollectionConfig {
   id: CollectionId;
@@ -128,6 +143,66 @@ export const COLLECTIONS: Record<CollectionId, CollectionConfig> = {
     buttonText: 'GET NOTHING CARDS',
     powerCalculation: DEFAULT_POWER_CONFIG,
   },
+  gmvbrs: {
+    id: 'gmvbrs',
+    name: 'gmvbrs',
+    displayName: 'GMVBRS',
+    description: 'GMVBRS Collection',
+    contractAddress: '0x8b1A1B7c32872a3c98481C4544A47629c02C70cF',
+    chain: 'base-mainnet',
+    enabled: true,
+    marketplaceUrl: '/gmvbrs',
+    buttonText: 'GET GMVBRS CARDS',
+    powerCalculation: DEFAULT_POWER_CONFIG,
+  },
+  viberotbangers: {
+    id: 'viberotbangers',
+    name: 'viberotbangers',
+    displayName: 'VIBEROTBANGERS',
+    description: 'VIBEROTBANGERS Collection',
+    contractAddress: '0x5FbDB2315678afecb367f032d93F642f64180aa3',
+    chain: 'base-mainnet',
+    enabled: true,
+    marketplaceUrl: '/viberotbangers',
+    buttonText: 'GET VIBEROTBANGERS CARDS',
+    powerCalculation: DEFAULT_POWER_CONFIG,
+  },
+  cumioh: {
+    id: 'cumioh',
+    name: 'cumioh',
+    displayName: 'CUMIOH',
+    description: 'CUMIOH Collection',
+    contractAddress: '0xfeabae8bdb41b2ae507972180df02e70148b38e1',
+    chain: 'base-mainnet',
+    enabled: true,
+    marketplaceUrl: '/cumioh',
+    buttonText: 'GET CUMIOH CARDS',
+    powerCalculation: DEFAULT_POWER_CONFIG,
+  },
+  meowverse: {
+    id: 'meowverse',
+    name: 'meowverse',
+    displayName: 'MEOWVERSE',
+    description: 'MEOWVERSE Collection',
+    contractAddress: '0xA5a8E2aF7c68b42bD6131bB5a4eA33e961cA3e3E',
+    chain: 'base-mainnet',
+    enabled: true,
+    marketplaceUrl: '/meowverse',
+    buttonText: 'GET MEOWVERSE CARDS',
+    powerCalculation: DEFAULT_POWER_CONFIG,
+  },
+  viberuto: {
+    id: 'viberuto',
+    name: 'viberuto',
+    displayName: 'VIBERUTO',
+    description: 'VIBERUTO Collection',
+    contractAddress: '0xBc43e5198F73D2B97d36B96b3e94884493AbA8d6',
+    chain: 'base-mainnet',
+    enabled: true,
+    marketplaceUrl: '/viberuto',
+    buttonText: 'GET VIBERUTO CARDS',
+    powerCalculation: DEFAULT_POWER_CONFIG,
+  },
 
   custom: {
     id: 'custom',
@@ -138,6 +213,78 @@ export const COLLECTIONS: Record<CollectionId, CollectionConfig> = {
     chain: process.env.NEXT_PUBLIC_CUSTOM_CHAIN || 'base-mainnet',
     ownerAddress: process.env.NEXT_PUBLIC_CUSTOM_OWNER || '',
     enabled: false,
+    powerCalculation: DEFAULT_POWER_CONFIG,
+  },
+  poorlydrawnpepes: {
+    id: 'poorlydrawnpepes',
+    name: 'poorlydrawnpepes',
+    displayName: 'Poorly Drawn Pepes',
+    description: 'Poorly Drawn Pepes Collection',
+    contractAddress: '0x0000000000000000000000000000000000000000', // Placeholder
+    chain: 'base-mainnet',
+    enabled: false,
+    marketplaceUrl: '/poorlydrawnpepes',
+    buttonText: 'GET POORLY DRAWN PEPES CARDS',
+    powerCalculation: DEFAULT_POWER_CONFIG,
+  },
+  teampothead: {
+    id: 'teampothead',
+    name: 'teampothead',
+    displayName: 'Team Pothead',
+    description: 'Team Pothead Collection',
+    contractAddress: '0x0000000000000000000000000000000000000000', // Placeholder
+    chain: 'base-mainnet',
+    enabled: false,
+    marketplaceUrl: '/teampothead',
+    buttonText: 'GET TEAM POTHEAD CARDS',
+    powerCalculation: DEFAULT_POWER_CONFIG,
+  },
+  tarot: {
+    id: 'tarot',
+    name: 'tarot',
+    displayName: 'Tarot',
+    description: 'Tarot Collection',
+    contractAddress: '0x0000000000000000000000000000000000000000', // Placeholder
+    chain: 'base-mainnet',
+    enabled: false,
+    marketplaceUrl: '/tarot',
+    buttonText: 'GET TAROT CARDS',
+    powerCalculation: DEFAULT_POWER_CONFIG,
+  },
+  baseballcabal: {
+    id: 'baseballcabal',
+    name: 'baseballcabal',
+    displayName: 'Baseball Cabal',
+    description: 'Baseball Cabal Collection',
+    contractAddress: '0x0000000000000000000000000000000000000000', // Placeholder
+    chain: 'base-mainnet',
+    enabled: false,
+    marketplaceUrl: '/baseballcabal',
+    buttonText: 'GET BASEBALL CABAL CARDS',
+    powerCalculation: DEFAULT_POWER_CONFIG,
+  },
+  vibefx: {
+    id: 'vibefx',
+    name: 'vibefx',
+    displayName: 'VibeFX',
+    description: 'VibeFX Collection',
+    contractAddress: '0x0000000000000000000000000000000000000000', // Placeholder
+    chain: 'base-mainnet',
+    enabled: false,
+    marketplaceUrl: '/vibefx',
+    buttonText: 'GET VIBEFX CARDS',
+    powerCalculation: DEFAULT_POWER_CONFIG,
+  },
+  historyofcomputer: {
+    id: 'historyofcomputer',
+    name: 'historyofcomputer',
+    displayName: 'History of Computer',
+    description: 'History of Computer Collection',
+    contractAddress: '0x0000000000000000000000000000000000000000', // Placeholder
+    chain: 'base-mainnet',
+    enabled: false,
+    marketplaceUrl: '/historyofcomputer',
+    buttonText: 'GET HISTORY OF COMPUTER CARDS',
     powerCalculation: DEFAULT_POWER_CONFIG,
   },
 };

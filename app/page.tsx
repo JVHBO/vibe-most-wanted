@@ -23,6 +23,7 @@ import { api } from "@/convex/_generated/api";
 import { CreateProfileModal } from "@/components/CreateProfileModal";
 import { SlotPreview } from "@/components/SlotPreview";
 import { CpuArenaModal } from "@/components/CpuArenaModal";
+import { OpenAdsHome } from "@/components/OpenAdsHome";
 
 const SettingsModal = dynamic(() => import("@/components/SettingsModal").then(m => m.SettingsModal), { ssr: false });
 const ChangelogModal = dynamic(() => import("@/components/ChangelogModal").then(m => m.ChangelogModal), { ssr: false });
@@ -616,7 +617,7 @@ export default function HomePage() {
           </div>
 
           {/* RAFFLE */}
-          <Link href="/raffle" style={{ borderRadius: 10, overflow: 'hidden', background: 'linear-gradient(135deg, #FACC15, #B45309)', animation: allowHomeMotion ? 'fadeInUp 0.5s ease' : undefined, minHeight: 50, textDecoration: 'none', position: 'relative' }}>
+          <Link href="/raffle" style={{ borderRadius: 10, overflow: 'hidden', background: raffleTimeLeft ? 'linear-gradient(135deg, #FACC15, #B45309)' : 'linear-gradient(135deg, #4a3f1a, #2a1f0a)', animation: allowHomeMotion ? 'fadeInUp 0.5s ease' : undefined, minHeight: 50, textDecoration: 'none', position: 'relative', opacity: raffleTimeLeft ? 1 : 0.7 }}>
             {/* Background ticker - pure decoration */}
             <div style={{ position: 'absolute', right: 3, top: 0, bottom: 0, width: 140, overflow: 'hidden', opacity: 0.30, zIndex: 0 }}>
 
@@ -641,7 +642,7 @@ export default function HomePage() {
               </div>
               {/* Prize info */}
               <div style={{ flex: 1, minWidth: 0, padding: '0 8px', zIndex: 1 }}>
-                <span style={{ fontSize: 11, fontWeight: 800, color: '#000', textTransform: 'uppercase', letterSpacing: 1, lineHeight: 1.1, display: 'block' }}>{(raffleConfig as any)?.prizeDescription || 'Raffle'}</span>
+                <span style={{ fontSize: 11, fontWeight: 800, color: raffleTimeLeft ? '#000' : '#aaa', textTransform: 'uppercase', letterSpacing: 1, lineHeight: 1.1, display: 'block' }}>{(raffleConfig as any)?.prizeDescription || 'Raffle'}</span>
                 <div style={{ display: 'flex', gap: 6, marginTop: 3, flexWrap: 'wrap' }}>
                   {(raffleConfig as any)?.cardValueUSD && (
                     <span style={{ fontSize: 8, color: 'rgba(0,0,0,0.6)', fontWeight: 700, lineHeight: 1 }}>Card ~${(raffleConfig as any).cardValueUSD}</span>
@@ -670,6 +671,8 @@ export default function HomePage() {
           </>
         )}
       </div>
+
+      {!showWalletGate && <OpenAdsHome />}
 
       <MyCardsModal isOpen={showMyCardsModal} onClose={() => setShowMyCardsModal(false)} nfts={nfts} soundEnabled={soundEnabled} />
       {showCoinsInbox && inboxStatus && (

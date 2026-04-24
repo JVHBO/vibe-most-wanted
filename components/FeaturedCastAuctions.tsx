@@ -442,7 +442,7 @@ export function FeaturedCastAuctions({
               <div>
                 <span className="text-vintage-ice">{t('castAuctionGetBadge')}</span>
               </div>
-              <button onClick={() => openMarketplace('/fid', sdk, true)} className="text-vintage-gold hover:text-vintage-gold/80 font-bold cursor-pointer">{t('castAuctionMintBadge')}</button>
+              <span className="text-zinc-500 font-bold text-xs cursor-not-allowed">🔒 Mint Encerrado</span>
             </div>
           )}
 

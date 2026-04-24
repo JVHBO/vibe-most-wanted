@@ -1,6 +1,6 @@
 # Progress — Sessão Abr/2026
 
-> Atualizado: 2026-04-16
+> Atualizado: 2026-04-22
 
 ---
 
@@ -40,6 +40,26 @@
 - [x] **Combo boost server-side**: primeiros spins do dia têm maior chance de forçar combo
   - Spin 1-3: 60% | Spin 4-6: 40% | Spin 7-10: 25% | Spin 11-20: 15% | 21+: 8%
 - [x] `forceNearestRankCombo()` completa o rank mais próximo no grid quando boost ativa
+- [x] **Refactor de combos por shape**
+  - [x] Horizontais, verticais, diagonais e L-shapes (4 células)
+  - [x] Dragukka pode completar shape no bonus
+  - [x] 4 dragukkas = combo especial único, explode para não loopar
+- [x] Dragukka pode completar combo mesmo com 1 carta real (1+3 wild / 2+2 wild)
+- [ ] **UI visual dos shapes**
+  - [x] Mostrar shapes válidos no help/UI
+  - [x] Destacar shape ativo quando um combo acontece
+- [x] **Odds + boost por shape**
+  - [x] Calcular progressão de shape válido
+  - [x] Usar shape válido como base do boost
+- [ ] **I18n completo do slot**
+  - [x] Cobrir 10 línguas
+  - [~] Remover hardcodes PT/EN do `SlotMachine.tsx`
+  - [~] Restam hardcodes em help visual / labels de machine / textos de cast
+
+#### Status restante do progress
+- [ ] Landing page do share win (`/share/slot`)
+- [ ] Remover guards dev-only antes do launch
+- [ ] Verificar se slot usa `ProfileContext`/`PlayerCardsContext` igual à home
 
 ### Limpeza de código
 - [x] Remover `bonusMultiplier`, `nearMiss`, cascade multiplier (dead code)

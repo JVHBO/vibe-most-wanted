@@ -1699,24 +1699,22 @@ ${shareT.shareTextMintYours || 'Mint yours at'} @jvhbo`;
               </button>
             </div>
           ) : (
-            <button
-              onClick={handleGenerateCard}
-              disabled={loading || isCheckingOnChain}
-              className="px-10 py-4 bg-vintage-gold text-vintage-black font-bold text-xl rounded-xl transition-all hover:scale-105 hover:bg-vintage-burnt-gold disabled:opacity-50 shadow-[0_0_30px_rgba(255,215,0,0.3)]"
-            >
-              {loading ? t.generating : isCheckingOnChain ? 'Checking...' : effectiveFarcasterUser ? t.mintMyCard : t.connectFarcasterToMint}
-            </button>
-          )}
-
-          {/* Check score link - subtle */}
-          {effectiveFarcasterUser && (
-            <button
-              onClick={handleCheckNeynarScore}
-              disabled={loading}
-              className="text-vintage-gold/70 text-xs hover:text-vintage-gold transition-colors disabled:opacity-50"
-            >
-              {t.checkNeynarScore}
-            </button>
+            <div className="flex flex-col items-center gap-3">
+              <div className="px-10 py-4 bg-zinc-800 border border-zinc-600 text-zinc-400 font-bold text-xl rounded-xl text-center opacity-70 cursor-not-allowed select-none">
+                🔒 Mint Encerrado
+              </div>
+              <p className="text-vintage-gold/60 text-sm text-center max-w-xs">
+                O mint do VibeFID foi encerrado. Todos os 572 cards foram mintados.
+              </p>
+              <a
+                href="https://opensea.io/collection/vibefid"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-vintage-gold/70 text-xs hover:text-vintage-gold transition-colors underline"
+              >
+                Ver no OpenSea →
+              </a>
+            </div>
           )}
 
           {/* Error display */}

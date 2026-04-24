@@ -4,12 +4,19 @@ import {
   SLOT_BONUS_WILDCARD,
   SLOT_CARD_POOL,
   SLOT_COLS,
+  SLOT_PATTERNS,
   SLOT_ROWS,
+  SLOT_SPECIAL_DRAGUKKA_PAYOUT,
   SLOT_TOTAL_CELLS,
   createSlotCard,
+  getSlotPatternTooltip,
+  isAnySlotWildcard,
+  isDragukkaCard,
+  isNormalWildcardCard,
   pickSlotCard,
   type SlotCard,
   type SlotCardDefinition,
+  type SlotPattern,
   type SlotRank,
   SLOT_RANK_ORDER,
 } from "./config";
@@ -28,8 +35,8 @@ type CardCombo = {
   description: string;
 };
 
-// Combo system: 4 cards of the same rank anywhere in the grid = combo
-// Dragukka (joker) substitutes any rank. Min 2 real cards required.
+// Combo system: 4 cards of the same rank forming one of the defined SLOT_PATTERNS (H/V/D/L) = combo
+// Dragukka (joker) substitutes any rank, but payout combos always require 4 matched cards total.
 
 // In normal mode: dragukka doesn't appear (re-rolled in createRandomSlotCard)
 // In bonus mode: only dragukka acts as joker
@@ -304,165 +311,53 @@ const CARD_QUAD_NAMES: Record<string, string> = {
 };
 
 /** Create a CardCombo for a complete rank match (all 4 suits present) */
-function createRankCombo(rank: SlotRank): CardCombo {
+function createRankCombo(rank: SlotRank, cards: string[], pattern: SlotPattern): CardCombo {
   const info = RANK_COMBO_INFO[rank];
   return {
     id: `rank_${rank}`,
     name: info.nameComplete,
     emoji: info.emoji,
-    cards: [],
+    cards,
+    minCards: 4,
     bonus: { type: "power", value: RANK_COMBO_PAYOUT[rank], target: "self" },
-    description: info.cards,
+    description: `${info.cards} • ${getSlotPatternTooltip(pattern)}`,
   };
 }
 
-/** Detect quad combo: 4+ identical cards (same baccarat name) anywhere in grid — pays 3× rank payout */
-function detectQuadCombo(
-  grid: SlotCard[],
-  isBonusMode: boolean,
-  usedWildcardIndices: Set<number> = new Set(),
-): {
-  combo: CardCombo;
-  matchedIndices: number[];
-  wildcardIndices: number[];
-} | null {
-  const nameGroups = new Map<string, number[]>();
-  // bonusJokerIndices: dragukka in bonus mode — persistent, excluded once used this spin
-  const bonusJokerIndices: number[] = [];
-  // normalJokerIndices: neymar/clawdmoltopenbot in normal mode — removed after use
-  const normalJokerIndices: number[] = [];
-
-  // First pass: count special wildcards to detect if any have 4+ (quad special)
-  const specialCounts = new Map<string, number[]>();
-  for (let i = 0; i < grid.length; i++) {
-    const card = grid[i]!;
-    if (!isBonusMode && NORMAL_WILDCARDS.has(card.baccarat)) {
-      if (!specialCounts.has(card.baccarat)) specialCounts.set(card.baccarat, []);
-      specialCounts.get(card.baccarat)!.push(i);
-    }
-  }
-
-  for (let i = 0; i < grid.length; i++) {
-    const card = grid[i]!;
-    const isBonusJoker = card.baccarat === SLOT_BONUS_WILDCARD && isBonusMode && !usedWildcardIndices.has(i);
-    const isNormalJoker = !isBonusMode && NORMAL_WILDCARDS.has(card.baccarat);
-    if (isBonusJoker) {
-      bonusJokerIndices.push(i);
-    } else if (isNormalJoker) {
-      // If 4+ of this special exist → treat as regular card (can form special quad)
-      // Otherwise → treat as wildcard joker
-      const count = specialCounts.get(card.baccarat)?.length ?? 0;
-      if (count >= 4) {
-        if (!nameGroups.has(card.baccarat)) nameGroups.set(card.baccarat, []);
-        nameGroups.get(card.baccarat)!.push(i);
-      } else {
-        normalJokerIndices.push(i);
-      }
-    } else if (card.rank) {
-      if (!nameGroups.has(card.baccarat)) nameGroups.set(card.baccarat, []);
-      nameGroups.get(card.baccarat)!.push(i);
-    }
-  }
-
-  // Find card name with most duplicates — at least 2 real copies needed
-  let bestName = "";
-  let bestIndices: number[] = [];
-  let bestBonusNeeded = 0;
-  let bestNormalNeeded = 0;
-
-  for (const [name, indices] of nameGroups) {
-    const needed = Math.max(0, 4 - indices.length);
-    const bonusToUse = Math.min(needed, bonusJokerIndices.length);
-    const stillNeeded = needed - bonusToUse;
-    const normalToUse = Math.min(stillNeeded, normalJokerIndices.length);
-    const total = indices.length + bonusToUse + normalToUse;
-    // Wildcards fill at most 1 slot — requires 3 real copies minimum
-    if (total >= 4 && indices.length >= 3 && indices.length > bestIndices.length) {
-      bestName = name;
-      bestIndices = indices;
-      bestBonusNeeded = bonusToUse;
-      bestNormalNeeded = normalToUse;
-    }
-  }
-
-  if (!bestName) return null;
-
-  const card = grid[bestIndices[0]!]!;
-  const rank = card.rank;
-  const label = card.baccarat.split(" ").map(w => w[0]!.toUpperCase() + w.slice(1)).join(" ");
-
-  // Special cards (neymar, clawd) have no rank — use fixed ultra-rare payout
-  const SPECIAL_QUAD_NAMES: Record<string, string> = {
-    "neymar":            "Neymar's Miracle",
-    "clawdmoltopenbot":  "Bot Singularity",
-  };
-  const specialName = SPECIAL_QUAD_NAMES[bestName];
-  const quadName = specialName ?? CARD_QUAD_NAMES[bestName] ?? `Quad ${label}!`;
-  const payoutValue = rank ? RANK_COMBO_PAYOUT[rank] * 3 : 5000; // specials pay 5000%
-
+function createQuadCombo(name: string, cards: string[], payoutValue: number, pattern: SlotPattern): CardCombo {
+  const label = name.split(" ").map((w) => w[0]!.toUpperCase() + w.slice(1)).join(" ");
+  const specialName = name === "neymar" ? "Neymar's Miracle" : name === "clawdmoltopenbot" ? "Bot Singularity" : null;
+  const quadName = specialName ?? CARD_QUAD_NAMES[name] ?? `Quad ${label}!`;
   return {
-    combo: {
-      id: `quad_${bestName}`,
-      name: quadName,
-      emoji: specialName ? "🌟" : "💀",
-      cards: [],
-      bonus: { type: "power", value: payoutValue, target: "self" },
-      description: `4x ${label} — ultra rare!`,
-    },
-    // normal jokers (neymar/clawd) go into matchedIndices → will be removed
-    matchedIndices: [...bestIndices, ...normalJokerIndices.slice(0, bestNormalNeeded)],
-    // bonus joker (dragukka) goes into wildcardIndices → persists
-    wildcardIndices: bonusJokerIndices.slice(0, bestBonusNeeded),
+    id: `quad_${name}`,
+    name: quadName,
+    emoji: specialName ? "🌟" : "💀",
+    cards,
+    minCards: 4,
+    bonus: { type: "power", value: payoutValue, target: "self" },
+    description: `4x ${label} • ${getSlotPatternTooltip(pattern)}`,
   };
 }
 
-/** Detect near-miss: exactly 3 cards of same rank in final grid (no combo, but close) */
-export function detectNearMiss(grid: SlotCard[], isBonusMode: boolean): SlotNearMiss | null {
-  const rankGroups = new Map<SlotRank, { indices: number[]; suits: Set<string> }>();
-  const jokerIndices: number[] = [];
-
-  for (let i = 0; i < grid.length; i++) {
-    const card = grid[i]!;
-    const isJoker = card.baccarat === SLOT_BONUS_WILDCARD && isBonusMode;
-    if (isJoker) {
-      jokerIndices.push(i);
-    } else if (card.rank && card.suit) {
-      if (!rankGroups.has(card.rank)) rankGroups.set(card.rank, { indices: [], suits: new Set() });
-      const g = rankGroups.get(card.rank)!;
-      if (!g.suits.has(card.suit)) {
-        g.indices.push(i);
-        g.suits.add(card.suit);
-      }
-    }
-  }
-
-  for (const rank of SLOT_RANK_ORDER) {
-    const g = rankGroups.get(rank);
-    if (!g) continue;
-    const total = g.indices.length + jokerIndices.length;
-    // Near miss: exactly 3 real cards (no joker fill needed to reach 3), can't reach 4
-    if (g.indices.length === 3 && total < 4) {
-      const info = RANK_COMBO_INFO[rank];
-      const allSuits: Array<"hearts"|"diamonds"|"clubs"|"spades"> = ["hearts","diamonds","clubs","spades"];
-      const missingSuit = allSuits.find(s => !g.suits.has(s))!;
-      return {
-        rank,
-        nameIncomplete: info.nameIncomplete,
-        emoji: info.emoji,
-        presentIndices: g.indices,
-        missingSuit,
-        missingCard: info.suits[missingSuit],
-      };
-    }
-  }
-  return null;
+function createAllDragukkaCombo(pattern: SlotPattern): CardCombo {
+  return {
+    id: `quad_dragukka_${pattern.id}`,
+    name: "Dragukka Storm",
+    emoji: "🐉",
+    cards: Array(4).fill(SLOT_BONUS_WILDCARD),
+    minCards: 4,
+    bonus: { type: "power", value: SLOT_SPECIAL_DRAGUKKA_PAYOUT, target: "self" },
+    description: `4x Dragukka • ${getSlotPatternTooltip(pattern)}`,
+  };
 }
 
-/** Detect rank combo (4-of-a-kind by rank, one per suit) anywhere in the 5×3 grid.
- *  RULE: exactly 1 card per suit (♥♦♣♠) — duplicates of the same suit are ignored.
- *  Always 4 cards total: real cards fill suit slots, dragukka fills remaining slots. */
-function detectRankCombo(
+function getPatternCards(grid: SlotCard[], pattern: SlotPattern) {
+  return pattern.indices.map((index) => ({ index, card: grid[index]! }));
+}
+
+function detectPatternCombo(
   grid: SlotCard[],
+  pattern: SlotPattern,
   isBonusMode: boolean,
   usedWildcardIndices: Set<number> = new Set(),
 ): {
@@ -470,53 +365,182 @@ function detectRankCombo(
   matchedIndices: number[];
   wildcardIndices: number[];
 } | null {
-  // rankGroups: only 1 card per suit per rank (first occurrence wins)
-  const rankGroups = new Map<SlotRank, { indices: number[]; suits: Set<string> }>();
-  // bonusJokerIndices: dragukka — persistent, once per spin
-  const bonusJokerIndices: number[] = [];
-  // normalJokerIndices: neymar/clawdmoltopenbot — removed after use
-  const normalJokerIndices: number[] = [];
+  const entries = getPatternCards(grid, pattern);
+  const availableEntries = entries.filter(({ index }) => !usedWildcardIndices.has(index));
+  if (availableEntries.length !== 4) return null;
 
-  for (let i = 0; i < grid.length; i++) {
-    const card = grid[i]!;
-    const isBonusJoker = card.baccarat === SLOT_BONUS_WILDCARD && isBonusMode && !usedWildcardIndices.has(i);
-    const isNormalJoker = !isBonusMode && NORMAL_WILDCARDS.has(card.baccarat);
-    if (isBonusJoker) {
-      bonusJokerIndices.push(i);
-    } else if (isNormalJoker) {
-      normalJokerIndices.push(i);
-    } else if (card.rank && card.suit) {
-      if (!rankGroups.has(card.rank)) rankGroups.set(card.rank, { indices: [], suits: new Set() });
-      const g = rankGroups.get(card.rank)!;
-      // Only first card of each suit counts — no duplicate suits allowed
-      if (!g.suits.has(card.suit)) {
-        g.indices.push(i);
-        g.suits.add(card.suit);
-      }
-    }
+  const dragukkaEntries = availableEntries.filter(({ card }) => isBonusMode && isDragukkaCard(card.baccarat));
+  const normalWildcardEntries = availableEntries.filter(({ card }) => !isBonusMode && isNormalWildcardCard(card.baccarat));
+  const realEntries = availableEntries.filter(({ card }) => !isAnySlotWildcard(card.baccarat));
+
+  if (dragukkaEntries.length === 4) {
+    return {
+      combo: createAllDragukkaCombo(pattern),
+      matchedIndices: dragukkaEntries.map(({ index }) => index),
+      wildcardIndices: [],
+    };
+  }
+
+  const byName = new Map<string, typeof realEntries>();
+  for (const entry of realEntries) {
+    const current = byName.get(entry.card.baccarat) ?? [];
+    current.push(entry);
+    byName.set(entry.card.baccarat, current);
+  }
+
+  for (const [name, items] of byName) {
+    const total = items.length + dragukkaEntries.length + normalWildcardEntries.length;
+    if (total < 4) continue;
+    if (items.length < 1) continue;
+
+    const card = items[0]!.card;
+    const payoutValue = card.rank ? RANK_COMBO_PAYOUT[card.rank] * 3 : 5000;
+    const matched = [
+      ...items.map(({ index }) => index),
+      ...normalWildcardEntries.slice(0, Math.max(0, 4 - items.length - dragukkaEntries.length)).map(({ index }) => index),
+    ].slice(0, 4 - dragukkaEntries.length);
+    const wildcardIndices = dragukkaEntries.slice(0, Math.max(0, 4 - matched.length)).map(({ index }) => index);
+    const cards = [...matched.map((index) => grid[index]!.baccarat), ...wildcardIndices.map((index) => grid[index]!.baccarat)].slice(0, 4);
+    if (cards.length !== 4) continue;
+
+    return {
+      combo: createQuadCombo(name, cards, payoutValue, pattern),
+      matchedIndices: matched,
+      wildcardIndices,
+    };
+  }
+
+  const byRank = new Map<SlotRank, Map<string, { index: number; card: SlotCard }>>();
+  for (const entry of realEntries) {
+    if (!entry.card.rank || !entry.card.suit) continue;
+    const suits = byRank.get(entry.card.rank) ?? new Map();
+    if (!suits.has(entry.card.suit)) suits.set(entry.card.suit, entry);
+    byRank.set(entry.card.rank, suits);
   }
 
   for (const rank of SLOT_RANK_ORDER) {
-    const g = rankGroups.get(rank);
-    const indices = g?.indices ?? [];
-    const needed = Math.max(0, 4 - indices.length);
-    const bonusToUse = Math.min(needed, bonusJokerIndices.length);
-    const stillNeeded = needed - bonusToUse;
-    const normalToUse = Math.min(stillNeeded, normalJokerIndices.length);
-    const total = indices.length + bonusToUse + normalToUse;
+    const suitEntries = byRank.get(rank);
+    const realCount = suitEntries?.size ?? 0;
+    const total = realCount + dragukkaEntries.length + normalWildcardEntries.length;
+    if (total < 4) continue;
+    if (realCount < 1) continue;
 
-    // Requires 4 total AND minimum 3 real cards — wildcards can fill at most 1 slot
-    if (total >= 4 && indices.length >= 3) {
-      return {
-        combo: createRankCombo(rank),
-        matchedIndices: [...indices, ...normalJokerIndices.slice(0, normalToUse)],
-        wildcardIndices: bonusJokerIndices.slice(0, bonusToUse),
-      };
-    }
+    const realMatched = [...(suitEntries?.values() ?? [])].map(({ index }) => index);
+    const normalNeeded = Math.max(0, Math.min(normalWildcardEntries.length, 4 - realMatched.length - dragukkaEntries.length));
+    const wildcardNeeded = Math.max(0, 4 - realMatched.length - normalNeeded);
+    const matchedIndices = [...realMatched, ...normalWildcardEntries.slice(0, normalNeeded).map(({ index }) => index)];
+    const wildcardIndices = dragukkaEntries.slice(0, wildcardNeeded).map(({ index }) => index);
+    const cards = [...matchedIndices.map((index) => grid[index]!.baccarat), ...wildcardIndices.map((index) => grid[index]!.baccarat)].slice(0, 4);
+    if (cards.length !== 4) continue;
+
+    return {
+      combo: createRankCombo(rank, cards, pattern),
+      matchedIndices,
+      wildcardIndices,
+    };
   }
 
   return null;
 }
+
+export function detectNearMiss(grid: SlotCard[], isBonusMode: boolean): SlotNearMiss | null {
+  for (const pattern of SLOT_PATTERNS) {
+    const entries = getPatternCards(grid, pattern);
+    const dragukkaCount = entries.filter(({ card }) => isBonusMode && isDragukkaCard(card.baccarat)).length;
+    const realCards = entries.filter(({ card }) => !isAnySlotWildcard(card.baccarat));
+    const ranks = new Map<SlotRank, { indices: number[]; suits: Set<string> }>();
+
+    for (const { index, card } of realCards) {
+      if (!card.rank || !card.suit) continue;
+      const current = ranks.get(card.rank) ?? { indices: [], suits: new Set<string>() };
+      if (!current.suits.has(card.suit)) {
+        current.indices.push(index);
+        current.suits.add(card.suit);
+      }
+      ranks.set(card.rank, current);
+    }
+
+    for (const rank of SLOT_RANK_ORDER) {
+      const current = ranks.get(rank);
+      if (!current) continue;
+      if (current.indices.length === 3 && current.indices.length + dragukkaCount < 4) {
+        const info = RANK_COMBO_INFO[rank];
+        const allSuits: Array<"hearts"|"diamonds"|"clubs"|"spades"> = ["hearts","diamonds","clubs","spades"];
+        const missingSuit = allSuits.find((suit) => !current.suits.has(suit))!;
+        return {
+          rank,
+          nameIncomplete: `${info.nameIncomplete} • ${getSlotPatternTooltip(pattern)}`,
+          emoji: info.emoji,
+          presentIndices: current.indices,
+          missingSuit,
+          missingCard: info.suits[missingSuit],
+        };
+      }
+    }
+  }
+  return null;
+}
+
+function getBestBoostPattern(grid: SlotCard[], isBonusMode: boolean): SlotPattern | null {
+  let best: { pattern: SlotPattern; score: number } | null = null;
+
+  for (const pattern of SLOT_PATTERNS) {
+    const entries = getPatternCards(grid, pattern);
+    const dragukkaCount = entries.filter(({ card }) => isBonusMode && isDragukkaCard(card.baccarat)).length;
+    const normalWildcardCount = entries.filter(({ card }) => !isBonusMode && isNormalWildcardCard(card.baccarat)).length;
+    const realCards = entries.filter(({ card }) => !isAnySlotWildcard(card.baccarat));
+
+    const countsByRank = new Map<string, number>();
+    const countsByName = new Map<string, number>();
+    for (const { card } of realCards) {
+      if (card.rank) countsByRank.set(card.rank, (countsByRank.get(card.rank) ?? 0) + 1);
+      countsByName.set(card.baccarat, (countsByName.get(card.baccarat) ?? 0) + 1);
+    }
+
+    const bestRankCount = Math.max(0, ...countsByRank.values());
+    const bestQuadCount = Math.max(0, ...countsByName.values());
+    const progress = Math.max(bestRankCount, bestQuadCount) + dragukkaCount + normalWildcardCount;
+    if (progress < 2 || progress >= 4) continue;
+
+    const patternWeight = pattern.type === "horizontal" ? 1 : pattern.type === "vertical" ? 1 : pattern.type === "diagonal" ? 1.1 : 1.15;
+    const score = progress * patternWeight;
+    if (!best || score > best.score) best = { pattern, score };
+  }
+
+  return best?.pattern ?? null;
+}
+
+function forcePatternCombo(grid: SlotCard[], isBonusMode: boolean): void {
+  const pattern = getBestBoostPattern(grid, isBonusMode);
+  if (!pattern) return;
+
+  const entries = getPatternCards(grid, pattern);
+  const realCards = entries.filter(({ card }) => !isAnySlotWildcard(card.baccarat));
+  const countsByRank = new Map<SlotRank, number>();
+
+  for (const { card } of realCards) {
+    if (!card.rank) continue;
+    countsByRank.set(card.rank, (countsByRank.get(card.rank) ?? 0) + 1);
+  }
+
+  const targetRank = [...countsByRank.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? "7";
+  const info = RANK_COMBO_INFO[targetRank];
+  const allSuits: Array<"hearts" | "diamonds" | "clubs" | "spades"> = ["hearts", "diamonds", "clubs", "spades"];
+  const usedSuits = new Set(realCards.map(({ card }) => card.suit).filter(Boolean) as string[]);
+  const missingSuits = allSuits.filter((suit) => !usedSuits.has(suit)).slice(0, 4);
+
+  for (const { index, card } of entries) {
+    if (isAnySlotWildcard(card.baccarat)) continue;
+    if (card.rank === targetRank) continue;
+    const nextSuit = missingSuits.shift();
+    if (!nextSuit) break;
+    const baccarat = info.suits[nextSuit];
+    const def = SLOT_CARD_POOL.find((entry) => entry.baccarat.toLowerCase() === baccarat.toLowerCase());
+    if (!def) continue;
+    grid[index] = createSlotCard({ baccarat: def.baccarat, rarity: def.rarity, rank: targetRank, suit: nextSuit, hasFoil: card.hasFoil });
+  }
+}
+
 
 const NORMAL_FOIL_CHANCE = 0.15;
 const BONUS_FOIL_CHANCE = 0.07;                  // reduzido de 0.15 — menos foils no bonus
@@ -642,33 +666,26 @@ function createRandomSlotCard(isBonusMode: boolean, allowWildcardSpawn: boolean)
     return createBonusWildcard(1);
   }
 
-  const picked = pickSlotCard(isBonusMode ? BONUS_WEIGHT_MULTIPLIER : 1);
-
-  // Fora do bonus: se a carta sorteada for dragukka, re-sortear
-  // para garantir que a wild nunca apareça em spins normais
-  if (!isBonusMode && picked.baccarat === SLOT_BONUS_WILDCARD) {
-    const fallback = pickSlotCard(1);
-    const foilChance = NORMAL_FOIL_CHANCE;
-    return createSlotCard({
-      baccarat: fallback.baccarat,
-      rarity: fallback.rarity,
-      hasFoil: Math.random() < foilChance,
-    });
-  }
-
-  // No bonus mode: if card is neymar or clawdmoltopenbot, re-roll
-  // only dragukka acts as wildcard in bonus
-  if (isBonusMode && BONUS_MODE_EXCLUDED.has(picked.baccarat)) {
-    const fallback = pickSlotCard(isBonusMode ? BONUS_WEIGHT_MULTIPLIER : 1);
-    const foilChance = BONUS_FOIL_CHANCE;
-    return createSlotCard({
-      baccarat: fallback.baccarat,
-      rarity: fallback.rarity,
-      hasFoil: Math.random() < foilChance,
-    });
-  }
-
   const foilChance = isBonusMode ? BONUS_FOIL_CHANCE : NORMAL_FOIL_CHANCE;
+  let picked = pickSlotCard(isBonusMode ? BONUS_WEIGHT_MULTIPLIER : 1);
+
+  // Fora do bonus: dragukka nunca pode sair
+  if (!isBonusMode) {
+    let guard = 0;
+    while (picked.baccarat === SLOT_BONUS_WILDCARD && guard < 64) {
+      picked = pickSlotCard(1);
+      guard += 1;
+    }
+  }
+
+  // No bonus mode: only dragukka acts as wildcard
+  if (isBonusMode) {
+    let guard = 0;
+    while (BONUS_MODE_EXCLUDED.has(picked.baccarat) && guard < 64) {
+      picked = pickSlotCard(BONUS_WEIGHT_MULTIPLIER);
+      guard += 1;
+    }
+  }
 
   return createSlotCard({
     baccarat: picked.baccarat,
@@ -804,9 +821,15 @@ function findNextCombo(
   isBonusMode: boolean,
   usedWildcardIndices: Set<number> = new Set(),
 ): SlotComboMatch | null {
-  // Priority 1: Quad (4 identical cards) — strongest combo
-  // Priority 2: Four-of-a-kind (4 same rank, different suits)
-  const match = detectQuadCombo(grid, isBonusMode, usedWildcardIndices) ?? detectRankCombo(grid, isBonusMode, usedWildcardIndices);
+  let match: { combo: CardCombo; matchedIndices: number[]; wildcardIndices: number[] } | null = null;
+
+  for (const pattern of SLOT_PATTERNS) {
+    const candidate = detectPatternCombo(grid, pattern, isBonusMode, usedWildcardIndices);
+    if (!candidate) continue;
+    match = candidate;
+    break;
+  }
+
   if (!match) return null;
 
   const { combo, matchedIndices, wildcardIndices } = match;
@@ -815,9 +838,20 @@ function findNextCombo(
 
   if (skippedStaticCombos.has(staticKey)) return null;
 
-  const preservedFoilIndices = matchedIndices.filter((i) => grid[i]?.hasFoil);
-  const removedIndices = matchedIndices.filter((i) => !grid[i]?.hasFoil);
-  return { combo, matchedIndices, wildcardIndices, removedIndices, preservedFoilIndices, reward: 0, staticKey };
+  // Preserve foils (never removed). Remove everything else that participated in the combo,
+  // including wildcards like Dragukka, so 4-dragukka can't loop forever.
+  const preservedFoilIndices = allIndices.filter((i) => grid[i]?.hasFoil);
+  const removedIndices = allIndices.filter((i) => !grid[i]?.hasFoil);
+
+  return {
+    combo,
+    matchedIndices,
+    wildcardIndices,
+    removedIndices,
+    preservedFoilIndices,
+    reward: 0,
+    staticKey,
+  };
 }
 
 function growWildcards(grid: SlotCard[], _wildcardIndices: number[]): SlotCard[] {
@@ -890,60 +924,6 @@ export function extractBonusState(grid: SlotCard[], spinsRemaining = 0, prevSpin
   };
 }
 
-/** Force a combo by completing the rank that already has the most cards in the grid.
- *  Replaces non-rank cells with the missing suit(s) of the best candidate rank. */
-function forceNearestRankCombo(grid: SlotCard[]): void {
-  // Tally how many distinct suits of each rank are present
-  const rankSuits = new Map<SlotRank, Set<string>>();
-  for (const card of grid) {
-    if (card.rank && card.suit) {
-      if (!rankSuits.has(card.rank)) rankSuits.set(card.rank, new Set());
-      rankSuits.get(card.rank)!.add(card.suit);
-    }
-  }
-
-  // Find rank with most suits present (best candidate)
-  let bestRank: SlotRank | null = null;
-  let bestCount = 0;
-  for (const [rank, suits] of rankSuits) {
-    if (suits.size > bestCount && suits.size < 4) {
-      bestCount = suits.size;
-      bestRank = rank;
-    }
-  }
-  // If no rank started, pick a random common one
-  if (!bestRank) {
-    const commons: SlotRank[] = ["2", "3", "4", "5", "6"];
-    bestRank = commons[Math.floor(Math.random() * commons.length)]!;
-  }
-
-  const info = RANK_COMBO_INFO[bestRank];
-  const allSuits: Array<"hearts" | "diamonds" | "clubs" | "spades"> = ["hearts", "diamonds", "clubs", "spades"];
-  const presentSuits = rankSuits.get(bestRank) ?? new Set<string>();
-  const missingSuits = allSuits.filter(s => !presentSuits.has(s));
-
-  // Replace non-rank cells with the missing suits
-  const nonRankIndices = grid
-    .map((c, i) => ({ c, i }))
-    .filter(({ c }) => !(c.rank === bestRank))
-    .map(({ i }) => i)
-    .sort(() => Math.random() - 0.5);
-
-  for (let m = 0; m < missingSuits.length && m < nonRankIndices.length; m++) {
-    const suit = missingSuits[m]!;
-    const cardName = info.suits[suit];
-    const def = SLOT_CARD_POOL.find((d: SlotCardDefinition) => d.baccarat.toLowerCase() === cardName.toLowerCase());
-    if (!def || nonRankIndices[m] === undefined) continue;
-    const idx = nonRankIndices[m]!;
-    grid[idx] = {
-      baccarat: def.baccarat,
-      rarity: def.rarity,
-      rank: bestRank,
-      suit,
-      hasFoil: false,
-    };
-  }
-}
 
 export function resolveSlotSpin(
   isBonusMode: boolean,
@@ -953,9 +933,9 @@ export function resolveSlotSpin(
 ): SlotSpinResolution {
   const initialGrid = createInitialSlotGrid(isBonusMode, bonusState, forceFoilCount);
 
-  // Combo boost: replace cells to force the highest-progress rank to complete
+  // Combo boost: prefer the best partially-built valid shape
   if (comboBoostChance > 0 && Math.random() < comboBoostChance) {
-    forceNearestRankCombo(initialGrid);
+    forcePatternCombo(initialGrid, isBonusMode);
   }
 
   const comboSteps: SlotComboStep[] = [];

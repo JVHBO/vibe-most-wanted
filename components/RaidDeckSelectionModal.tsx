@@ -471,18 +471,9 @@ export function RaidDeckSelectionModal({
                 <div className="flex items-center justify-between mb-1">
                   <h3 className="text-xs font-bold text-vintage-gold">VibeFID - 6th Slot Special Card</h3>
                   {!hasVibeFID && (
-                    <a
-                      href='/fid'
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="px-3 py-1 bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black text-xs font-bold rounded-lg transition"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (soundEnabled) AudioManager.buttonClick();
-                      }}
-                    >
-                      Mint VibeFID
-                    </a>
+                    <span className="px-3 py-1 bg-zinc-800 text-zinc-500 text-xs font-bold rounded-lg cursor-not-allowed">
+                      Mint Encerrado
+                    </span>
                   )}
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-1 text-[10px]">

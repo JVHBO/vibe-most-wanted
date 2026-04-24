@@ -53,7 +53,7 @@ const translations = {
     success: "Success", depositSuccess: "Deposited successfully!", withdrawSuccess: "Withdrawn successfully!",
     insufficientBalance: "Insufficient balance", approveFirst: "Approve VBMS first",
     connectWallet: "Connect wallet", rulesTitle: "Slot Rules",
-    rules: ["Match 4 cards of the same rank to win!","Higher rank combos = bigger prizes","Quad (4 identical) pays 3× more","10 free spins daily","Foil cards survive combos and accumulate"],
+    rules: ["Match 4 cards forming a pattern (horizontal, vertical, diagonal or L-shape)!","Higher rank combos = bigger prizes","Quad (4 identical) pays 3× more","5 free spins daily","Foil cards survive combos and accumulate"],
     settings: "Settings", language: "Language",
     musicBg: "Background Music", musicBgDesc: "Casino BGM during gameplay",
     volume: "Volume", musicSource: "Music Source",
@@ -71,7 +71,7 @@ const translations = {
     success: "Sucesso", depositSuccess: "Depositado com sucesso!", withdrawSuccess: "Sacado com sucesso!",
     insufficientBalance: "Saldo insuficiente", approveFirst: "Aprove VBMS primeiro",
     connectWallet: "Conecte a carteira", rulesTitle: "Regras do Slot",
-    rules: ["Combine 4 cartas do mesmo rank para ganhar!","Ranks maiores = prêmios maiores","Quad (4 idênticas) paga 3× mais","10 giros grátis por dia","Cartas foil sobrevivem aos combos e acumulam"],
+    rules: ["Combine 4 cartas formando um padrão (horizontal, vertical, diagonal ou L)!","Ranks maiores = prêmios maiores","Quad (4 idênticas) paga 3× mais","5 giros grátis por dia","Cartas foil sobrevivem aos combos e acumulam"],
     settings: "Configurações", language: "Idioma",
     musicBg: "Música de Fundo", musicBgDesc: "BGM do cassino durante o jogo",
     volume: "Volume", musicSource: "Fonte da música",
@@ -89,7 +89,7 @@ const translations = {
     success: "Éxito", depositSuccess: "¡Depositado con éxito!", withdrawSuccess: "¡Retirado con éxito!",
     insufficientBalance: "Saldo insuficiente", approveFirst: "Aprueba VBMS primero",
     connectWallet: "Conecta la billetera", rulesTitle: "Reglas del Slot",
-    rules: ["¡Combina 4 cartas del mismo rango para ganar!","Rangos más altos = premios mayores","Quad (4 idénticas) paga 3× más","10 giros gratis por día","Las cartas foil sobreviven a los combos"],
+    rules: ["¡Combina 4 cartas formando un patrón (horizontal, vertical, diagonal o L)!","Rangos más altos = premios mayores","Quad (4 idénticas) paga 3× más","5 giros gratis por día","Las cartas foil sobreviven a los combos"],
     settings: "Configuración", language: "Idioma",
     musicBg: "Música de Fondo", musicBgDesc: "BGM del casino durante el juego",
     volume: "Volumen", musicSource: "Fuente de música",
@@ -137,7 +137,7 @@ const translations = {
     rulesAndPrizes: "Правила и призы", prizes: "Призы",
   },
   "zh-CN": {
-    title: "Tukka 老虎机", back: "返回", credits: "积分", vbms: "VBMS",
+    title: "Tukka Slots", back: "返回", credits: "积分", vbms: "VBMS",
     freeSpins: "免费旋转", deposit: "存入", withdraw: "提取",
     error: "错误", depositing: "存入中...", withdrawing: "提取中...",
     success: "成功", depositSuccess: "存入成功！", withdrawSuccess: "提取成功！",
@@ -191,7 +191,7 @@ const translations = {
     rulesAndPrizes: "Règles & Prix", prizes: "Prix",
   },
   ja: {
-    title: "Tukkaスロット", back: "戻る", credits: "クレジット", vbms: "VBMS",
+    title: "Tukka Slots", back: "戻る", credits: "クレジット", vbms: "VBMS",
     freeSpins: "フリースピン", deposit: "入金", withdraw: "出金",
     error: "エラー", depositing: "入金中...", withdrawing: "出金中...",
     success: "成功", depositSuccess: "入金完了！", withdrawSuccess: "出金完了！",
@@ -311,7 +311,7 @@ export default function SlotPage() {
         // add 1% slippage buffer
         const totalWei = BigInt(Math.round(per100ETH * hundreds * 1e18 * 1.01));
         setBuyStep("buying");
-        setTxStatus(`Comprando com ETH...`);
+        setTxStatus(tr("depositing"));
         await writeContractAsync({
           address: buyShopAddr, abi: SHOP_ABI, functionName: 'buyCoins',
           args: [BigInt(coins)], value: totalWei, chainId: buyChainId,
@@ -319,13 +319,13 @@ export default function SlotPage() {
       } else {
         const totalStable = BigInt(Math.round(per100Stable * hundreds * 1e6));
         setBuyStep("approving");
-        setTxStatus(`Aprovando ${buyStableSym}...`);
+        setTxStatus(`${tr("approveFirst")} ${buyStableSym}...`);
         await writeContractAsync({
           address: buyStableAddr, abi: ERC20_APPROVE_ABI, functionName: 'approve',
           args: [buyShopAddr, totalStable], chainId: buyChainId,
         });
         setBuyStep("buying");
-        setTxStatus(`Comprando com ${buyStableSym}...`);
+        setTxStatus(tr("depositing"));
         await writeContractAsync({
           address: buyShopAddr, abi: SHOP_ABI, functionName: 'buyCoinsWithToken',
           args: [buyStableAddr, BigInt(coins)], chainId: buyChainId,
@@ -521,7 +521,7 @@ export default function SlotPage() {
     }
 
     setDepositStep("transferring");
-    setTxStatus("Transferring VBMS...");
+    setTxStatus(tr("depositing"));
     setErrorMsg(null);
 
     try {

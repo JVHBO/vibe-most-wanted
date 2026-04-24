@@ -501,6 +501,7 @@ export default defineSchema({
     paidSpinsUsed: v.number(), // paid spins bought
     totalSpins: v.number(), // total spins today
     totalWon: v.number(), // total coins won today
+    noComboStreak: v.optional(v.number()), // consecutive non-bonus spins without combo
     lastSpinTime: v.optional(v.number()),
   })
     .index("by_player_date", ["playerAddress", "date"]),
@@ -1794,6 +1795,16 @@ export default defineSchema({
     lastUpdated: v.number(),
   })
     .index("by_key", ["key"]),
+
+  // Snapshot of all VibeFID holders (mint encerrado — 572 holders)
+  vibeFidHolders: defineTable({
+    address: v.string(),      // Holder address (lowercase)
+    chain: v.string(),        // 'base' or 'arbitrum'
+    tokenCount: v.number(),   // Number of tokens held
+    snapshotAt: v.number(),   // Timestamp of snapshot
+  })
+    .index("by_address", ["address"])
+    .index("by_chain", ["chain"]),
 
   // ═══════════════════════════════════════════════════════════════════════════════
   // BACCARAT CASINO (Simple card game - bet VBMS, win cards)

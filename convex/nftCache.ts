@@ -343,3 +343,63 @@ export const getCacheStats = query({
     };
   },
 });
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// VIBEFID HOLDERS SNAPSHOT
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export const saveVibeFidHolders = mutation({
+  args: {
+    adminKey: v.string(),
+    holders: v.array(v.object({
+      address: v.string(),
+      chain: v.string(),
+      tokenCount: v.number(),
+    })),
+  },
+  handler: async (ctx, { adminKey, holders }) => {
+    if (adminKey !== process.env.VMW_INTERNAL_SECRET) throw new Error("Unauthorized");
+    const now = Date.now();
+    let inserted = 0;
+    let updated = 0;
+    for (const h of holders) {
+      const addr = h.address.toLowerCase();
+      const existing = await ctx.db.query("vibeFidHolders")
+        .withIndex("by_address", (q) => q.eq("address", addr))
+        .first();
+      if (existing) {
+        await ctx.db.patch(existing._id, { tokenCount: h.tokenCount, snapshotAt: now });
+        updated++;
+      } else {
+        await ctx.db.insert("vibeFidHolders", { address: addr, chain: h.chain, tokenCount: h.tokenCount, snapshotAt: now });
+        inserted++;
+      }
+    }
+    return { inserted, updated, total: holders.length };
+  },
+});
+
+export const isVibeFidHolder = query({
+  args: { address: v.string() },
+  handler: async (ctx, { address }) => {
+    const rec = await ctx.db.query("vibeFidHolders")
+      .withIndex("by_address", (q) => q.eq("address", address.toLowerCase()))
+      .first();
+    return rec !== null;
+  },
+});
+
+export const getVibeFidHolderCount = query({
+  args: {},
+  handler: async (ctx) => {
+    const all = await ctx.db.query("vibeFidHolders").take(1000);
+    return all.length;
+  },
+});
+
+export const getAllVibeFidHolders = query({
+  args: {},
+  handler: async (ctx) => {
+    return ctx.db.query("vibeFidHolders").take(1000);
+  },
+});

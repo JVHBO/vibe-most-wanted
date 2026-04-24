@@ -313,25 +313,31 @@ export interface NeynarCast {
  * Docs: https://docs.neynar.com/reference/lookup-cast-by-hash-or-warpcast-url
  */
 export async function getCastByHash(castHash: string): Promise<NeynarCast | null> {
-  if (!NEYNAR_API_KEY) {
-    console.error('NEYNAR_API_KEY is not configured');
-    return null;
-  }
-
-  // 🚀 BANDWIDTH FIX: Check cache first
   const cached = getFromCache<NeynarCast>(castCache, castHash);
-  if (cached) {
-    return cached;
-  }
+  if (cached) return cached;
+
+  // Try Haatz first (free)
+  try {
+    const r = await fetch(`${HAATZ_BASE}/farcaster/cast?identifier=${castHash}&type=hash`, {
+      headers: { accept: 'application/json' },
+      signal: AbortSignal.timeout(5000),
+    });
+    if (r.ok) {
+      const data = await r.json();
+      if (data.cast) {
+        setInCache(castCache, castHash, data.cast as NeynarCast, CAST_CACHE_TTL);
+        return data.cast as NeynarCast;
+      }
+    }
+  } catch {}
+
+  if (!NEYNAR_API_KEY) return null;
 
   try {
     const response = await fetch(
       `${NEYNAR_API_BASE}/farcaster/cast?identifier=${castHash}&type=hash`,
       {
-        headers: {
-          'accept': 'application/json',
-          'api_key': NEYNAR_API_KEY,
-        },
+        headers: { 'accept': 'application/json', 'api_key': NEYNAR_API_KEY },
       }
     );
 
@@ -363,25 +369,31 @@ export async function getCastByHash(castHash: string): Promise<NeynarCast | null
  * This is more reliable than using truncated hashes
  */
 export async function getCastByUrl(warpcastUrl: string): Promise<NeynarCast | null> {
-  if (!NEYNAR_API_KEY) {
-    console.error('NEYNAR_API_KEY is not configured');
-    return null;
-  }
-
-  // 🚀 BANDWIDTH FIX: Check cache first
   const cached = getFromCache<NeynarCast>(castCache, warpcastUrl);
-  if (cached) {
-    return cached;
-  }
+  if (cached) return cached;
+
+  // Try Haatz first (free)
+  try {
+    const r = await fetch(`${HAATZ_BASE}/farcaster/cast?identifier=${encodeURIComponent(warpcastUrl)}&type=url`, {
+      headers: { accept: 'application/json' },
+      signal: AbortSignal.timeout(5000),
+    });
+    if (r.ok) {
+      const data = await r.json();
+      if (data.cast) {
+        setInCache(castCache, warpcastUrl, data.cast as NeynarCast, CAST_CACHE_TTL);
+        return data.cast as NeynarCast;
+      }
+    }
+  } catch {}
+
+  if (!NEYNAR_API_KEY) return null;
 
   try {
     const response = await fetch(
       `${NEYNAR_API_BASE}/farcaster/cast?identifier=${encodeURIComponent(warpcastUrl)}&type=url`,
       {
-        headers: {
-          'accept': 'application/json',
-          'api_key': NEYNAR_API_KEY,
-        },
+        headers: { 'accept': 'application/json', 'api_key': NEYNAR_API_KEY },
       }
     );
 
@@ -608,13 +620,11 @@ export async function checkCastInteractions(
         const NEYNAR_API_KEY = process.env.NEYNAR_API_KEY || process.env.NEXT_PUBLIC_NEYNAR_API_KEY;
         if (NEYNAR_API_KEY) {
           const userCastsResponse = await fetch(
-            `https://api.neynar.com/v2/farcaster/feed/user/casts?fid=${viewerFid}&limit=50&include_replies=true`,
-            {
-              headers: {
-                'accept': 'application/json',
-                'api_key': NEYNAR_API_KEY,
-              },
-            }
+            `${HAATZ_BASE}/farcaster/feed/user/casts?fid=${viewerFid}&limit=50&include_replies=true`,
+            { headers: { 'accept': 'application/json' }, signal: AbortSignal.timeout(5000) }
+          ).catch(() => null) || await fetch(
+            `${NEYNAR_API_BASE}/farcaster/feed/user/casts?fid=${viewerFid}&limit=50&include_replies=true`,
+            { headers: { 'accept': 'application/json', 'api_key': NEYNAR_API_KEY || '' } }
           );
 
           if (userCastsResponse.ok) {

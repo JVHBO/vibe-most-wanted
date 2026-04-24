@@ -18,11 +18,15 @@ export function isMiniappMode(): boolean {
  */
 export function isBaseAppWebView(): boolean {
   if (typeof window === 'undefined') return false;
-  const ua = typeof navigator !== 'undefined' ? navigator.userAgent : '';
+  const ua = typeof navigator !== 'undefined' ? navigator.userAgent.toLowerCase() : '';
+
+  // Reliable signals for Base/Coinbase in-app WebViews.
+  if (typeof (window as any).ReactNativeWebView !== 'undefined') return true;
   return (
-    typeof (window as any).ReactNativeWebView !== 'undefined' ||
-    ua.includes('Coinbase') ||
-    ua.includes('Base')
+    ua.includes('coinbasewallet') ||
+    ua.includes('coinbase wallet') ||
+    ua.includes('cbwallet') ||
+    ua.includes('baseapp')
   );
 }
 
@@ -83,3 +87,4 @@ export function shouldDisableVoiceChat(): boolean {
 export function isWarpcastClient(clientFid: number | undefined): boolean {
   return clientFid === 9152;
 }
+

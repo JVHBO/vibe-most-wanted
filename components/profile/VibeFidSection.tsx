@@ -195,8 +195,8 @@ export function VibeFidSection({ fid, isOwnProfile, address, hasVibeBadge, onCar
     return rarityOrder.indexOf(neynarScoreData.rarity) > rarityOrder.indexOf(card.rarity);
   };
 
-  const handleCheckNeynarScore = async () => {
-    AudioManager.buttonClick();
+  const handleCheckNeynarScore = async (silent = false) => {
+    if (!silent) AudioManager.buttonClick();
     setLoading(true);
     setError(null);
     try {
@@ -213,7 +213,7 @@ export function VibeFidSection({ fid, isOwnProfile, address, hasVibeBadge, onCar
         await saveScoreCheck({ fid: user.fid, username: user.username, score, rarity });
       }
       setNeynarScoreData({ score, rarity, fid: user.fid, username: user.username, displayName: user.display_name, pfpUrl: user.pfp_url });
-      setShowScoreModal(true);
+      if (!silent) setShowScoreModal(true);
     } catch (err: any) {
       setError(err.message || 'Failed to fetch Neynar score');
       setTimeout(() => setError(null), 3000);
@@ -304,6 +304,12 @@ export function VibeFidSection({ fid, isOwnProfile, address, hasVibeBadge, onCar
     setIsUpgrading(false);
   };
 
+  // Auto-fetch score when no card exists
+  useEffect(() => {
+    if (fidCards === undefined || fidCards.length > 0) return;
+    handleCheckNeynarScore(true);
+  }, [fidCards?.length]);
+
   // Report card status to parent for badge display
   useEffect(() => {
     if (fidCards === undefined) return;
@@ -322,36 +328,71 @@ export function VibeFidSection({ fid, isOwnProfile, address, hasVibeBadge, onCar
     );
   }
 
-  // Mint banner if no card
+  // No card — show Neynar score + stats
   if (fidCards.length === 0) {
     return (
-      <div className="bg-vintage-charcoal rounded-xl border border-vintage-gold/50 p-6 text-center">
-        {hasVibeBadge ? (
-          <>
-            <p className="text-yellow-400 font-bold text-base mb-1">VibeFID NFT detected</p>
-            <p className="text-vintage-ice/60 text-sm mb-2">
-              This player owns a VibeFID NFT on-chain, but the card was received via transfer — no Convex record exists for FID #{fid}.
-            </p>
-            <p className="text-vintage-ice/40 text-xs">
-              The card data is only created when minted through the app.
-            </p>
-          </>
-        ) : (
-          <>
-            <p className="text-vintage-gold font-bold text-base mb-1">No VibeFID Card</p>
-            <p className="text-vintage-ice/60 text-sm mb-4">This player hasn&apos;t minted their VibeFID card yet.</p>
-          </>
+      <div className="bg-vintage-charcoal rounded-xl border border-vintage-gold/50 p-4">
+        <div className="flex items-center justify-between mb-3">
+          <span className="text-vintage-gold font-bold text-sm uppercase tracking-wider">Farcaster Score</span>
+          <span className="text-zinc-600 text-xs border border-zinc-700 rounded px-2 py-0.5">🔒 Mint Encerrado</span>
+        </div>
+
+        {loading && !neynarScoreData && (
+          <div className="flex items-center gap-2 text-vintage-gold/60 text-sm py-4 justify-center">
+            <span className="animate-spin">⟳</span> Carregando score...
+          </div>
         )}
-        {isOwnProfile && (
-          <Link
-            href="/fid"
-            className="inline-flex items-center gap-2 mt-3 px-4 py-2 bg-vintage-gold text-black font-bold border-2 border-black shadow-[3px_3px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_#000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all text-sm"
-          >
-            {hasVibeBadge ? 'Sync Card' : 'Mint Now'}
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <path d="M5 12h14M12 5l7 7-7 7"/>
-            </svg>
-          </Link>
+
+        {neynarScoreData && (
+          <div className="flex gap-3 items-start">
+            {/* Avatar */}
+            {neynarScoreData.pfpUrl && (
+              <img src={neynarScoreData.pfpUrl} alt={neynarScoreData.username} className="w-14 h-14 rounded-full border-2 border-vintage-gold/40 flex-shrink-0 object-cover" />
+            )}
+            <div className="flex-1 min-w-0">
+              <p className="text-vintage-gold font-bold text-sm truncate">@{neynarScoreData.username}</p>
+              <p className="text-vintage-ice/60 text-xs truncate mb-2">{neynarScoreData.displayName}</p>
+              <div className="bg-vintage-black/40 rounded border border-vintage-gold/20 px-2 py-1.5 mb-2">
+                <p className="text-vintage-burnt-gold text-[10px] uppercase tracking-wide">Neynar Score</p>
+                <p className="text-vintage-gold font-bold text-xl leading-tight">{neynarScoreData.score.toFixed(3)}</p>
+                <p className="text-vintage-ice/50 text-[10px]">{neynarScoreData.rarity}</p>
+              </div>
+              {/* Score history mini */}
+              {scoreHistory?.history && scoreHistory.history.length > 0 && (
+                <div className="space-y-0.5">
+                  {scoreHistory.history.slice(0, 3).map((entry: any, i: number) => {
+                    const prev = scoreHistory.history[i + 1]?.score;
+                    const diff = prev != null ? entry.score - prev : 0;
+                    return (
+                      <div key={i} className="flex justify-between text-[10px] text-vintage-ice/50">
+                        <span>{new Date(entry.checkedAt).toLocaleDateString()}</span>
+                        <span className="flex items-center gap-1">
+                          {entry.score.toFixed(3)}
+                          {diff !== 0 && <span className={diff > 0 ? 'text-green-400' : 'text-red-400'}>{diff > 0 ? '+' : ''}{diff.toFixed(3)}</span>}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {!loading && !neynarScoreData && (
+          <div className="text-center py-3">
+            <p className="text-vintage-ice/50 text-xs mb-2">FID #{fid}</p>
+            <button
+              onClick={handleCheckNeynarScore}
+              className="px-4 py-2 bg-vintage-black border border-vintage-gold/40 text-vintage-gold font-bold rounded text-xs hover:bg-vintage-gold/10 transition-colors"
+            >
+              Ver Score
+            </button>
+          </div>
+        )}
+
+        {error && (
+          <div className="mt-2 p-2 bg-red-900/50 border border-red-500 rounded text-red-200 text-xs text-center">{error}</div>
         )}
       </div>
     );

@@ -1150,6 +1150,30 @@ export const patchDrawResult = mutation({
   },
 });
 
+/** Admin: fully replace winner data in raffleResults for an epoch */
+export const adminFixWinners = mutation({
+  args: {
+    adminKey:       v.string(),
+    epoch:          v.number(),
+    winner:         v.string(),
+    winnerTicket:   v.number(),
+    winnerIndex:    v.number(),
+    username:       v.optional(v.string()),
+    winners:        v.optional(v.array(v.string())),
+    winnerTickets:  v.optional(v.array(v.number())),
+    winnerUsernames: v.optional(v.array(v.union(v.string(), v.null()))),
+    winnerChains:   v.optional(v.array(v.union(v.string(), v.null()))),
+  },
+  handler: async (ctx, { adminKey, epoch, ...patch }) => {
+    if (adminKey !== process.env.VMW_INTERNAL_SECRET) throw new Error("Unauthorized");
+    const rec = await ctx.db.query("raffleResults")
+      .withIndex("by_epoch", (q: any) => q.eq("epoch", epoch)).first();
+    if (!rec) throw new Error("No result for epoch " + epoch);
+    await ctx.db.patch(rec._id, patch);
+    return { ok: true };
+  },
+});
+
 /** Admin: manually insert a missing raffleEntry (for gaps in polling) */
 export const insertMissingEntry = mutation({
   args: {

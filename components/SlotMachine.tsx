@@ -22,8 +22,8 @@ import {
   SLOT_ROWS,
   SLOT_TOTAL_CELLS,
   SLOT_SUIT_COLOR,
-  createSlotCard,
-  getSlotCardRarity,
+  createSlotCard,  getSlotCardRarity,
+  getSlotPatternForIndices,
   isDeveloperSlotAddress,
   pickSlotCard,
 } from "@/lib/slot/config";
@@ -35,30 +35,178 @@ import type {
 import { getSlotComboCatalog, resolveComboAudio } from "@/lib/slot/engine";
 import { getBaseAppBlur, isBaseAppWebView } from "@/lib/utils/miniapp";
 
-const SLOT_UI_TRANSLATIONS: Record<string, {
+type SlotUiText = {
   spin: string; deposit: string; withdraw: string; buyBonus: string;
   bet: string; balance: string; freeSpins: string; bonusMode: string;
   bonusSpin: string; bonusRemaining: string; winUpTo: string;
-  connectWallet: string; accessDenied: string; accessDeniedDesc: string; welcome: string;
+  connectWallet: string; accessDenied: string; accessDeniedDesc: string; welcome: string; slotTitle: string;
   howToPlay: string; combos: string; mechanics: string; howToDeposit: string;
   prev: string; next: string; play: string; missing: string;
   freeSpinsDay: string; noDeposit: string;
-}> = {
-  en:      { spin:"SPIN",deposit:"DEPOSIT",withdraw:"WITHDRAW",buyBonus:"BUY BONUS",bet:"BET",balance:"BALANCE",freeSpins:"FREE SPINS",bonusMode:"BONUS MODE",bonusSpin:"BONUS SPIN",bonusRemaining:"remaining",winUpTo:"WIN UP TO",connectWallet:"Connect wallet!",accessDenied:"Access restricted!",accessDeniedDesc:"This slot machine is private and under development.",welcome:"Welcome",howToPlay:"How to play →",combos:"Combos",mechanics:"Mechanics",howToDeposit:"How to Deposit",prev:"← Prev",next:"Next →",play:"Play! 🎰",missing:"Missing",freeSpinsDay:"10 free spins per day!",noDeposit:"No deposit needed to start" },
-  "pt-BR": { spin:"GIRAR",deposit:"DEPOSITAR",withdraw:"SACAR",buyBonus:"COMPRAR BÔNUS",bet:"APOSTA",balance:"SALDO",freeSpins:"GIROS GRÁTIS",bonusMode:"MODO BÔNUS",bonusSpin:"GIRO BÔNUS",bonusRemaining:"restantes",winUpTo:"GANHE ATÉ",connectWallet:"Conecte a carteira!",accessDenied:"Acesso restrito!",accessDeniedDesc:"Este slot machine é privado e está em desenvolvimento.",welcome:"Bem-vindo",howToPlay:"Ver como jogar →",combos:"Combos",mechanics:"Mecânicas",howToDeposit:"Como Depositar",prev:"← Anterior",next:"Próximo →",play:"Jogar! 🎰",missing:"Faltou",freeSpinsDay:"10 giros grátis por dia!",noDeposit:"Não precisa depositar para começar" },
-  es:      { spin:"GIRAR",deposit:"DEPOSITAR",withdraw:"RETIRAR",buyBonus:"COMPRAR BONO",bet:"APUESTA",balance:"SALDO",freeSpins:"GIROS GRATIS",bonusMode:"MODO BONO",bonusSpin:"GIRO BONO",bonusRemaining:"restantes",winUpTo:"GANA HASTA",connectWallet:"¡Conecta la billetera!",accessDenied:"¡Acceso restringido!",accessDeniedDesc:"Esta máquina tragamonedas es privada y está en desarrollo.",welcome:"Bienvenido",howToPlay:"Ver cómo jugar →",combos:"Combos",mechanics:"Mecánicas",howToDeposit:"Cómo Depositar",prev:"← Anterior",next:"Siguiente →",play:"¡Jugar! 🎰",missing:"Faltó",freeSpinsDay:"¡10 giros gratis por día!",noDeposit:"No necesitas depositar para empezar" },
-  hi:      { spin:"घुमाएं",deposit:"जमा",withdraw:"निकालें",buyBonus:"बोनस खरीदें",bet:"दांव",balance:"शेष",freeSpins:"मुफ्त स्पिन",bonusMode:"बोनस मोड",bonusSpin:"बोनस स्पिन",bonusRemaining:"शेष",winUpTo:"तक जीतें",connectWallet:"वॉलेट कनेक्ट करें!",accessDenied:"पहुँच प्रतिबंधित!",accessDeniedDesc:"यह स्लॉट मशीन निजी है और विकास में है।",welcome:"स्वागत",howToPlay:"खेलना सीखें →",combos:"कॉम्बो",mechanics:"यांत्रिकी",howToDeposit:"जमा कैसे करें",prev:"← पिछला",next:"अगला →",play:"खेलें! 🎰",missing:"कमी",freeSpinsDay:"प्रतिदिन 10 मुफ्त स्पिन!",noDeposit:"शुरू करने के लिए जमा की जरूरत नहीं" },
-  ru:      { spin:"КРУТИТЬ",deposit:"ПОПОЛНИТЬ",withdraw:"ВЫВЕСТИ",buyBonus:"КУПИТЬ БОНУС",bet:"СТАВКА",balance:"БАЛАНС",freeSpins:"БЕСПЛАТНЫЕ",bonusMode:"БОНУС РЕЖИМ",bonusSpin:"БОНУС СПИН",bonusRemaining:"осталось",winUpTo:"ВЫИГРАЙ ДО",connectWallet:"Подключи кошелёк!",accessDenied:"Доступ закрыт!",accessDeniedDesc:"Этот слот-автомат приватный и находится в разработке.",welcome:"Добро пожаловать",howToPlay:"Как играть →",combos:"Комбо",mechanics:"Механики",howToDeposit:"Как пополнить",prev:"← Назад",next:"Далее →",play:"Играть! 🎰",missing:"Не хватает",freeSpinsDay:"10 бесплатных спинов в день!",noDeposit:"Депозит не нужен для старта" },
-  "zh-CN": { spin:"旋转",deposit:"存入",withdraw:"提取",buyBonus:"购买奖励",bet:"投注",balance:"余额",freeSpins:"免费旋转",bonusMode:"奖励模式",bonusSpin:"奖励旋转",bonusRemaining:"剩余",winUpTo:"最多赢",connectWallet:"连接钱包！",accessDenied:"访问受限！",accessDeniedDesc:"此老虎机为私人测试版，正在开发中。",welcome:"欢迎",howToPlay:"了解玩法 →",combos:"组合",mechanics:"机制",howToDeposit:"如何存入",prev:"← 上一页",next:"下一页 →",play:"开始！🎰",missing:"缺少",freeSpinsDay:"每天10次免费旋转！",noDeposit:"无需存款即可开始" },
-  id:      { spin:"PUTAR",deposit:"SETOR",withdraw:"TARIK",buyBonus:"BELI BONUS",bet:"TARUHAN",balance:"SALDO",freeSpins:"PUTARAN GRATIS",bonusMode:"MODE BONUS",bonusSpin:"PUTARAN BONUS",bonusRemaining:"tersisa",winUpTo:"MENANGKAN HINGGA",connectWallet:"Hubungkan dompet!",accessDenied:"Akses dibatasi!",accessDeniedDesc:"Mesin slot ini bersifat pribadi dan sedang dalam pengembangan.",welcome:"Selamat Datang",howToPlay:"Cara bermain →",combos:"Kombo",mechanics:"Mekanisme",howToDeposit:"Cara Setor",prev:"← Sebelumnya",next:"Berikutnya →",play:"Main! 🎰",missing:"Kurang",freeSpinsDay:"10 putaran gratis per hari!",noDeposit:"Tidak perlu setor untuk mulai" },
-  fr:      { spin:"TOURNER",deposit:"DÉPOSER",withdraw:"RETIRER",buyBonus:"ACHETER BONUS",bet:"MISE",balance:"SOLDE",freeSpins:"TOURS GRATUITS",bonusMode:"MODE BONUS",bonusSpin:"TOUR BONUS",bonusRemaining:"restants",winUpTo:"GAGNER JUSQU'À",connectWallet:"Connectez le portefeuille!",accessDenied:"Accès restreint!",accessDeniedDesc:"Cette machine à sous est privée et en cours de développement.",welcome:"Bienvenue",howToPlay:"Comment jouer →",combos:"Combos",mechanics:"Mécaniques",howToDeposit:"Comment Déposer",prev:"← Précédent",next:"Suivant →",play:"Jouer! 🎰",missing:"Manque",freeSpinsDay:"10 tours gratuits par jour!",noDeposit:"Pas besoin de dépôt pour commencer" },
-  ja:      { spin:"回す",deposit:"入金",withdraw:"出金",buyBonus:"ボーナス購入",bet:"ベット",balance:"残高",freeSpins:"フリースピン",bonusMode:"ボーナスモード",bonusSpin:"ボーナススピン",bonusRemaining:"残り",winUpTo:"最大で獲得",connectWallet:"ウォレットを接続！",accessDenied:"アクセス制限！",accessDeniedDesc:"このスロットマシンはプライベートで開発中です。",welcome:"ようこそ",howToPlay:"遊び方を見る →",combos:"コンボ",mechanics:"仕組み",howToDeposit:"入金方法",prev:"← 前へ",next:"次へ →",play:"プレイ！🎰",missing:"不足",freeSpinsDay:"毎日10回フリースピン！",noDeposit:"開始に入金不要" },
-  it:      { spin:"GIRA",deposit:"DEPOSITA",withdraw:"PRELEVA",buyBonus:"COMPRA BONUS",bet:"PUNTATA",balance:"SALDO",freeSpins:"GIRI GRATUITI",bonusMode:"MODALITÀ BONUS",bonusSpin:"GIRO BONUS",bonusRemaining:"rimasti",winUpTo:"VINCI FINO A",connectWallet:"Connetti il portafoglio!",accessDenied:"Accesso limitato!",accessDeniedDesc:"Questa slot machine è privata ed è in fase di sviluppo.",welcome:"Benvenuto",howToPlay:"Come giocare →",combos:"Combo",mechanics:"Meccaniche",howToDeposit:"Come Depositare",prev:"← Precedente",next:"Successivo →",play:"Gioca! 🎰",missing:"Manca",freeSpinsDay:"10 giri gratuiti al giorno!",noDeposit:"Nessun deposito per iniziare" },
-};
-function getSlotT(lang: string) {
-  return SLOT_UI_TRANSLATIONS[lang] ?? SLOT_UI_TRANSLATIONS["en"]!;
-}
 
+  spinLog: string; noSpinsYet: string;
+  betPrefix: string;
+  bonusBadge: string;
+  turboOn: string;
+  turboOff: string;
+  foilBadge: string;
+  lockedBadge: string;
+
+  helpWelcomeSubtitle: string;
+  helpComboRateHint: string;
+  helpCardDailyFreeSpinsTitle: string;
+  helpCardDailyFreeSpinsDesc: string;
+  helpCardCascadeTitle: string;
+  helpCardCascadeDesc: string;
+  helpCardFoilsTitle: string;
+  helpCardFoilsDesc: string;
+  helpCardBonusModeTitle: string;
+  helpCardBonusModeDesc: string;
+
+  helpCombosPayoutTableTitle: string;
+  helpRankComboTitle: string;
+  helpRankComboTagline: string;
+  helpRankComboDesc: string;
+  helpRankComboExample: string;
+  helpQuadComboTitle: string;
+  helpQuadComboTagline: string;
+  helpQuadComboDesc: string;
+  helpQuadComboExample: string;
+  helpCombosPayoutAceLabel: string;
+  helpCombosPayoutKingLabel: string;
+  helpCombosPayoutQueenLabel: string;
+  helpCombosPayoutJackLabel: string;
+  helpCombosPayoutTenLabel: string;
+  helpCombosPayoutNineLabel: string;
+  helpCombosPayoutEightLabel: string;
+  helpCombosPayoutSevenLabel: string;
+  helpCombosPayoutTwoToSixLabel: string;
+  helpMechanicCascadeTitle: string;
+  helpMechanicCascadeDesc: string;
+  helpMechanicFoilTitle: string;
+  helpMechanicFoilDesc: string;
+  helpMechanicBonusModeTitle: string;
+  helpMechanicBonusModeDesc: string;
+  helpMechanicDragukkaTitle: string;
+  helpMechanicDragukkaDesc: string;
+  helpMechanicWildcardsTitle: string;
+  helpMechanicWildcardsDesc: string;
+
+  helpDepositNeedVbmsTitle: string;
+  helpDepositStep1Title: string;
+  helpDepositStep1Desc: string;
+  helpDepositStep2Title: string;
+  helpDepositStep2Desc: string;
+  helpDepositStep3Title: string;
+  helpDepositStep3Desc: string;
+  helpDepositStep4Title: string;
+  helpDepositStep4Desc: string;
+  helpDepositContractLabel: string;
+  helpDepositApproveTransferLabel: string;
+  helpDepositTransferLabel: string;
+  helpDepositApproveLabel: string;
+  helpDepositDepositLabel: string;
+  helpDepositUniswapLabel: string;
+  helpDepositBaseLabel: string;
+  helpDepositVbmsLabel: string;
+  helpDepositCoinsLabel: string;
+  helpDepositTopOfSlotLabel: string;
+  helpDepositTwoTxLabel: string;
+  helpDepositRatioLabel: string;
+  helpDepositWithdrawAnytimeLabel: string;
+  helpDepositAddressShort: string;
+  helpDepositContractAddressLine: string;
+  helpDepositClickDepositQuoted: string;
+  helpDepositChooseAmountsLine: string;
+  helpDepositTwoTransactionsLine: string;
+  helpDepositReceiveCoinsLine: string;
+
+  dragToRotate: string; close: string;
+  continue: string; cancel: string; confirm: string;
+  bonusWildcardStays: string;
+  bonusTitle: string;
+  playBonus: string;
+  bonusCompleted: string;
+  bonusCoinsWon: string;
+  shareWin: string;
+  closeX: string;
+  cardBackAlt: string;
+  tapToDismiss: string;
+
+  coins: string;
+
+  errorProfileNotFound: string;
+  errorConnectWalletFirst: string;
+  errorAccessDeniedDevOnly: string;
+  errorInsufficientCoins: string;
+
+  raritySpecial: string;
+  rarityMythic: string;
+  rarityLegendary: string;
+  rarityEpic: string;
+  rarityRare: string;
+  rarityCommon: string;
+
+  recoveredSpinToast: string;
+  winToast: string;
+  bonusRoundCast: string;
+  bigWinCast: string;
+  bigWinLabel: string;
+  costLabel: string;
+  prizeMultiplierLabel: string;
+  currentBalanceLabel: string;
+};
+
+const SLOT_UI_TRANSLATIONS: Record<string, Partial<SlotUiText>> = {
+  en:      { spin:"SPIN",deposit:"DEPOSIT",withdraw:"WITHDRAW",buyBonus:"BUY BONUS",bet:"BET",balance:"BALANCE",freeSpins:"FREE SPINS",bonusMode:"BONUS MODE",bonusSpin:"BONUS SPIN",bonusRemaining:"remaining",winUpTo:"WIN UP TO",connectWallet:"Connect wallet!",accessDenied:"Access restricted!",accessDeniedDesc:"This slot machine is private and under development.",welcome:"Welcome",slotTitle:"Tukka Slots",howToPlay:"How to play →",combos:"Combos",mechanics:"Mechanics",howToDeposit:"How to Deposit",prev:"← Prev",next:"Next →",play:"Play! 🎰",missing:"Missing",freeSpinsDay:"5 free spins per day!",noDeposit:"No deposit needed to start",spinLog:"Spin Log",noSpinsYet:"No spins yet",betPrefix:"bet",bonusBadge:"BONUS",turboOn:"Turbo ON",turboOff:"Turbo OFF",foilBadge:"FOIL",lockedBadge:"LOCKED",helpWelcomeSubtitle:"Card slot with cascading combos",helpComboRateHint:"Target: ~1 combo every 5 spins. First daily spins have higher chance.",helpCardDailyFreeSpinsTitle:"5 free spins",helpCardDailyFreeSpinsDesc:"Every day, no cost",helpCardCascadeTitle:"Cascade",helpCardCascadeDesc:"Chain combos pay more",helpCardFoilsTitle:"Foils",helpCardFoilsDesc:"Golden cards that stack",helpCardBonusModeTitle:"Bonus Mode",helpCardBonusModeDesc:"4+ foils = 10 bonus spins",helpCombosPayoutTableTitle:"Real payouts (% of bet)",helpRankComboTitle:"Rank Combo",helpRankComboTagline:"most common",helpRankComboDesc:"4 cards of the same rank forming one of 23 valid patterns: horizontal, vertical, diagonal or L-shape. Position matters!",helpRankComboExample:"= \"The Anon Council\" 🔥",helpQuadComboTitle:"Quad Combo",helpQuadComboTagline:"3× stronger",helpQuadComboDesc:"4 identical cards (exact same card). Much rarer, pays 3× the rank combo.",helpQuadComboExample:"= \"Tukka Takeover\" 💀",helpCombosPayoutAceLabel:"Ace (A)",helpCombosPayoutKingLabel:"King (K)",helpCombosPayoutQueenLabel:"Queen (Q)",helpCombosPayoutJackLabel:"Jack (J)",helpCombosPayoutTenLabel:"10",helpCombosPayoutNineLabel:"9",helpCombosPayoutEightLabel:"8",helpCombosPayoutSevenLabel:"7",helpCombosPayoutTwoToSixLabel:"2–6",helpMechanicCascadeTitle:"CASCADE",helpMechanicCascadeDesc:"When a combo happens, cards disappear and new ones fall. Today cascade combos have NO extra multiplier: payout is flat per combo.",helpMechanicFoilTitle:"FOIL (gold card)",helpMechanicFoilDesc:"Foil cards are NOT destroyed in combos — they stay on the grid and stack. More foils = higher chance to trigger Bonus Mode.",helpMechanicBonusModeTitle:"BONUS MODE",helpMechanicBonusModeDesc:"4+ foils on the final grid trigger 10 bonus spins. During bonus, getting 4+ foils again adds 10 more spins.",helpMechanicDragukkaTitle:"DRAGUKKA (Joker)",helpMechanicDragukkaDesc:"Appears only in Bonus Mode. Stays on the grid for all 10 spins and can replace any card — but only once per spin.",helpMechanicWildcardsTitle:"NEYMAR & CLAWD (Wildcard)",helpMechanicWildcardsDesc:"Appear in normal mode. They can complete any combo as the missing card, but disappear after being used.",helpDepositNeedVbmsTitle:"Need VBMS to play?",helpDepositStep1Title:"Get VBMS",helpDepositStep1Desc:"Buy VBMS on Uniswap or earn it by playing on the site. Contract: 0xF14C1...728 (Base)",helpDepositStep2Title:"Click \"Deposit\"",helpDepositStep2Desc:"At the top of the slot screen, click the Deposit button. Choose the amount (100, 250, 500, or 1000 VBMS).",helpDepositStep3Title:"Approve and Transfer",helpDepositStep3Desc:"Two transactions in your wallet: 1) Approve (authorize spending), 2) Transfer (send the VBMS).",helpDepositStep4Title:"Receive Coins",helpDepositStep4Desc:"1 VBMS = 10 Coins to play. Coins stay in your account and can be withdrawn back anytime.",bonusWildcardStays:"The Wildcard stays on the grid for the entire bonus!",bonusTitle:"BONUS!",playBonus:"🎰 PLAY BONUS",bonusCompleted:"Bonus Complete!",bonusCoinsWon:"coins won in bonus",shareWin:"🔗 Share Win",dragToRotate:"Drag to rotate",closeX:"✕ Close",cardBackAlt:"Card back",tapToDismiss:"tap anywhere to dismiss",coins:"coins",errorProfileNotFound:"Profile not found",errorConnectWalletFirst:"Please connect wallet first",errorAccessDeniedDevOnly:"Access denied: slot restricted to developer wallets",errorInsufficientCoins:"Insufficient coins. Need {amount} coins to spin.",raritySpecial:"SPECIAL",rarityMythic:"MYTHIC",rarityLegendary:"LEGEND",rarityEpic:"EPIC",rarityRare:"RARE",rarityCommon:"COMMON",recoveredSpinToast:"🎰 Spin recovered! You won +{amount} coins (ID: {id})",winToast:"+{amount} coins!",bonusRoundCast:"🎰 Bonus Round: +{amount} coins{mult} {by} on Tukka Slots!",bigWinCast:"🎰 {label} +{amount} coins{mult} {by} on Tukka Slots!",bigWinLabel:"{label}!",costLabel:"Cost",prizeMultiplierLabel:"Prize multiplier",currentBalanceLabel:"Current balance" },
+  "pt-BR": { spin:"GIRAR",deposit:"DEPOSITAR",withdraw:"SACAR",buyBonus:"COMPRAR BÔNUS",bet:"APOSTA",balance:"SALDO",freeSpins:"GIROS GRÁTIS",bonusMode:"MODO BÔNUS",bonusSpin:"GIRO BÔNUS",bonusRemaining:"restantes",winUpTo:"GANHE ATÉ",connectWallet:"Conecte a carteira!",accessDenied:"Acesso restrito!",accessDeniedDesc:"Este slot machine é privado e está em desenvolvimento.",welcome:"Bem-vindo",slotTitle:"Tukka Slots",howToPlay:"Ver como jogar →",combos:"Combos",mechanics:"Mecânicas",howToDeposit:"Como Depositar",prev:"← Anterior",next:"Próximo →",play:"Jogar! 🎰",missing:"Faltou",freeSpinsDay:"5 giros grátis por dia!",noDeposit:"Não precisa depositar para começar",spinLog:"Spin Log",noSpinsYet:"Nenhum spin ainda",betPrefix:"aposta",bonusBadge:"BÔNUS",turboOn:"Turbo ON",turboOff:"Turbo OFF",foilBadge:"FOIL",lockedBadge:"LOCKED",helpWelcomeSubtitle:"Slot de cartas com combos em cascata",helpComboRateHint:"Meta: ~1 combo a cada 5 spins. Primeiros giros do dia têm chance maior.",helpCardDailyFreeSpinsTitle:"5 giros grátis",helpCardDailyFreeSpinsDesc:"Todo dia, sem custo",helpCardCascadeTitle:"Cascata",helpCardCascadeDesc:"Combos encadeiam e pagam mais",helpCardFoilsTitle:"Foils",helpCardFoilsDesc:"Cartas douradas que acumulam",helpCardBonusModeTitle:"Bonus Mode",helpCardBonusModeDesc:"4+ foils = 10 giros bônus",helpCombosPayoutTableTitle:"Pagamentos reais (% da aposta)",helpRankComboTitle:"Rank Combo",helpRankComboTagline:"mais comum",helpRankComboDesc:"4 cartas do mesmo rank formando um dos 23 padrões válidos: horizontal, vertical, diagonal ou L. A posição importa!",helpRankComboExample:"= \"The Anon Council\" 🔥",helpQuadComboTitle:"Quad Combo",helpQuadComboTagline:"3× mais forte",helpQuadComboDesc:"4 cartas idênticas (mesma carta exata). Muito mais raro, paga 3× o rank combo.",helpQuadComboExample:"= \"Tukka Takeover\" 💀",helpMechanicCascadeTitle:"CASCADE",helpMechanicCascadeDesc:"Quando um combo ocorre, as cartas somem e novas caem. Hoje os combos em cascata NÃO têm multiplicador extra: o payout é flat por combo.",helpMechanicFoilTitle:"FOIL (carta dourada)",helpMechanicFoilDesc:"Cartas foil NÃO são destruídas no combo — ficam no grid e acumulam. Quanto mais foils, maior a chance de Bonus Mode.",helpMechanicBonusModeTitle:"BONUS MODE",helpMechanicBonusModeDesc:"4+ foils no grid final ativam 10 giros bônus. Durante o bônus, 4+ foils novamente adicionam mais 10 giros.",helpMechanicDragukkaTitle:"DRAGUKKA (Joker)",helpMechanicDragukkaDesc:"Aparece só no Bonus Mode. Fica no grid por todas as 10 rodadas e pode substituir qualquer carta — mas só 1 vez por rodada.",helpMechanicWildcardsTitle:"NEYMAR & CLAWD (Coringa)",helpMechanicWildcardsDesc:"Aparecem no modo normal. Podem completar qualquer combo no lugar faltando, mas somem após serem usados.",helpDepositNeedVbmsTitle:"Precisa de VBMS para jogar?",helpDepositStep1Title:"Consiga VBMS",helpDepositStep1Desc:"Compre VBMS na Uniswap ou ganhe jogando no site. Contract: 0xF14C1...728 (Base)",helpDepositStep2Title:"Clique em \"Deposit\"",helpDepositStep2Desc:"No topo da tela do slot, clique no botão Deposit. Escolha o valor (100, 250, 500 ou 1000 VBMS).",helpDepositStep3Title:"Aprovar e Transferir",helpDepositStep3Desc:"Duas transações na sua carteira: 1ª Approve (autoriza o gasto), 2ª Transfer (envia os VBMS).",helpDepositStep4Title:"Receba Coins",helpDepositStep4Desc:"1 VBMS = 10 Coins para jogar. Coins ficam na sua conta e podem ser sacados de volta a qualquer hora.",bonusWildcardStays:"A Wildcard permanece no grid durante todo o bônus!",bonusTitle:"BÔNUS!",playBonus:"🎰 JOGAR BÔNUS",bonusCompleted:"Bônus concluído!",bonusCoinsWon:"coins ganhos no bônus",shareWin:"🔗 Compartilhar",dragToRotate:"Arraste para girar",closeX:"✕ Fechar",cardBackAlt:"Verso da carta",tapToDismiss:"toque em qualquer lugar para fechar",coins:"coins",errorProfileNotFound:"Perfil não encontrado",errorConnectWalletFirst:"Conecte a carteira primeiro",errorAccessDeniedDevOnly:"Acesso negado: slot restrito para carteiras dev",errorInsufficientCoins:"Coins insuficientes. Precisa de {amount} coins para girar.",raritySpecial:"SPECIAL",rarityMythic:"MYTHIC",rarityLegendary:"LEGEND",rarityEpic:"EPIC",rarityRare:"RARE",rarityCommon:"COMMON",recoveredSpinToast:"🎰 Spin recuperado! Você ganhou +{amount} coins (ID: {id})",winToast:"+{amount} coins!",bonusRoundCast:"🎰 Rodada bônus: +{amount} coins{mult} {by} no Tukka Slots!",bigWinCast:"🎰 {label} +{amount} coins{mult} {by} no Tukka Slots!",bigWinLabel:"{label}!",costLabel:"Custo",prizeMultiplierLabel:"Multiplicador de prêmio",currentBalanceLabel:"Saldo atual" },
+  es:      { spin:"GIRAR",deposit:"DEPOSITAR",withdraw:"RETIRAR",buyBonus:"COMPRAR BONO",bet:"APUESTA",balance:"SALDO",freeSpins:"GIROS GRATIS",bonusMode:"MODO BONO",bonusSpin:"GIRO BONO",bonusRemaining:"restantes",winUpTo:"GANA HASTA",connectWallet:"¡Conecta la billetera!",accessDenied:"¡Acceso restringido!",accessDeniedDesc:"Esta máquina tragamonedas es privada y está en desarrollo.",welcome:"Bienvenido",slotTitle:"Tukka Slots",howToPlay:"Ver cómo jugar →",combos:"Combos",mechanics:"Mecánicas",howToDeposit:"Cómo Depositar",prev:"← Anterior",next:"Siguiente →",play:"¡Jugar! 🎰",missing:"Faltó",freeSpinsDay:"¡5 giros gratis por día!",noDeposit:"No necesitas depositar para empezar",spinLog:"Spin Log",noSpinsYet:"Aún no hay giros",betPrefix:"apuesta",bonusBadge:"BONUS",turboOn:"Turbo ON",turboOff:"Turbo OFF",foilBadge:"FOIL",lockedBadge:"LOCKED",helpWelcomeSubtitle:"Slot de cartas con combos en cascada",helpComboRateHint:"Objetivo: ~1 combo cada 5 giros. Los primeros giros del día tienen más probabilidad.",helpCardDailyFreeSpinsTitle:"5 giros gratis",helpCardDailyFreeSpinsDesc:"Cada día, sin costo",helpCardCascadeTitle:"Cascada",helpCardCascadeDesc:"Los combos encadenados pagan más",helpCardFoilsTitle:"Foils",helpCardFoilsDesc:"Cartas doradas que se acumulan",helpCardBonusModeTitle:"Modo Bonus",helpCardBonusModeDesc:"4+ foils = 10 giros bonus",helpCombosPayoutTableTitle:"Pagos reales (% de la apuesta)",helpRankComboTitle:"Rank Combo",helpRankComboTagline:"más común",helpRankComboDesc:"4 cartas del mismo rango formando uno de los 23 patrones válidos: horizontal, vertical, diagonal o L. ¡La posición importa!",helpRankComboExample:"= \"The Anon Council\" 🔥",helpQuadComboTitle:"Quad Combo",helpQuadComboTagline:"3× más fuerte",helpQuadComboDesc:"4 cartas idénticas (la misma carta exacta). Mucho más raro, paga 3× el rank combo.",helpQuadComboExample:"= \"Tukka Takeover\" 💀",helpMechanicCascadeTitle:"CASCADE",helpMechanicCascadeDesc:"Cuando ocurre un combo, las cartas desaparecen y caen nuevas. Hoy los combos en cascada NO tienen multiplicador extra: el pago es plano por combo.",helpMechanicFoilTitle:"FOIL (carta dorada)",helpMechanicFoilDesc:"Las cartas foil NO se destruyen en el combo: se quedan en la cuadrícula y se acumulan. Más foils = mayor probabilidad de activar el Modo Bonus.",helpMechanicBonusModeTitle:"MODO BONUS",helpMechanicBonusModeDesc:"4+ foils en la cuadrícula final activan 10 giros bonus. Durante el bonus, conseguir 4+ foils de nuevo añade 10 giros más.",helpMechanicDragukkaTitle:"DRAGUKKA (Joker)",helpMechanicDragukkaDesc:"Aparece solo en Modo Bonus. Se queda en la cuadrícula durante los 10 giros y puede reemplazar cualquier carta, pero solo una vez por giro.",helpMechanicWildcardsTitle:"NEYMAR & CLAWD (Comodines)",helpMechanicWildcardsDesc:"Aparecen en el modo normal. Pueden completar cualquier combo como carta faltante, pero desaparecen después de usarse.",helpDepositNeedVbmsTitle:"¿Necesitas VBMS para jugar?",helpDepositStep1Title:"Consigue VBMS",helpDepositStep1Desc:"Compra VBMS en Uniswap o gánalo jugando en el sitio. Contrato: 0xF14C1...728 (Base)",helpDepositStep2Title:"Haz clic en \"Deposit\"",helpDepositStep2Desc:"En la parte superior de la pantalla del slot, haz clic en el botón Deposit. Elige el monto (100, 250, 500 o 1000 VBMS).",helpDepositStep3Title:"Aprobar y Transferir",helpDepositStep3Desc:"Dos transacciones en tu billetera: 1) Approve (autorizar gasto), 2) Transfer (enviar los VBMS).",helpDepositStep4Title:"Recibe Coins",helpDepositStep4Desc:"1 VBMS = 10 Coins para jugar. Las Coins quedan en tu cuenta y se pueden retirar cuando quieras.",bonusWildcardStays:"El comodín permanece en la cuadrícula durante todo el bono.",bonusTitle:"¡BONO!",playBonus:"🎰 JUGAR BONO",bonusCompleted:"¡Bono terminado!",bonusCoinsWon:"monedas ganadas en el bono",shareWin:"🔗 Compartir",dragToRotate:"Arrastra para girar",closeX:"✕ Cerrar",cardBackAlt:"Reverso de la carta",tapToDismiss:"toca en cualquier lugar para cerrar",coins:"monedas",errorProfileNotFound:"Perfil no encontrado",errorConnectWalletFirst:"Conecta la billetera primero",errorAccessDeniedDevOnly:"Acceso denegado: slot restringido a billeteras dev",errorInsufficientCoins:"Monedas insuficientes. Necesitas {amount} monedas para girar.",raritySpecial:"SPECIAL",rarityMythic:"MYTHIC",rarityLegendary:"LEGEND",rarityEpic:"EPIC",rarityRare:"RARE",rarityCommon:"COMMON",recoveredSpinToast:"🎰 ¡Giro recuperado! Ganaste +{amount} monedas (ID: {id})",winToast:"+{amount} monedas!",bonusRoundCast:"🎰 Ronda bonus: +{amount} monedas{mult} {by} en Tukka Slots!",bigWinCast:"🎰 {label} +{amount} monedas{mult} {by} en Tukka Slots!",bigWinLabel:"{label}!",costLabel:"Costo",prizeMultiplierLabel:"Multiplicador",currentBalanceLabel:"Saldo actual" },
+  hi:      { spin:"घुमाएं",deposit:"जमा",withdraw:"निकालें",buyBonus:"बोनस खरीदें",bet:"दांव",balance:"शेष",freeSpins:"मुफ्त स्पिन",bonusMode:"बोनस मोड",bonusSpin:"बोनस स्पिन",bonusRemaining:"शेष",winUpTo:"तक जीतें",connectWallet:"वॉलेट कनेक्ट करें!",accessDenied:"पहुँच प्रतिबंधित!",accessDeniedDesc:"यह स्लॉट मशीन निजी है और विकास में है।",welcome:"स्वागत",slotTitle:"Tukka Slots",howToPlay:"खेलना सीखें →",combos:"कॉम्बो",mechanics:"यांत्रिकी",howToDeposit:"जमा कैसे करें",prev:"← पिछला",next:"अगला →",play:"खेलें! 🎰",missing:"कमी",freeSpinsDay:"प्रतिदिन 10 मुफ्त स्पिन!",noDeposit:"शुरू करने के लिए जमा की जरूरत नहीं",spinLog:"Spin Log",noSpinsYet:"अभी तक कोई स्पिन नहीं",betPrefix:"दांव",bonusBadge:"BONUS",turboOn:"Turbo ON",turboOff:"Turbo OFF",foilBadge:"FOIL",lockedBadge:"LOCKED",helpWelcomeSubtitle:"कैस्केडिंग कॉम्बो वाला कार्ड स्लॉट",helpComboRateHint:"लक्ष्य: लगभग हर 5 स्पिन में 1 कॉम्बो। दिन के शुरुआती स्पिन में संभावना अधिक है।",helpCardDailyFreeSpinsTitle:"10 मुफ्त स्पिन",helpCardDailyFreeSpinsDesc:"हर दिन, बिना लागत",helpCardCascadeTitle:"कैस्केड",helpCardCascadeDesc:"चेन कॉम्बो ज़्यादा भुगतान करते हैं",helpCardFoilsTitle:"फॉइल्स",helpCardFoilsDesc:"सुनहरे कार्ड जो जमा होते हैं",helpCardBonusModeTitle:"बोनस मोड",helpCardBonusModeDesc:"4+ फॉइल = 10 बोनस स्पिन",helpCombosPayoutTableTitle:"वास्तविक भुगतान (% दांव)",helpMechanicCascadeTitle:"CASCADE",helpMechanicCascadeDesc:"जब कोई कॉम्बो होता है, कार्ड गायब हो जाते हैं और नए गिरते हैं। आज कैस्केड कॉम्बो का कोई अतिरिक्त गुणक नहीं है: भुगतान प्रति कॉम्बो फ्लैट है।",helpMechanicFoilTitle:"FOIL (गोल्ड कार्ड)",helpMechanicFoilDesc:"Foil कार्ड कॉम्बो में नष्ट नहीं होते — वे ग्रिड पर रहते हैं और जमा होते हैं। अधिक foils = बोनस मोड की अधिक संभावना।",helpMechanicBonusModeTitle:"बोनस मोड",helpMechanicBonusModeDesc:"अंतिम ग्रिड में 4+ foils होने पर 10 बोनस स्पिन मिलते हैं। बोनस के दौरान फिर से 4+ foils मिलने पर 10 और स्पिन जुड़ते हैं।",helpMechanicDragukkaTitle:"DRAGUKKA (Joker)",helpMechanicDragukkaDesc:"केवल बोनस मोड में आता है। पूरे 10 स्पिन तक ग्रिड पर रहता है और किसी भी कार्ड की जगह ले सकता है — लेकिन प्रति स्पिन केवल 1 बार।",helpMechanicWildcardsTitle:"NEYMAR & CLAWD (वाइल्डकार्ड)",helpMechanicWildcardsDesc:"नॉर्मल मोड में आते हैं। किसी भी कॉम्बो में गायब कार्ड की जगह पूरा कर सकते हैं, लेकिन इस्तेमाल के बाद गायब हो जाते हैं।",helpDepositNeedVbmsTitle:"खेलने के लिए VBMS चाहिए?",helpDepositStep1Title:"VBMS प्राप्त करें",helpDepositStep1Desc:"Uniswap पर VBMS खरीदें या साइट पर खेलकर कमाएँ। कॉन्ट्रैक्ट: 0xF14C1...728 (Base)",helpDepositStep2Title:"\"Deposit\" पर क्लिक करें",helpDepositStep2Desc:"स्लॉट स्क्रीन के ऊपर Deposit बटन पर क्लिक करें। राशि चुनें (100, 250, 500, या 1000 VBMS)।",helpDepositStep3Title:"Approve और Transfer",helpDepositStep3Desc:"आपके वॉलेट में दो ट्रांजैक्शन: 1) Approve (खर्च की अनुमति), 2) Transfer (VBMS भेजें)।",helpDepositStep4Title:"Coins प्राप्त करें",helpDepositStep4Desc:"1 VBMS = खेलने के लिए 10 Coins। Coins आपके खाते में रहते हैं और कभी भी वापस निकाले जा सकते हैं।",bonusWildcardStays:"वाइल्डकार्ड पूरे बोनस के दौरान ग्रिड पर रहती है!",bonusTitle:"बोनस!",playBonus:"🎰 बोनस खेलें",bonusCompleted:"बोनस पूरा!",bonusCoinsWon:"बोनस में जीते गए कॉइन्स",shareWin:"🔗 शेयर",dragToRotate:"घुमाने के लिए खींचें",closeX:"✕ बंद करें",cardBackAlt:"कार्ड का पिछला भाग",tapToDismiss:"बंद करने के लिए कहीं भी टैप करें",coins:"कॉइन्स",errorProfileNotFound:"प्रोफ़ाइल नहीं मिली",errorConnectWalletFirst:"पहले वॉलेट कनेक्ट करें",errorAccessDeniedDevOnly:"एक्सेस अस्वीकृत: स्लॉट केवल dev वॉलेट के लिए",errorInsufficientCoins:"कॉइन्स पर्याप्त नहीं। स्पिन करने के लिए {amount} कॉइन्स चाहिए।",raritySpecial:"SPECIAL",rarityMythic:"MYTHIC",rarityLegendary:"LEGEND",rarityEpic:"EPIC",rarityRare:"RARE",rarityCommon:"COMMON",recoveredSpinToast:"🎰 स्पिन रिकवर हुआ! आपने +{amount} कॉइन्स जीते (ID: {id})",winToast:"+{amount} कॉइन्स!",bonusRoundCast:"🎰 बोनस राउंड: +{amount} कॉइन्स{mult} {by} Tukka Slots में!",bigWinCast:"🎰 {label} +{amount} कॉइन्स{mult} {by} Tukka Slots में!",bigWinLabel:"{label}!",costLabel:"लागत",prizeMultiplierLabel:"पुरस्कार गुणक",currentBalanceLabel:"वर्तमान शेष" },
+  ru:      { spin:"КРУТИТЬ",deposit:"ПОПОЛНИТЬ",withdraw:"ВЫВЕСТИ",buyBonus:"КУПИТЬ БОНУС",bet:"СТАВКА",balance:"БАЛАНС",freeSpins:"БЕСПЛАТНЫЕ",bonusMode:"БОНУС РЕЖИМ",bonusSpin:"БОНУС СПИН",bonusRemaining:"осталось",winUpTo:"ВЫИГРАЙ ДО",connectWallet:"Подключи кошелёк!",accessDenied:"Доступ закрыт!",accessDeniedDesc:"Этот слот-автомат приватный и находится в разработке.",welcome:"Добро пожаловать",slotTitle:"Tukka Slots",howToPlay:"Как играть →",combos:"Комбо",mechanics:"Механики",howToDeposit:"Как пополнить",prev:"← Назад",next:"Далее →",play:"Играть! 🎰",missing:"Не хватает",freeSpinsDay:"10 бесплатных спинов в день!",noDeposit:"Депозит не нужен для старта",spinLog:"Spin Log",noSpinsYet:"Пока нет спинов",betPrefix:"ставка",bonusBadge:"BONUS",turboOn:"Turbo ON",turboOff:"Turbo OFF",foilBadge:"FOIL",lockedBadge:"LOCKED",helpWelcomeSubtitle:"Карточный слот с каскадными комбо",helpComboRateHint:"Цель: ~1 комбо каждые 5 спинов. Первые спины дня имеют повышенный шанс.",helpCardDailyFreeSpinsTitle:"10 бесплатных спинов",helpCardDailyFreeSpinsDesc:"Каждый день, бесплатно",helpCardCascadeTitle:"Каскад",helpCardCascadeDesc:"Цепочки комбо платят больше",helpCardFoilsTitle:"Фойлы",helpCardFoilsDesc:"Золотые карты, которые накапливаются",helpCardBonusModeTitle:"Бонусный режим",helpCardBonusModeDesc:"4+ фойла = 10 бонусных спинов",helpCombosPayoutTableTitle:"Реальные выплаты (% от ставки)",helpMechanicCascadeTitle:"CASCADE",helpMechanicCascadeDesc:"Когда происходит комбо, карты исчезают и падают новые. Сейчас каскадные комбо НЕ имеют дополнительного множителя: выплата фиксирована за комбо.",helpMechanicFoilTitle:"FOIL (золотая карта)",helpMechanicFoilDesc:"Фойл-карты НЕ уничтожаются в комбо — они остаются на поле и накапливаются. Больше фойлов = выше шанс активировать бонусный режим.",helpMechanicBonusModeTitle:"БОНУС РЕЖИМ",helpMechanicBonusModeDesc:"4+ фойла на финальной сетке дают 10 бонусных спинов. Во время бонуса, если снова собрать 4+ фойла, добавляется ещё 10 спинов.",helpMechanicDragukkaTitle:"DRAGUKKA (Джокер)",helpMechanicDragukkaDesc:"Появляется только в бонусном режиме. Остаётся на поле на все 10 спинов и может заменить любую карту — но только один раз за спин.",helpMechanicWildcardsTitle:"NEYMAR & CLAWD (Вайлдкард)",helpMechanicWildcardsDesc:"Появляются в обычном режиме. Они могут завершить любое комбо как недостающая карта, но исчезают после использования.",helpDepositNeedVbmsTitle:"Нужен VBMS, чтобы играть?",helpDepositStep1Title:"Получите VBMS",helpDepositStep1Desc:"Купите VBMS на Uniswap или заработайте, играя на сайте. Контракт: 0xF14C1...728 (Base)",helpDepositStep2Title:"Нажмите \"Deposit\"",helpDepositStep2Desc:"Вверху экрана слота нажмите кнопку Deposit. Выберите сумму (100, 250, 500 или 1000 VBMS).",helpDepositStep3Title:"Approve и Transfer",helpDepositStep3Desc:"Две транзакции в кошельке: 1) Approve (разрешить списание), 2) Transfer (отправить VBMS).",helpDepositStep4Title:"Получите Coins",helpDepositStep4Desc:"1 VBMS = 10 Coins для игры. Coins остаются на вашем аккаунте и их можно вывести обратно в любое время.",bonusWildcardStays:"Вайлдкард остаётся на поле на весь бонус!",bonusTitle:"БОНУС!",playBonus:"🎰 ИГРАТЬ БОНУС",bonusCompleted:"Бонус завершён!",bonusCoinsWon:"монет выиграно в бонусе",shareWin:"🔗 Поделиться",dragToRotate:"Тяни, чтобы вращать",closeX:"✕ Закрыть",cardBackAlt:"Рубашка карты",tapToDismiss:"нажмите где угодно, чтобы закрыть",coins:"монет",errorProfileNotFound:"Профиль не найден",errorConnectWalletFirst:"Сначала подключите кошелёк",errorAccessDeniedDevOnly:"Доступ запрещён: слот только для dev-кошельков",errorInsufficientCoins:"Недостаточно монет. Нужно {amount} монет для спина.",raritySpecial:"SPECIAL",rarityMythic:"MYTHIC",rarityLegendary:"LEGEND",rarityEpic:"EPIC",rarityRare:"RARE",rarityCommon:"COMMON",recoveredSpinToast:"🎰 Спин восстановлен! Вы выиграли +{amount} монет (ID: {id})",winToast:"+{amount} монет!",bonusRoundCast:"🎰 Бонус-раунд: +{amount} монет{mult} {by} в Tukka Slots!",bigWinCast:"🎰 {label} +{amount} монет{mult} {by} в Tukka Slots!",bigWinLabel:"{label}!",costLabel:"Стоимость",prizeMultiplierLabel:"Множитель",currentBalanceLabel:"Текущий баланс" },
+  "zh-CN": { spin:"旋转",deposit:"存入",withdraw:"提取",buyBonus:"购买奖励",bet:"投注",balance:"余额",freeSpins:"免费旋转",bonusMode:"奖励模式",bonusSpin:"奖励旋转",bonusRemaining:"剩余",winUpTo:"最多赢",connectWallet:"连接钱包！",accessDenied:"访问受限！",accessDeniedDesc:"此老虎机为私人测试版，正在开发中。",welcome:"欢迎",slotTitle:"Tukka Slots",howToPlay:"了解玩法 →",combos:"组合",mechanics:"机制",howToDeposit:"如何存入",prev:"← 上一页",next:"下一页 →",play:"开始！🎰",missing:"缺少",freeSpinsDay:"每天10次免费旋转！",noDeposit:"无需存款即可开始",spinLog:"Spin Log",noSpinsYet:"暂无记录",betPrefix:"下注",bonusBadge:"BONUS",turboOn:"Turbo ON",turboOff:"Turbo OFF",foilBadge:"FOIL",lockedBadge:"LOCKED",helpWelcomeSubtitle:"带有连锁组合的卡牌老虎机",helpComboRateHint:"目标：约每 5 次旋转 1 次组合。每日前几次旋转概率更高。",helpCardDailyFreeSpinsTitle:"10 次免费旋转",helpCardDailyFreeSpinsDesc:"每天一次，无成本",helpCardCascadeTitle:"连锁下落",helpCardCascadeDesc:"连锁组合支付更高",helpCardFoilsTitle:"Foils",helpCardFoilsDesc:"会叠加的金色卡牌",helpCardBonusModeTitle:"奖励模式",helpCardBonusModeDesc:"4+ foils = 10 次奖励旋转",helpCombosPayoutTableTitle:"真实赔付（占下注百分比）",helpMechanicCascadeTitle:"CASCADE",helpMechanicCascadeDesc:"当出现组合时，卡牌会消失并有新牌下落。当前连锁组合没有额外倍数：每个组合的赔付固定。",helpMechanicFoilTitle:"FOIL（金卡）",helpMechanicFoilDesc:"Foil 卡不会在组合中被消除——它们会留在格子里并叠加。Foils 越多，触发奖励模式的概率越高。",helpMechanicBonusModeTitle:"奖励模式",helpMechanicBonusModeDesc:"最终格子里有 4+ foils 会触发 10 次奖励旋转。奖励期间再次获得 4+ foils 会再增加 10 次旋转。",helpMechanicDragukkaTitle:"DRAGUKKA（小丑）",helpMechanicDragukkaDesc:"只在奖励模式出现。会在整个 10 次旋转期间留在格子里，并可替代任意卡牌——但每次旋转只能用一次。",helpMechanicWildcardsTitle:"NEYMAR & CLAWD（万能牌）",helpMechanicWildcardsDesc:"在普通模式出现。它们可以作为缺失的卡牌完成任意组合，但使用后会消失。",helpDepositNeedVbmsTitle:"需要 VBMS 才能玩吗？",helpDepositStep1Title:"获取 VBMS",helpDepositStep1Desc:"在 Uniswap 购买 VBMS，或在站内游玩获得。合约：0xF14C1...728（Base）",helpDepositStep2Title:"点击 \"Deposit\"",helpDepositStep2Desc:"在老虎机界面顶部点击 Deposit 按钮。选择数量（100、250、500 或 1000 VBMS）。",helpDepositStep3Title:"Approve 和 Transfer",helpDepositStep3Desc:"钱包中会有两笔交易：1) Approve（授权花费），2) Transfer（发送 VBMS）。",helpDepositStep4Title:"获得 Coins",helpDepositStep4Desc:"1 VBMS = 10 Coins 用于游玩。Coins 会保存在你的账户中，并可随时提现吗。",bonusWildcardStays:"百搭在整个奖励期间都会留在格子里！",bonusTitle:"奖励！",playBonus:"🎰 开始奖励",bonusCompleted:"奖励结束！",bonusCoinsWon:"奖励中赢得的金币",shareWin:"🔗 分享",dragToRotate:"拖动旋转",closeX:"✕ 关闭",cardBackAlt:"卡牌背面",tapToDismiss:"点击任意位置关闭",coins:"金币",errorProfileNotFound:"未找到资料",errorConnectWalletFirst:"请先连接钱包",errorAccessDeniedDevOnly:"拒绝访问：仅限 dev 钱包",errorInsufficientCoins:"金币不足。需要 {amount} 金币才能旋转。",raritySpecial:"SPECIAL",rarityMythic:"MYTHIC",rarityLegendary:"LEGEND",rarityEpic:"EPIC",rarityRare:"RARE",rarityCommon:"COMMON",recoveredSpinToast:"🎰 已恢复旋转！你赢得了 +{amount} 金币（ID: {id}）",winToast:"+{amount} 金币!",bonusRoundCast:"🎰 奖励回合：+{amount} 金币{mult} {by} 在 Tukka Slots!",bigWinCast:"🎰 {label} +{amount} 金币{mult} {by} 在 Tukka Slots!",bigWinLabel:"{label}!",costLabel:"花费",prizeMultiplierLabel:"奖励倍率",currentBalanceLabel:"当前余额" },
+  id:      { spin:"PUTAR",deposit:"SETOR",withdraw:"TARIK",buyBonus:"BELI BONUS",bet:"TARUHAN",balance:"SALDO",freeSpins:"PUTARAN GRATIS",bonusMode:"MODE BONUS",bonusSpin:"PUTARAN BONUS",bonusRemaining:"tersisa",winUpTo:"MENANGKAN HINGGA",connectWallet:"Hubungkan dompet!",accessDenied:"Akses dibatasi!",accessDeniedDesc:"Mesin slot ini bersifat pribadi dan sedang dalam pengembangan.",welcome:"Selamat Datang",slotTitle:"Tukka Slots",howToPlay:"Cara bermain →",combos:"Kombo",mechanics:"Mekanisme",howToDeposit:"Cara Setor",prev:"← Sebelumnya",next:"Berikutnya →",play:"Main! 🎰",missing:"Kurang",freeSpinsDay:"10 putaran gratis per hari!",noDeposit:"Tidak perlu setor untuk mulai",spinLog:"Spin Log",noSpinsYet:"Belum ada spin",betPrefix:"taruhan",bonusBadge:"BONUS",turboOn:"Turbo ON",turboOff:"Turbo OFF",foilBadge:"FOIL",lockedBadge:"LOCKED",helpWelcomeSubtitle:"Slot kartu dengan combo berantai",helpComboRateHint:"Target: ~1 combo tiap 5 spin. Spin awal harian punya peluang lebih tinggi.",helpCardDailyFreeSpinsTitle:"10 spin gratis",helpCardDailyFreeSpinsDesc:"Setiap hari, tanpa biaya",helpCardCascadeTitle:"Cascade",helpCardCascadeDesc:"Combo berantai bayar lebih",helpCardFoilsTitle:"Foils",helpCardFoilsDesc:"Kartu emas yang menumpuk",helpCardBonusModeTitle:"Mode Bonus",helpCardBonusModeDesc:"4+ foils = 10 spin bonus",helpCombosPayoutTableTitle:"Pembayaran nyata (% dari taruhan)",helpMechanicCascadeTitle:"CASCADE",helpMechanicCascadeDesc:"Saat kombo terjadi, kartu menghilang dan yang baru jatuh. Saat ini kombo cascade TIDAK punya pengali tambahan: pembayaran flat per kombo.",helpMechanicFoilTitle:"FOIL (kartu emas)",helpMechanicFoilDesc:"Kartu foil TIDAK hancur saat kombo — tetap di grid dan menumpuk. Lebih banyak foils = peluang lebih tinggi memicu Mode Bonus.",helpMechanicBonusModeTitle:"MODE BONUS",helpMechanicBonusModeDesc:"4+ foils di grid akhir memicu 10 spin bonus. Selama bonus, mendapatkan 4+ foils lagi menambah 10 spin.",helpMechanicDragukkaTitle:"DRAGUKKA (Joker)",helpMechanicDragukkaDesc:"Muncul hanya di Mode Bonus. Tetap di grid selama 10 spin dan bisa menggantikan kartu apa pun — tapi hanya sekali per spin.",helpMechanicWildcardsTitle:"NEYMAR & CLAWD (Wildcard)",helpMechanicWildcardsDesc:"Muncul di mode normal. Bisa melengkapi kombo apa pun sebagai kartu yang hilang, tapi hilang setelah digunakan.",helpDepositNeedVbmsTitle:"Butuh VBMS untuk bermain?",helpDepositStep1Title:"Dapatkan VBMS",helpDepositStep1Desc:"Beli VBMS di Uniswap atau dapatkan dengan bermain di situs. Kontrak: 0xF14C1...728 (Base)",helpDepositStep2Title:"Klik \"Deposit\"",helpDepositStep2Desc:"Di bagian atas layar slot, klik tombol Deposit. Pilih jumlah (100, 250, 500, atau 1000 VBMS).",helpDepositStep3Title:"Approve dan Transfer",helpDepositStep3Desc:"Dua transaksi di dompet: 1) Approve (izin belanja), 2) Transfer (kirim VBMS).",helpDepositStep4Title:"Terima Coins",helpDepositStep4Desc:"1 VBMS = 10 Coins untuk bermain. Coins tersimpan di akunmu dan bisa ditarik kembali kapan saja.",bonusWildcardStays:"Wildcard tetap di grid selama bonus!",bonusTitle:"BONUS!",playBonus:"🎰 MAIN BONUS",bonusCompleted:"Bonus selesai!",bonusCoinsWon:"koin menang di bonus",shareWin:"🔗 Bagikan",dragToRotate:"Seret untuk memutar",closeX:"✕ Tutup",cardBackAlt:"Bagian belakang kartu",tapToDismiss:"ketuk di mana saja untuk menutup",coins:"koin",errorProfileNotFound:"Profil tidak ditemukan",errorConnectWalletFirst:"Hubungkan dompet dulu",errorAccessDeniedDevOnly:"Akses ditolak: slot hanya untuk dompet dev",errorInsufficientCoins:"Koin tidak cukup. Perlu {amount} koin untuk memutar.",raritySpecial:"SPECIAL",rarityMythic:"MYTHIC",rarityLegendary:"LEGEND",rarityEpic:"EPIC",rarityRare:"RARE",rarityCommon:"COMMON",recoveredSpinToast:"🎰 Spin dipulihkan! Kamu menang +{amount} koin (ID: {id})",winToast:"+{amount} koin!",bonusRoundCast:"🎰 Ronde bonus: +{amount} koin{mult} {by} di Tukka Slots!",bigWinCast:"🎰 {label} +{amount} koin{mult} {by} di Tukka Slots!",bigWinLabel:"{label}!",costLabel:"Biaya",prizeMultiplierLabel:"Pengali hadiah",currentBalanceLabel:"Saldo saat ini" },
+  fr:      { spin:"TOURNER",deposit:"DÉPOSER",withdraw:"RETIRER",buyBonus:"ACHETER BONUS",bet:"MISE",balance:"SOLDE",freeSpins:"TOURS GRATUITS",bonusMode:"MODE BONUS",bonusSpin:"TOUR BONUS",bonusRemaining:"restants",winUpTo:"GAGNER JUSQU'À",connectWallet:"Connectez le portefeuille!",accessDenied:"Accès restreint!",accessDeniedDesc:"Cette machine à sous est privée et en cours de développement.",welcome:"Bienvenue",slotTitle:"Tukka Slots",howToPlay:"Comment jouer →",combos:"Combos",mechanics:"Mécaniques",howToDeposit:"Comment Déposer",prev:"← Précédent",next:"Suivant →",play:"Jouer! 🎰",missing:"Manque",freeSpinsDay:"10 tours gratuits par jour!",noDeposit:"Pas besoin de dépôt pour commencer",spinLog:"Spin Log",noSpinsYet:"Aucun spin pour l'instant",betPrefix:"mise",bonusBadge:"BONUS",turboOn:"Turbo ON",turboOff:"Turbo OFF",foilBadge:"FOIL",lockedBadge:"LOCKED",helpWelcomeSubtitle:"Machine à sous de cartes avec combos en cascade",helpComboRateHint:"Objectif : ~1 combo tous les 5 spins. Les premiers spins du jour ont une probabilité plus élevée.",helpCardDailyFreeSpinsTitle:"10 tours gratuits",helpCardDailyFreeSpinsDesc:"Chaque jour, sans coût",helpCardCascadeTitle:"Cascade",helpCardCascadeDesc:"Les combos en chaîne paient plus",helpCardFoilsTitle:"Foils",helpCardFoilsDesc:"Cartes dorées qui s'accumulent",helpCardBonusModeTitle:"Mode Bonus",helpCardBonusModeDesc:"4+ foils = 10 tours bonus",helpCombosPayoutTableTitle:"Paiements réels (% de la mise)",helpMechanicCascadeTitle:"CASCADE",helpMechanicCascadeDesc:"Quand un combo se produit, les cartes disparaissent et de nouvelles tombent. Aujourd'hui, les combos en cascade n'ont PAS de multiplicateur supplémentaire : le paiement est fixe par combo.",helpMechanicFoilTitle:"FOIL (carte dorée)",helpMechanicFoilDesc:"Les cartes foil ne sont PAS détruites dans un combo : elles restent sur la grille et s'empilent. Plus de foils = plus de chances de déclencher le Mode Bonus.",helpMechanicBonusModeTitle:"MODE BONUS",helpMechanicBonusModeDesc:"4+ foils sur la grille finale déclenchent 10 tours bonus. Pendant le bonus, obtenir à nouveau 4+ foils ajoute 10 tours supplémentaires.",helpMechanicDragukkaTitle:"DRAGUKKA (Joker)",helpMechanicDragukkaDesc:"Apparaît uniquement en Mode Bonus. Reste sur la grille pendant les 10 tours et peut remplacer n'importe quelle carte — mais une seule fois par tour.",helpMechanicWildcardsTitle:"NEYMAR & CLAWD (Wildcard)",helpMechanicWildcardsDesc:"Apparaissent en mode normal. Ils peuvent compléter n'importe quel combo comme carte manquante, mais disparaissent après utilisation.",helpDepositNeedVbmsTitle:"Besoin de VBMS pour jouer ?",helpDepositStep1Title:"Obtenir du VBMS",helpDepositStep1Desc:"Achetez du VBMS sur Uniswap ou gagnez-en en jouant sur le site. Contrat : 0xF14C1...728 (Base)",helpDepositStep2Title:"Cliquez sur \"Deposit\"",helpDepositStep2Desc:"En haut de l'écran de la machine à sous, cliquez sur le bouton Deposit. Choisissez le montant (100, 250, 500 ou 1000 VBMS).",helpDepositStep3Title:"Approve et Transfer",helpDepositStep3Desc:"Deux transactions dans votre portefeuille : 1) Approve (autoriser la dépense), 2) Transfer (envoyer le VBMS).",helpDepositStep4Title:"Recevoir des Coins",helpDepositStep4Desc:"1 VBMS = 10 Coins pour jouer. Les Coins restent sur votre compte et peuvent être retirées à tout moment.",bonusWildcardStays:"Le joker reste sur la grille pendant tout le bonus !",bonusTitle:"BONUS!",playBonus:"🎰 JOUER LE BONUS",bonusCompleted:"Bonus terminé!",bonusCoinsWon:"pièces gagnées en bonus",shareWin:"🔗 Partager",dragToRotate:"Glissez pour tourner",closeX:"✕ Fermer",cardBackAlt:"Dos de carte",tapToDismiss:"touchez n'importe où pour fermer",coins:"pièces",errorProfileNotFound:"Profil introuvable",errorConnectWalletFirst:"Connectez d'abord le portefeuille",errorAccessDeniedDevOnly:"Accès refusé : slot réservé aux portefeuilles dev",errorInsufficientCoins:"Pièces insuffisantes. Il faut {amount} pièces pour tourner.",raritySpecial:"SPECIAL",rarityMythic:"MYTHIC",rarityLegendary:"LEGEND",rarityEpic:"EPIC",rarityRare:"RARE",rarityCommon:"COMMON",recoveredSpinToast:"🎰 Spin récupéré ! Vous avez gagné +{amount} pièces (ID: {id})",winToast:"+{amount} pièces!",bonusRoundCast:"🎰 Tour bonus : +{amount} pièces{mult} {by} sur Tukka Slots!",bigWinCast:"🎰 {label} +{amount} pièces{mult} {by} sur Tukka Slots!",bigWinLabel:"{label}!",costLabel:"Coût",prizeMultiplierLabel:"Multiplicateur",currentBalanceLabel:"Solde actuel" },
+  ja:      { spin:"回す",deposit:"入金",withdraw:"出金",buyBonus:"ボーナス購入",bet:"ベット",balance:"残高",freeSpins:"フリースピン",bonusMode:"ボーナスモード",bonusSpin:"ボーナススピン",bonusRemaining:"残り",winUpTo:"最大で獲得",connectWallet:"ウォレットを接続！",accessDenied:"アクセス制限！",accessDeniedDesc:"このスロットマシンはプライベートで開発中です。",welcome:"ようこそ",slotTitle:"Tukka Slots",howToPlay:"遊び方を見る →",combos:"コンボ",mechanics:"仕組み",howToDeposit:"入金方法",prev:"← 前へ",next:"次へ →",play:"プレイ！🎰",missing:"不足",freeSpinsDay:"毎日10回フリースピン！",noDeposit:"開始に入金不要",spinLog:"Spin Log",noSpinsYet:"まだスピンがありません",betPrefix:"ベット",bonusBadge:"BONUS",turboOn:"Turbo ON",turboOff:"Turbo OFF",foilBadge:"FOIL",lockedBadge:"LOCKED",helpWelcomeSubtitle:"カスケードコンボのカードスロット",helpComboRateHint:"目標：およそ 5 スピンに 1 回コンボ。毎日の最初のスピンは確率が高い。",helpCardDailyFreeSpinsTitle:"10 回フリースピン",helpCardDailyFreeSpinsDesc:"毎日、無料",helpCardCascadeTitle:"カスケード",helpCardCascadeDesc:"連鎖コンボほど高配当",helpCardFoilsTitle:"Foils",helpCardFoilsDesc:"重なるゴールドカード",helpCardBonusModeTitle:"ボーナスモード",helpCardBonusModeDesc:"4+ foils = 10 ボーナススピン",helpCombosPayoutTableTitle:"実際の配当（ベット比率%）",helpMechanicCascadeTitle:"CASCADE",helpMechanicCascadeDesc:"コンボが発生するとカードが消え、新しいカードが落ちてきます。現在カスケードコンボに追加倍率はありません：配当はコンボごとに固定です。",helpMechanicFoilTitle:"FOIL（ゴールドカード）",helpMechanicFoilDesc:"Foil カードはコンボで消えません——グリッドに残って蓄積します。Foils が多いほどボーナスモード発動率が上がります。",helpMechanicBonusModeTitle:"ボーナスモード",helpMechanicBonusModeDesc:"最終グリッドで 4+ foils になると 10 回のボーナススピンを獲得。ボーナス中に再び 4+ foils になるとさらに 10 回追加されます。",helpMechanicDragukkaTitle:"DRAGUKKA（ジョーカー）",helpMechanicDragukkaDesc:"ボーナスモードでのみ出現。10 回のスピン中ずっとグリッドに残り、任意のカードとして扱えます——ただし 1 スピンにつき 1 回だけ。",helpMechanicWildcardsTitle:"NEYMAR & CLAWD（ワイルドカード）",helpMechanicWildcardsDesc:"通常モードで出現。欠けている1枚として任意のコンボを完成できますが、使用後に消えます。",helpDepositNeedVbmsTitle:"プレイに VBMS が必要？",helpDepositStep1Title:"VBMS を入手",helpDepositStep1Desc:"Uniswap で VBMS を購入するか、サイトで遊んで獲得します。コントラクト：0xF14C1...728（Base）",helpDepositStep2Title:"\"Deposit\" をクリック",helpDepositStep2Desc:"スロット画面上部の Deposit ボタンをクリック。金額（100 / 250 / 500 / 1000 VBMS）を選択します。",helpDepositStep3Title:"Approve と Transfer",helpDepositStep3Desc:"ウォレットで 2 回のトランザクション：1) Approve（支払い許可）、2) Transfer（VBMS 送信）。",helpDepositStep4Title:"Coins を受け取る",helpDepositStep4Desc:"1 VBMS = 10 Coins。Coins はアカウントに残り、いつでも引き出せます。",bonusWildcardStays:"ワイルドカードはボーナス中ずっと残ります！",bonusTitle:"ボーナス！",playBonus:"🎰 ボーナスをプレイ",bonusCompleted:"ボーナス完了！",bonusCoinsWon:"ボーナスで獲得したコイン",shareWin:"🔗 共有",dragToRotate:"ドラッグして回転",closeX:"✕ 閉じる",cardBackAlt:"カード裏",tapToDismiss:"どこでもタップして閉じる",coins:"コイン",errorProfileNotFound:"プロフィールが見つかりません",errorConnectWalletFirst:"先にウォレットを接続してください",errorAccessDeniedDevOnly:"アクセス拒否：dev ウォレットのみ",errorInsufficientCoins:"コインが足りません。回すには {amount} コイン必要です。",raritySpecial:"SPECIAL",rarityMythic:"MYTHIC",rarityLegendary:"LEGEND",rarityEpic:"EPIC",rarityRare:"RARE",rarityCommon:"COMMON",recoveredSpinToast:"🎰 スピンを復元！+{amount} コイン獲得 (ID: {id})",winToast:"+{amount} コイン!",bonusRoundCast:"🎰 ボーナスラウンド：+{amount} コイン{mult} {by} Tukka Slots!",bigWinCast:"🎰 {label} +{amount} コイン{mult} {by} Tukka Slots!",bigWinLabel:"{label}!",costLabel:"コスト",prizeMultiplierLabel:"倍率",currentBalanceLabel:"現在の残高" },
+  it:      { spin:"GIRA",deposit:"DEPOSITA",withdraw:"PRELEVA",buyBonus:"COMPRA BONUS",bet:"PUNTATA",balance:"SALDO",freeSpins:"GIRI GRATUITI",bonusMode:"MODALITÀ BONUS",bonusSpin:"GIRO BONUS",bonusRemaining:"rimasti",winUpTo:"VINCI FINO A",connectWallet:"Connetti il portafoglio!",accessDenied:"Accesso limitato!",accessDeniedDesc:"Questa slot machine è privata ed è in fase di sviluppo.",welcome:"Benvenuto",slotTitle:"Tukka Slots",howToPlay:"Come giocare →",combos:"Combo",mechanics:"Meccaniche",howToDeposit:"Come Depositare",prev:"← Precedente",next:"Successivo →",play:"Gioca! 🎰",missing:"Manca",freeSpinsDay:"10 giri gratuiti al giorno!",noDeposit:"Nessun deposito per iniziare",spinLog:"Spin Log",noSpinsYet:"Nessuno spin ancora",betPrefix:"puntata",bonusBadge:"BONUS",turboOn:"Turbo ON",turboOff:"Turbo OFF",foilBadge:"FOIL",lockedBadge:"LOCKED",helpWelcomeSubtitle:"Slot di carte con combo a cascata",helpComboRateHint:"Obiettivo: ~1 combo ogni 5 spin. I primi spin giornalieri hanno più probabilità.",helpCardDailyFreeSpinsTitle:"10 giri gratuiti",helpCardDailyFreeSpinsDesc:"Ogni giorno, gratis",helpCardCascadeTitle:"Cascade",helpCardCascadeDesc:"Le combo a catena pagano di più",helpCardFoilsTitle:"Foils",helpCardFoilsDesc:"Carte dorate che si accumulano",helpCardBonusModeTitle:"Modalità Bonus",helpCardBonusModeDesc:"4+ foils = 10 giri bonus",helpCombosPayoutTableTitle:"Pagamenti reali (% della puntata)",helpMechanicCascadeTitle:"CASCADE",helpMechanicCascadeDesc:"Quando avviene una combo, le carte spariscono e ne cadono di nuove. Oggi le combo in cascade NON hanno moltiplicatore extra: il pagamento è fisso per combo.",helpMechanicFoilTitle:"FOIL (carta dorata)",helpMechanicFoilDesc:"Le carte foil NON vengono distrutte nelle combo: restano nella griglia e si accumulano. Più foils = maggiore probabilità di attivare la Modalità Bonus.",helpMechanicBonusModeTitle:"MODALITÀ BONUS",helpMechanicBonusModeDesc:"4+ foils nella griglia finale attivano 10 giri bonus. Durante il bonus, ottenere di nuovo 4+ foils aggiunge altri 10 giri.",helpMechanicDragukkaTitle:"DRAGUKKA (Joker)",helpMechanicDragukkaDesc:"Appare solo in Modalità Bonus. Resta nella griglia per tutti i 10 giri e può sostituire qualsiasi carta — ma solo una volta per giro.",helpMechanicWildcardsTitle:"NEYMAR & CLAWD (Wildcard)",helpMechanicWildcardsDesc:"Appaiono in modalità normale. Possono completare qualsiasi combo come carta mancante, ma scompaiono dopo l'uso.",helpDepositNeedVbmsTitle:"Serve VBMS per giocare?",helpDepositStep1Title:"Ottieni VBMS",helpDepositStep1Desc:"Compra VBMS su Uniswap o guadagnalo giocando sul sito. Contratto: 0xF14C1...728 (Base)",helpDepositStep2Title:"Clicca \"Deposit\"",helpDepositStep2Desc:"In alto nella schermata della slot, clicca il pulsante Deposit. Scegli l'importo (100, 250, 500 o 1000 VBMS).",helpDepositStep3Title:"Approve e Transfer",helpDepositStep3Desc:"Due transazioni nel wallet: 1) Approve (autorizza la spesa), 2) Transfer (invia i VBMS).",helpDepositStep4Title:"Ricevi Coins",helpDepositStep4Desc:"1 VBMS = 10 Coins per giocare. Le Coins restano nel tuo account e possono essere prelevate indietro in qualsiasi momento.",bonusWildcardStays:"La wildcard resta nella griglia per tutto il bonus!",bonusTitle:"BONUS!",playBonus:"🎰 GIOCA BONUS",bonusCompleted:"Bonus completato!",bonusCoinsWon:"monete vinte nel bonus",shareWin:"🔗 Condividi",dragToRotate:"Trascina per ruotare",closeX:"✕ Chiudi",cardBackAlt:"Retro carta",tapToDismiss:"tocca ovunque per chiudere",coins:"monete",errorProfileNotFound:"Profilo non trovato",errorConnectWalletFirst:"Connetti prima il portafoglio",errorAccessDeniedDevOnly:"Accesso negato: slot solo per portafogli dev",errorInsufficientCoins:"Monete insufficienti. Servono {amount} monete per girare.",raritySpecial:"SPECIAL",rarityMythic:"MYTHIC",rarityLegendary:"LEGEND",rarityEpic:"EPIC",rarityRare:"RARE",rarityCommon:"COMMON",recoveredSpinToast:"🎰 Spin recuperato! Hai vinto +{amount} monete (ID: {id})",winToast:"+{amount} monete!",bonusRoundCast:"🎰 Round bonus: +{amount} monete{mult} {by} su Tukka Slots!",bigWinCast:"🎰 {label} +{amount} monete{mult} {by} su Tukka Slots!",bigWinLabel:"{label}!",costLabel:"Costo",prizeMultiplierLabel:"Moltiplicatore",currentBalanceLabel:"Saldo attuale" },
+};
+const SLOT_UI_FALLBACK: Pick<SlotUiText, "spinLog" | "noSpinsYet" | "close" | "continue" | "cancel" | "confirm"> = {
+  spinLog: "Spin Log",
+  noSpinsYet: "No spins yet",
+  close: "Close",
+  continue: "Continue",
+  cancel: "Cancel",
+  confirm: "Confirm",
+};
+
+function getSlotT(lang: string): SlotUiText {
+  return {
+    ...SLOT_UI_FALLBACK,
+    ...(SLOT_UI_TRANSLATIONS.en ?? {}),
+    ...(SLOT_UI_TRANSLATIONS[lang] ?? {}),
+  } as SlotUiText;
+}
+const SLOT_MISC_TRANSLATIONS: Record<string, {
+  cancel: string;
+  confirm: string;
+  jackpotMax: string;
+  noWinningLines: string;
+  recoveredNoWinToast: string;
+}> = {
+  en: { cancel: "Cancel", confirm: "Confirm", jackpotMax: "MAX JACKPOT!", noWinningLines: "No winning lines", recoveredNoWinToast: "🎰 Previous spin finished without wins (ID: {id})" },
+  "pt-BR": { cancel: "Cancelar", confirm: "Confirmar", jackpotMax: "JACKPOT MÁXIMO!", noWinningLines: "Sem linhas ganhadoras", recoveredNoWinToast: "🎰 Spin anterior concluído sem ganhos (ID: {id})" },
+  es: { cancel: "Cancelar", confirm: "Confirmar", jackpotMax: "¡JACKPOT MÁXIMO!", noWinningLines: "Sin líneas ganadoras", recoveredNoWinToast: "🎰 El giro anterior terminó sin ganancias (ID: {id})" },
+  hi: { cancel: "रद्द करें", confirm: "पुष्टि करें", jackpotMax: "मैक्स जैकपॉट!", noWinningLines: "कोई जीतने वाली लाइन नहीं", recoveredNoWinToast: "🎰 पिछला स्पिन बिना जीत के पूरा हुआ (ID: {id})" },
+  ru: { cancel: "Отмена", confirm: "Подтвердить", jackpotMax: "МАКС ДЖЕКПОТ!", noWinningLines: "Нет выигрышных линий", recoveredNoWinToast: "🎰 Предыдущий спин завершен без выигрыша (ID: {id})" },
+  "zh-CN": { cancel: "取消", confirm: "确认", jackpotMax: "最高头奖！", noWinningLines: "没有中奖线", recoveredNoWinToast: "🎰 上一局未中奖（ID: {id}）" },
+  id: { cancel: "Batal", confirm: "Konfirmasi", jackpotMax: "JACKPOT MAKS!", noWinningLines: "Tidak ada garis menang", recoveredNoWinToast: "🎰 Spin sebelumnya selesai tanpa menang (ID: {id})" },
+  fr: { cancel: "Annuler", confirm: "Confirmer", jackpotMax: "JACKPOT MAX !", noWinningLines: "Aucune ligne gagnante", recoveredNoWinToast: "🎰 Le spin précédent s'est terminé sans gain (ID: {id})" },
+  ja: { cancel: "キャンセル", confirm: "確認", jackpotMax: "MAXジャックポット！", noWinningLines: "当たりラインなし", recoveredNoWinToast: "🎰 前回のスピンは当たりなしで終了しました (ID: {id})" },
+  it: { cancel: "Annulla", confirm: "Conferma", jackpotMax: "JACKPOT MASSIMO!", noWinningLines: "Nessuna linea vincente", recoveredNoWinToast: "🎰 Lo spin precedente è terminato senza vincite (ID: {id})" },
+};
+
+function getSlotMiscT(lang: string) {
+  return SLOT_MISC_TRANSLATIONS[lang] ?? SLOT_MISC_TRANSLATIONS.en;
+}
 const COLS = SLOT_COLS;
 const ROWS = SLOT_ROWS;
 const TOTAL_CELLS = SLOT_TOTAL_CELLS;
@@ -109,61 +257,62 @@ interface SpinResult {
 }
 interface ActivePayline { name: string; d: string; color: string; }
 
-// Payline SVG paths (viewBox 0 0 100 100)
-const PAYLINE_PATHS: Record<string, string> = {
-  "Row 1":      "M10,17 L90,17",
-  "Row 2":      "M10,50 L90,50",
-  "Row 3":      "M10,83 L90,83",
-  "Diagonal V": "M10,17 L30,50 L50,83 L70,50 L90,17",
-  "Diagonal N": "M10,83 L30,50 L50,17 L70,50 L90,83",
-};
-const RARITY_COLORS: Record<string, string> = {
-  "mythic":"#a855f7","legendary":"#f59e0b","epic":"#ec4899",
-  "rare":"#3b82f6","common":"#6b7280","special":"#FACC15",
-};
+const GRID_CENTER_X = [10, 30, 50, 70, 90] as const;
+const GRID_CENTER_Y = [17, 50, 83] as const;
 
-// Max win: Special rarity (220) * 6 cards (4x) * power_percent (1.2) * cascade 8x * 5 steps = ~42,240
-const MAX_POSSIBLE_WIN = 42240;
+function getGridCellCenter(index: number): { x: number; y: number } | null {
+  if (index < 0 || index >= TOTAL_CELLS) return null;
+  const row = Math.floor(index / COLS);
+  const col = index % COLS;
+  const x = GRID_CENTER_X[col as 0 | 1 | 2 | 3 | 4];
+  const y = GRID_CENTER_Y[row as 0 | 1 | 2];
+  if (x === undefined || y === undefined) return null;
+  return { x, y };
+}
+
+function buildPatternPath(indices: readonly number[]): string | null {
+  const points = indices
+    .map((index) => getGridCellCenter(index))
+    .filter((point): point is { x: number; y: number } => point !== null);
+
+  if (points.length < 2) return null;
+  return `M${points.map((point) => `${point.x},${point.y}`).join(" L")}`;
+}
+
+function getActivePaylineForStep(step: SlotComboStep): ActivePayline | null {
+  const comboIndices = [...step.matchedIndices, ...step.wildcardIndices];
+  const pattern = getSlotPatternForIndices(comboIndices);
+  if (!pattern) return null;
+
+  const path = buildPatternPath(pattern.indices);
+  if (!path) return null;
+
+  return {
+    name: pattern.id,
+    d: path,
+    color: getComboColor(step.combo.id),
+  };
+}
+
 
 function getComboColor(comboId: string): string {
-  // Rank combos: color by rank value
   if (comboId.startsWith("rank_")) {
     const rank = comboId.replace("rank_", "");
     const rankColors: Record<string, string> = {
-      "A": "#a855f7", "K": "#f59e0b", "Q": "#ec4899", "J": "#3b82f6",
+      A: "#a855f7", K: "#f59e0b", Q: "#ec4899", J: "#3b82f6",
       "10": "#06b6d4", "9": "#10b981", "8": "#84cc16",
       "7": "#eab308", "6": "#f97316", "5": "#ef4444",
       "4": "#8b5cf6", "3": "#6b7280", "2": "#6b7280",
     };
     return rankColors[rank] ?? "#FFD700";
   }
-  // Suit combos: color by suit
+
   if (comboId.startsWith("suit_")) {
     const suit = comboId.replace("suit_", "").split("_")[0] as keyof typeof SLOT_SUIT_COLOR;
     return SLOT_SUIT_COLOR[suit] ?? "#FFD700";
   }
-  return "#FFD700";
-}
 
-function computeActivePaylines(patterns: string[]): ActivePayline[] {
-  const result: ActivePayline[] = [];
-  for (const p of patterns) {
-    for (const plName of Object.keys(PAYLINE_PATHS)) {
-      if (p.startsWith(plName)) {
-        const m = p.match(/(\d+)x (.+)/);
-        let color = "#FFD700";
-        if (m) {
-          const char = m[2].trim().toLowerCase();
-          const poolCard = POOL.find(c => c.baccarat === char);
-          if (poolCard) color = RARITY_COLORS[poolCard.rarity.toLowerCase()] || "#FFD700";
-        }
-        result.push({ name: plName, d: PAYLINE_PATHS[plName], color });
-        break;
-      }
-    }
-    if (/VBMS Special/i.test(p)) result.push({ name: "VBMS", d: "", color: "#FFD700" });
-  }
-  return result;
+  return "#FFD700";
 }
 
 // Web Audio reel tick
@@ -209,16 +358,28 @@ function playCardFall() {
   } catch(e) {}
 }
 
+function getRarityLabel(t: SlotUiText, rarity: string): string {
+  switch (rarity) {
+    case "Special": return t.raritySpecial;
+    case "Mythic": return t.rarityMythic;
+    case "Legendary": return t.rarityLegendary;
+    case "Epic": return t.rarityEpic;
+    case "Rare": return t.rarityRare;
+    case "Common": return t.rarityCommon;
+    default: return rarity;
+  }
+}
+
 const RS: Record<string, {
-  border: string; glow: string; bg: string; labelBg: string; label: string;
+  border: string; glow: string; bg: string; labelBg: string;
   borderW: number; icon: string; cornerGrad: string;
 }> = {
-  Special:   { border:"#FACC15", glow:"#FACC15", bg:"#111827", labelBg:"#4C1D95", label:"SPECIAL",   borderW:3, icon:"★", cornerGrad:"linear-gradient(135deg,#FACC15 0%,transparent 60%)" },
-  Mythic:    { border:"#a855f7", glow:"#a855f7", bg:"#111827", labelBg:"#4C1D95", label:"MYTHIC",    borderW:3, icon:"♦", cornerGrad:"linear-gradient(135deg,#a855f7 0%,transparent 60%)" },
-  Legendary: { border:"#f59e0b", glow:"#f59e0b", bg:"#111827", labelBg:"#4C1D95", label:"LEGEND",    borderW:3, icon:"♥", cornerGrad:"linear-gradient(135deg,#f59e0b 0%,transparent 60%)" },
-  Epic:      { border:"#ec4899", glow:"#ec4899", bg:"#111827", labelBg:"#4C1D95", label:"EPIC",      borderW:2, icon:"♠", cornerGrad:"linear-gradient(135deg,#ec4899 0%,transparent 60%)" },
-  Rare:      { border:"#3b82f6", glow:"#3b82f6", bg:"#111827", labelBg:"#4C1D95", label:"RARE",      borderW:2, icon:"♣", cornerGrad:"linear-gradient(135deg,#3b82f6 0%,transparent 60%)" },
-  Common:    { border:"#6b7280", glow:"#6b7280", bg:"#111827", labelBg:"#1f2937", label:"COMMON",    borderW:1, icon:"·", cornerGrad:"linear-gradient(135deg,#6b7280 0%,transparent 60%)" },
+  Special:   { border:"#FACC15", glow:"#FACC15", bg:"#111827", labelBg:"#4C1D95", borderW:3, icon:"★", cornerGrad:"linear-gradient(135deg,#FACC15 0%,transparent 60%)" },
+  Mythic:    { border:"#a855f7", glow:"#a855f7", bg:"#111827", labelBg:"#4C1D95", borderW:3, icon:"♦", cornerGrad:"linear-gradient(135deg,#a855f7 0%,transparent 60%)" },
+  Legendary: { border:"#f59e0b", glow:"#f59e0b", bg:"#111827", labelBg:"#4C1D95", borderW:3, icon:"♥", cornerGrad:"linear-gradient(135deg,#f59e0b 0%,transparent 60%)" },
+  Epic:      { border:"#ec4899", glow:"#ec4899", bg:"#111827", labelBg:"#4C1D95", borderW:2, icon:"♠", cornerGrad:"linear-gradient(135deg,#ec4899 0%,transparent 60%)" },
+  Rare:      { border:"#3b82f6", glow:"#3b82f6", bg:"#111827", labelBg:"#4C1D95", borderW:2, icon:"♣", cornerGrad:"linear-gradient(135deg,#3b82f6 0%,transparent 60%)" },
+  Common:    { border:"#6b7280", glow:"#6b7280", bg:"#111827", labelBg:"#1f2937", borderW:1, icon:"·", cornerGrad:"linear-gradient(135deg,#6b7280 0%,transparent 60%)" },
 };
 
 const LABELS = SLOT_CARD_LABELS;
@@ -229,9 +390,6 @@ function pick(): SlotCard {
   return createSlotCard({ baccarat: card.baccarat, rarity: card.rarity });
 }
 
-// Combo info will be retrieved from TCG combos using detectCombos
-
-// Combo info will be retrieved from detectCombos result
 
 const PAYOUTS: [string, string, string][] = [
   ["Special",     "220", "#FACC15"],["Mythic",    "140",  "#a855f7"],
@@ -421,12 +579,12 @@ const SlotGridCard = memo(function SlotGridCard({
         )}
         {showStaticFoil && (
           <div className="absolute top-0 right-0 z-30 px-1 py-0.5 text-[7px] font-black text-black rounded-bl" style={{ background: "#FFD700" }}>
-            FOIL
+            {"FOIL"}
           </div>
         )}
         {isLockedGif && (
           <div className="absolute top-0 right-0 z-30 px-1 py-0.5 text-[7px] font-black text-black rounded-bl" style={{ background: "#FFD700" }}>
-            LOCKED
+            {"LOCKED"}
           </div>
         )}
         {showIndices && !spinning && (
@@ -707,10 +865,20 @@ export default function SlotMachine({
   const { userProfile, refreshProfile } = useProfile();
   const { lang } = useLanguage();
   const isBaseApp = isBaseAppWebView();
-  const liteMotion = isFrameMode || isBaseApp;
+  const liteMotion = isBaseApp;
   const t = getSlotT(lang);
+  const tm = getSlotMiscT(lang);
+  const helpWelcomeSubtitle = t.helpWelcomeSubtitle;
+  const comboRateHint = t.helpComboRateHint;
+  const helpWelcomeCards = [
+    { icon:"🎲", title: t.helpCardDailyFreeSpinsTitle, desc: t.helpCardDailyFreeSpinsDesc },
+    { icon:"⚡", title: t.helpCardCascadeTitle, desc: t.helpCardCascadeDesc },
+    { icon:"✨", title: t.helpCardFoilsTitle, desc: t.helpCardFoilsDesc },
+    { icon:"🎰", title: t.helpCardBonusModeTitle, desc: t.helpCardBonusModeDesc },
+  ];
   const spinMut = useMutation(api.slot.spinSlot);
-  const statsQ  = useQuery(api.slot.getSlotDailyStats, { address: address || "" });
+  const effectiveAddress = address ?? userProfile?.address ?? "";
+  const statsQ  = useQuery(api.slot.getSlotDailyStats, { address: effectiveAddress });
 
   const [cells, setCells]           = useState<SlotCard[]>(() => Array.from({ length: TOTAL_CELLS }, () => createSlotCard({ baccarat: "claude", rarity: "Common" })));
   const [isSpinning, setIsSpinning] = useState(false);
@@ -776,9 +944,13 @@ export default function SlotMachine({
       if (Date.now() - timestamp > 2 * 60 * 1000) { sessionStorage.removeItem("slot_pending_spin"); return; }
       sessionStorage.removeItem("slot_pending_spin");
       if (winAmount > 0) {
-        toast.success(`🎰 Spin recuperado! Você ganhou +${winAmount.toLocaleString()} coins (ID: ${String(spinId).slice(-6)})`);
+        toast.success(
+        t.recoveredSpinToast
+          .replace("{amount}", winAmount.toLocaleString())
+          .replace("{id}", String(spinId).slice(-6)),
+      );
       } else {
-        toast(`🎰 Spin anterior concluído sem ganhos (ID: ${String(spinId).slice(-6)})`);
+        toast(tm.recoveredNoWinToast.replace("{id}", String(spinId).slice(-6)));
       }
     } catch {}
   }, []);
@@ -808,6 +980,7 @@ export default function SlotMachine({
   const betMult  = BET_OPTIONS[betIdx];
   const betCost  = betMult;
   const bonusCost = betCost * BONUS_COST_MULT;
+  const maxPossibleWin = betCost * 100;
 
   useEffect(() => {
     bonusStateRef.current = bonusState;
@@ -816,8 +989,11 @@ export default function SlotMachine({
   const [mounted, setMounted] = useState(false);
   useEffect(() => { setMounted(true); }, []);
 
-  // Access control — apenas wallets autorizados
-  const isAllowed = isConnected && isDeveloperSlotAddress(address);
+  // Access control (dev-only): allow either connected wallet or linked primary profile wallet.
+  const isAllowedAddress =
+    isDeveloperSlotAddress(address) ||
+    isDeveloperSlotAddress(userProfile?.address);
+  const isAllowed = isAllowedAddress;
 
   const columnHasLockedCells = useCallback((col: number) => {
     for (let row = 0; row < ROWS; row += 1) {
@@ -889,7 +1065,7 @@ export default function SlotMachine({
     }
 
     // Passos de desaceleração: delays crescentes, cada um mostra carta aleatória
-    const slowSteps = liteMotion ? [130, 230, 360] : [85, 130, 190, 270, 370];
+    const slowSteps = liteMotion ? [130, 230, 360] : [110, 170, 250, 350, 480, 620];
     let step = 0;
 
     const tick = () => {
@@ -979,7 +1155,7 @@ export default function SlotMachine({
     }
 
     if (totalWin > 0) {
-      toast.success(`+${totalWin.toLocaleString()} coins!`);
+      toast.success(t.winToast.replace("{amount}", totalWin.toLocaleString()));
     }
 
     const gifCellIdx = finalGrid.findIndex((card) => card.baccarat === "dragukka");
@@ -1008,7 +1184,8 @@ export default function SlotMachine({
       setPhase("COMBO");
       setCells(step.beforeGrid);
       setWinCells(new Set([...step.matchedIndices, ...step.wildcardIndices]));
-      setActivePaylines([]);
+      const activePayline = getActivePaylineForStep(step);
+      setActivePaylines(activePayline ? [activePayline] : []);
       setComboDisplay({
         name: step.combo.name,
         color: getComboColor(step.combo.id),
@@ -1052,6 +1229,7 @@ export default function SlotMachine({
 
     setCells(finalGrid);
     setWinAmt(totalWin);
+    setActivePaylines([]);
     return details;
   }, [playNarration, liteMotion]);
 
@@ -1094,8 +1272,29 @@ export default function SlotMachine({
     setTimeout(() => setBigWinType(null), 4000);
   }, []);
 
+  function getConvexSlotErrorMessage(err: unknown): string {
+    const raw =
+      typeof err === "string" ? err
+      : err instanceof Error ? err.message
+      : (err as any)?.data?.message ?? (err as any)?.message ?? "";
+
+    const msg = String(raw || "");
+
+    if (msg.includes("Please connect wallet first")) return t.errorConnectWalletFirst;
+    if (msg.includes("Profile not found")) return t.errorProfileNotFound;
+    if (msg.includes("Access denied")) return t.errorAccessDeniedDevOnly;
+
+    if (msg.includes("Insufficient coins")) {
+      const m = msg.match(/Need\s+(\d+)\s+coins/i);
+      const amount = m?.[1] ?? "0";
+      return t.errorInsufficientCoins.replace("{amount}", amount);
+    }
+
+    return msg || "Error";
+  }
+
   const spin = async (isFree: boolean, forceBonusMode = false) => {
-    if (!isConnected || !address) { toast.error(t.connectWallet); return; }
+    if (!effectiveAddress) { toast.error(t.connectWallet); return; }
     if (!isAllowed) { toast.error(t.accessDenied); return; }
     if (isSpinning) return;
 
@@ -1148,7 +1347,7 @@ export default function SlotMachine({
       for (let c = 0; c < COLS; c++) startCol(c);
 
       const res = await spinMut({
-        address,
+        address: effectiveAddress,
         isFreeSpin: isFreeOnly && !bonusMode && !isBuyBonusEntry,
         buyBonusEntry: isBuyBonusEntry && !bonusEntryPaid,
         betMultiplier: betMult,
@@ -1277,6 +1476,7 @@ export default function SlotMachine({
                 finishSpinVisuals(res.finalGrid, res.winAmount, res.maxWin, details, res.triggeredBonus);
                 resolve();
               } catch (e) {
+                toast.error(getConvexSlotErrorMessage(e));
                 reject(e);
               }
             })().catch(reject);
@@ -1359,12 +1559,12 @@ export default function SlotMachine({
   const dark = "linear-gradient(180deg,#1a0900 0%,#0d0500 100%)";
 
   // Tela de acesso restrito
-  if (address && !isAllowed) {
+  if (effectiveAddress && !isAllowed) {
     return (
       <div className="flex flex-col items-center justify-center h-full gap-4 px-8 text-center">
         <div className="text-4xl font-black" style={{ color:"#FFD700" }}>{t.accessDenied}</div>
         <div className="text-sm text-gray-400">{t.accessDeniedDesc}</div>
-        <div className="text-xs text-gray-600 font-mono break-all">{address}</div>
+        <div className="text-xs text-gray-600 font-mono break-all">{effectiveAddress}</div>
       </div>
     );
   }
@@ -1516,7 +1716,7 @@ export default function SlotMachine({
               return (
                 <div key={rar} className="mb-4">
                   <div className="text-[10px] font-black uppercase tracking-widest mb-2 px-1" style={{ color: rs.border }}>
-                    {rar} ({cards.length})
+                    {getRarityLabel(t, rar)} ({cards.length})
                   </div>
                   <div className="grid gap-1.5" style={{ gridTemplateColumns: "repeat(5, 1fr)" }}>
                     {cards.map(c => {
@@ -1599,7 +1799,7 @@ export default function SlotMachine({
             <div className="flex items-center gap-2">
               <div className="px-3 py-1 rounded-full border-2 font-black text-xs uppercase tracking-widest"
                 style={{ borderColor: (RS[card3D.card.rarity] ?? RS.Common).border, color: (RS[card3D.card.rarity] ?? RS.Common).border, background: (RS[card3D.card.rarity] ?? RS.Common).bg }}>
-                {card3D.card.rarity}
+                {getRarityLabel(t, card3D.card.rarity)}
               </div>
               {card3D.card.hasFoil && <div className="px-2 py-1 rounded-full border-2 border-orange-400 text-orange-300 font-black text-xs">✨ FOIL</div>}
               {c3dCombos.length > 0 && (
@@ -1701,17 +1901,17 @@ export default function SlotMachine({
                   boxShadow: '0 0 40px rgba(255,215,0,0.5)',
                 }}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={"/images/card-back.png"} alt="Card Back" draggable={false} decoding="async"
+                  <img src={"/images/card-back.png"} alt={t.cardBackAlt} draggable={false} decoding="async"
                     style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center', transform: 'scale(1.13) translateY(1.3%)', transformOrigin: 'center', pointerEvents: 'none' }} />
                 </div>
               </div>
             </div>
 
-            <p className="text-white/40 text-[10px] uppercase tracking-widest">Arraste para girar</p>
+            <p className="text-white/40 text-[10px] uppercase tracking-widest">{t.dragToRotate}</p>
             <button
               onClick={() => { setCard3D(null); card3DRotRef.current = { rotY: 0, rotX: 0, dragging: false, lastX: 0, lastY: 0 }; }}
               className="text-white/30 text-xs font-black uppercase tracking-widest hover:text-white/60 transition-colors"
-            >✕ Fechar</button>
+            >{t.closeX}</button>
           </div>
         </div>
       ); })()}
@@ -1721,12 +1921,12 @@ export default function SlotMachine({
         <div className="fixed inset-0 z-[650] flex items-center justify-center" style={{ background:'rgba(0,0,0,0.88)', backdropFilter:getOverlayBackdropFilter(isBaseApp, 8) }}>
           <div className="flex flex-col items-center gap-6 text-center px-8">
             <div className="font-black text-5xl" style={{ color:'#FFD700', textShadow:'0 0 30px #FFD700, 0 0 60px #FFA500', animation:'epic-bonus-pop 0.6s cubic-bezier(.34,1.56,.64,1) both' }}>
-              BONUS!
+              {t.bonusTitle}
             </div>
             <div className="font-black text-xl text-white uppercase tracking-widest">
-              {BONUS_FREE_SPINS} Free Spins
+              {BONUS_FREE_SPINS} {t.freeSpins}
             </div>
-            <div className="text-gray-400 text-sm">A Wildcard permanece no grid durante todo o bônus!</div>
+            <div className="text-gray-400 text-sm">{t.bonusWildcardStays}</div>
             <button
               onClick={() => {
                 setShowPlayBonus(false);
@@ -1736,7 +1936,7 @@ export default function SlotMachine({
               className="px-10 py-4 rounded-2xl font-black text-xl uppercase tracking-widest border-4 border-black active:scale-95 transition-transform"
               style={{ background:'linear-gradient(180deg,#FFD700,#c87941)', color:'#000', boxShadow:'0 6px 0 #000, 0 0 30px #FFD700' }}
             >
-              🎰 PLAY BONUS
+              {t.playBonus}
             </button>
           </div>
         </div>
@@ -1748,15 +1948,18 @@ export default function SlotMachine({
         const bonusMultX = betMult > 0 ? Math.round(bonusSummaryAmount / betMult) : 0;
         const winType = bonusMultX >= 100 ? 'max' : bonusMultX >= 20 ? 'big' : bonusMultX >= 5 ? 'great' : 'nice';
         const ogParams = new URLSearchParams({ amount: String(bonusSummaryAmount), x: String(bonusMultX), type: winType, ...(playerName ? { user: playerName } : {}), ...(sessionIdRef.current ? { sid: sessionIdRef.current } : {}) });
-        const castText = `🎰 Bonus Round: +${bonusSummaryAmount.toLocaleString()} coins${bonusMultX >= 2 ? ` (${bonusMultX}×)` : ''}${playerName ? ` by @${playerName}` : ''} on Tukka Slots!`;
+        const castText = t.bonusRoundCast
+          .replace("{amount}", bonusSummaryAmount.toLocaleString())
+          .replace("{mult}", bonusMultX >= 2 ? ` (${bonusMultX}×)` : "")
+          .replace("{by}", playerName ? `by @${playerName}` : "");
         return (
           <div className="fixed inset-0 z-[650] flex items-center justify-center" style={{ background:'rgba(0,0,0,0.92)', backdropFilter:getOverlayBackdropFilter(isBaseApp, 8) }}>
             <div className="flex flex-col items-center gap-5 text-center px-8 max-w-[320px]">
-              <div className="font-black text-2xl uppercase tracking-widest text-yellow-300">Bonus Concluído!</div>
+              <div className="font-black text-2xl uppercase tracking-widest text-yellow-300">{t.bonusCompleted}</div>
               <div className="font-black leading-none" style={{ fontSize: 52, color: bonusSummaryAmount > 0 ? '#4ade80' : '#6b7280', textShadow: bonusSummaryAmount > 0 ? '0 0 20px #4ade80' : undefined }}>
                 +{bonusSummaryAmount.toLocaleString()}
               </div>
-              <div className="text-gray-400 text-sm uppercase tracking-wider">coins ganhos no bonus</div>
+              <div className="text-gray-400 text-sm uppercase tracking-wider">{t.bonusCoinsWon}</div>
               {bonusSummaryAmount > 0 && (
                 <button
                   onClick={() => {
@@ -1767,7 +1970,7 @@ export default function SlotMachine({
                   className="px-6 py-2.5 rounded-xl font-black text-sm uppercase tracking-widest border-2 border-black active:scale-95 transition-transform"
                   style={{ background:'linear-gradient(180deg,#22c55e,#15803d)', color:'#fff', boxShadow:'0 4px 0 #000' }}
                 >
-                  🔗 Share Win
+                  {t.shareWin}
                 </button>
               )}
               <button
@@ -1775,7 +1978,7 @@ export default function SlotMachine({
                 className="px-8 py-3 rounded-xl font-black text-base uppercase tracking-widest border-2 border-black active:scale-95 transition-transform"
                 style={{ background:'linear-gradient(180deg,#7c3aed,#4c1d95)', color:'#FFD700', boxShadow:'0 4px 0 #000' }}
               >
-                Continuar
+                {t.continue}
               </button>
             </div>
           </div>
@@ -1785,14 +1988,18 @@ export default function SlotMachine({
       {/* BIG WIN overlay */}
       {bigWinType && (() => {
         const cfg = {
-          max:   { label: 'MAX WIN!',   color: '#a855f7', shadow: '0 0 20px #a855f7, 0 0 60px #c084fc', size: 52 },
-          big:   { label: 'BIG WIN!',   color: '#FFD700', shadow: '0 0 20px #FFD700, 0 0 50px #FFA500', size: 46 },
-          great: { label: 'GREAT WIN!', color: '#4ade80', shadow: '0 0 20px #4ade80, 0 0 40px #22c55e', size: 40 },
-          nice:  { label: 'NICE WIN!',  color: '#38bdf8', shadow: '0 0 16px #38bdf8, 0 0 30px #0ea5e9', size: 34 },
+          max:   { label: 'MAX WIN',   color: '#a855f7', shadow: '0 0 20px #a855f7, 0 0 60px #c084fc', size: 52 },
+          big:   { label: 'BIG WIN',   color: '#FFD700', shadow: '0 0 20px #FFD700, 0 0 50px #FFA500', size: 46 },
+          great: { label: 'GREAT WIN', color: '#4ade80', shadow: '0 0 20px #4ade80, 0 0 40px #22c55e', size: 40 },
+          nice:  { label: 'NICE WIN',  color: '#38bdf8', shadow: '0 0 16px #38bdf8, 0 0 30px #0ea5e9', size: 34 },
         }[bigWinType];
         const playerName = userProfile?.username ?? (address ? address.slice(0, 6) + '…' : '');
         const ogParams = new URLSearchParams({ amount: String(bigWinAmount), x: String(bigWinMultX), type: bigWinType, ...(playerName ? { user: playerName } : {}), ...(sessionIdRef.current ? { sid: sessionIdRef.current } : {}) });
-        const castText = `🎰 ${cfg.label} +${bigWinAmount.toLocaleString()} coins${bigWinMultX >= 2 ? ` (${bigWinMultX}×)` : ''}${playerName ? ` by @${playerName}` : ''} on Tukka Slots!`;
+        const castText = t.bigWinCast
+          .replace("{label}", cfg.label)
+          .replace("{amount}", bigWinAmount.toLocaleString())
+          .replace("{mult}", bigWinMultX >= 2 ? ` (${bigWinMultX}×)` : "")
+          .replace("{by}", playerName ? `by @${playerName}` : "");
         return (
           <div
             className="fixed inset-0 z-[640] flex flex-col items-center justify-center gap-3"
@@ -1804,7 +2011,7 @@ export default function SlotMachine({
               fontSize: cfg.size, color: cfg.color, textShadow: cfg.shadow,
               animation: 'epic-bonus-pop 0.5s cubic-bezier(.34,1.56,.64,1) both',
             }}>
-              {cfg.label}
+              {t.bigWinLabel.replace("{label}", cfg.label)}
             </div>
 
             {/* Multiplier */}
@@ -1816,7 +2023,7 @@ export default function SlotMachine({
 
             {/* Amount */}
             <div className="font-black pointer-events-none" style={{ fontSize: 28, color: cfg.color }}>
-              +{bigWinAmount.toLocaleString()} coins
+              +{bigWinAmount.toLocaleString()} {t.coins}
             </div>
 
             {/* Player name */}
@@ -1839,11 +2046,11 @@ export default function SlotMachine({
                 className="mt-1 px-6 py-2.5 rounded-xl font-black text-sm uppercase tracking-widest border-2 border-black"
                 style={{ background: `linear-gradient(180deg,${cfg.color}cc,${cfg.color}88)`, color: '#000', boxShadow: '0 4px 0 #000' }}
               >
-                🔗 Share Win
+                {t.shareWin}
               </button>
             )}
 
-            <div className="text-[10px] text-gray-500 pointer-events-none">tap anywhere to dismiss</div>
+            <div className="text-[10px] text-gray-500 pointer-events-none">{t.tapToDismiss}</div>
           </div>
         );
       })()}
@@ -1887,7 +2094,7 @@ export default function SlotMachine({
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="text-center epic-bonus-text">
                   <div className="font-black uppercase tracking-widest" style={{ fontSize: 32, color:'#FFD700', textShadow:'0 0 20px #FFD700, 0 0 40px #FFA500' }}>
-                    BONUS!
+                    {t.bonusTitle}
                   </div>
                   <div className="font-black text-white text-sm uppercase tracking-widest mt-1" style={{ textShadow:'0 0 10px #a855f7' }}>
                     {t.freeSpins}
@@ -1912,22 +2119,22 @@ export default function SlotMachine({
               <button onClick={() => setShowBonusConfirm(false)} className="w-6 h-6 rounded-full bg-red-600 border-2 border-black font-black text-white text-sm flex items-center justify-center">×</button>
             </div>
             <div className="p-4 text-center space-y-3">
-              <div className="text-white text-sm">Custo: <span className="font-black text-purple-300">{bonusCost} coins</span></div>
-              <div className="text-gray-400 text-xs">Multiplicador de prêmio: <span className="font-black text-green-400">2×</span></div>
-              <div className="text-gray-500 text-[10px]">Saldo atual: <span className="text-white font-bold">{coins.toLocaleString()} coins</span></div>
+              <div className="text-white text-sm">{t.costLabel}: <span className="font-black text-purple-300">{bonusCost} {t.coins}</span></div>
+              <div className="text-gray-400 text-xs">{t.bonusMode}: <span className="font-black text-green-400">+{BONUS_FREE_SPINS} {t.freeSpins}</span></div>
+              <div className="text-gray-500 text-[10px]">{t.currentBalanceLabel}: <span className="text-white font-bold">{coins.toLocaleString()} {t.coins}</span></div>
               <div className="flex gap-2 pt-1">
                 <button
                   onClick={() => setShowBonusConfirm(false)}
                   className="flex-1 py-2 border-2 border-gray-600 font-black text-xs uppercase text-gray-400 hover:bg-gray-800"
                 >
-                  Cancelar
+                  {tm.cancel}
                 </button>
                 <button
                   onClick={() => { setShowBonusConfirm(false); spin(false, true); }}
                   className="flex-1 py-2 border-2 border-black font-black text-xs uppercase active:scale-95 transition-transform"
                   style={{ background:"linear-gradient(180deg,#7c3aed,#4c1d95)", color:"#FFD700", textShadow:"1px 1px 0 #000", boxShadow:"0 3px 0 #000" }}
                 >
-                  Confirmar
+                  {tm.confirm}
                 </button>
               </div>
             </div>
@@ -1968,16 +2175,11 @@ export default function SlotMachine({
                   <div className="space-y-4">
                     <div className="text-center py-2">
                       <div className="text-5xl mb-2">🃏</div>
-                      <div className="font-black text-xl text-yellow-400 tracking-tight">Tukka Slots</div>
-                      <div className="text-gray-400 text-xs mt-1">Slot de cartas com combos em cascata</div>
+                      <div className="font-black text-xl text-yellow-400 tracking-tight">{t.slotTitle}</div>
+                      <div className="text-gray-400 text-xs mt-1">{helpWelcomeSubtitle}</div>
                     </div>
                     <div className="grid grid-cols-2 gap-2">
-                      {[
-                        { icon:"🎲", title:"10 giros grátis", desc:"Todo dia, sem custo" },
-                        { icon:"⚡", title:"Cascata", desc:"Combos encadeiam e pagam mais" },
-                        { icon:"✨", title:"Foils", desc:"Cartas douradas que acumulam" },
-                        { icon:"🎰", title:"Bonus Mode", desc:"4+ foils = 10 giros bônus 2×" },
-                      ].map(item => (
+                      {helpWelcomeCards.map(item => (
                         <div key={item.title} className="rounded-lg p-2.5 text-center" style={{ background:"#1a0800", border:"1px solid #3a2000" }}>
                           <div className="text-2xl mb-1">{item.icon}</div>
                           <div className="font-black text-[11px] text-yellow-300">{item.title}</div>
@@ -2004,19 +2206,19 @@ export default function SlotMachine({
                     <div className="rounded-xl overflow-hidden border-2" style={{ borderColor:"#3a2000" }}>
                       <div className="px-3 py-1.5 flex items-center gap-2" style={{ background:"#1a0800" }}>
                         <span className="text-base">🃏</span>
-                        <span className="font-black text-xs text-yellow-300 uppercase tracking-wider">Rank Combo</span>
-                        <span className="ml-auto text-[10px] text-gray-500">mais comum</span>
+                        <span className="font-black text-xs text-yellow-300 uppercase tracking-wider">{t.helpRankComboTitle}</span>
+                        <span className="ml-auto text-[10px] text-gray-500">{t.helpRankComboTagline}</span>
                       </div>
                       <div className="px-3 py-2 space-y-1.5" style={{ background:"#100500" }}>
                         <div className="text-gray-300 text-[11px] leading-relaxed">
-                          4 cartas do <span className="text-yellow-300 font-bold">mesmo rank</span>, cada uma de um naipe diferente (♥♦♣♠), em <span className="text-white font-bold">qualquer posição</span> do grid.
+                          {t.helpRankComboDesc}
                         </div>
                         <div className="flex gap-1 mt-1">
                           {["♥A","♦A","♣A","♠A"].map(c => (
                             <div key={c} className="flex-1 rounded text-center py-1 font-black text-[11px]" style={{ background:"#1a0800", color:"#a855f7", border:"1px solid #a855f766" }}>{c}</div>
                           ))}
                         </div>
-                        <div className="text-purple-400 font-black text-[10px] text-center">= "The Anon Council" 🔥</div>
+                        <div className="text-purple-400 font-black text-[10px] text-center">{t.helpRankComboExample}</div>
                       </div>
                     </div>
 
@@ -2024,36 +2226,36 @@ export default function SlotMachine({
                     <div className="rounded-xl overflow-hidden border-2" style={{ borderColor:"#3a2000" }}>
                       <div className="px-3 py-1.5 flex items-center gap-2" style={{ background:"#1a0800" }}>
                         <span className="text-base">💀</span>
-                        <span className="font-black text-xs text-red-400 uppercase tracking-wider">Quad Combo</span>
-                        <span className="ml-auto text-[10px] text-gray-500">3× mais forte</span>
+                        <span className="font-black text-xs text-red-400 uppercase tracking-wider">{t.helpQuadComboTitle}</span>
+                        <span className="ml-auto text-[10px] text-gray-500">{t.helpQuadComboTagline}</span>
                       </div>
                       <div className="px-3 py-2 space-y-1.5" style={{ background:"#100500" }}>
                         <div className="text-gray-300 text-[11px] leading-relaxed">
-                          4 cartas <span className="text-red-400 font-bold">idênticas</span> (mesma carta exata). Muito mais raro, paga <span className="text-red-400 font-bold">3×</span> o rank combo.
+                          {t.helpQuadComboDesc}
                         </div>
                         <div className="flex gap-1 mt-1">
                           {["Tukka","Tukka","Tukka","Tukka"].map((c,i) => (
                             <div key={i} className="flex-1 rounded text-center py-1 font-black text-[9px]" style={{ background:"#1a0800", color:"#ec4899", border:"1px solid #ec489966" }}>{c}</div>
                           ))}
                         </div>
-                        <div className="text-pink-400 font-black text-[10px] text-center">= "Tukka Takeover" 💀</div>
+                        <div className="text-pink-400 font-black text-[10px] text-center">{t.helpQuadComboExample}</div>
                       </div>
                     </div>
 
                     {/* Tabela de payouts */}
                     <div className="rounded-lg overflow-hidden" style={{ border:"1px solid #2a2a2a" }}>
-                      <div className="px-3 py-1 text-[10px] font-black uppercase tracking-wider text-gray-500" style={{ background:"#111" }}>Pagamentos (% da aposta)</div>
+                      <div className="px-3 py-1 text-[10px] font-black uppercase tracking-wider text-gray-500" style={{ background:"#111" }}>{t.helpCombosPayoutTableTitle}</div>
                       <div className="px-2 py-1.5 space-y-0.5" style={{ background:"#0d0d0d" }}>
                         {[
-                          { label:"Ás (A)",   color:"#a855f7", payout:"1000%" },
-                          { label:"Rei (K)",  color:"#f59e0b", payout:"500%"  },
-                          { label:"Rainha (Q)",color:"#ec4899",payout:"400%"  },
-                          { label:"Valete (J)",color:"#3b82f6", payout:"300%" },
-                          { label:"10",       color:"#06b6d4", payout:"250%"  },
-                          { label:"9",        color:"#10b981", payout:"200%"  },
-                          { label:"8",        color:"#84cc16", payout:"150%"  },
-                          { label:"7",        color:"#eab308", payout:"100%"  },
-                          { label:"2 – 6",    color:"#6b7280", payout:"15–60%"},
+                          { label:t.helpCombosPayoutAceLabel,   color:"#a855f7", payout:"1000%" },
+                          { label:t.helpCombosPayoutKingLabel,  color:"#f59e0b", payout:"500%"  },
+                          { label:t.helpCombosPayoutQueenLabel, color:"#ec4899", payout:"400%"  },
+                          { label:t.helpCombosPayoutJackLabel,  color:"#3b82f6", payout:"300%" },
+                          { label:t.helpCombosPayoutTenLabel,   color:"#06b6d4", payout:"250%"  },
+                          { label:t.helpCombosPayoutNineLabel,  color:"#10b981", payout:"200%"  },
+                          { label:t.helpCombosPayoutEightLabel, color:"#84cc16", payout:"150%"  },
+                          { label:t.helpCombosPayoutSevenLabel, color:"#eab308", payout:"100%"  },
+                          { label:t.helpCombosPayoutTwoToSixLabel, color:"#6b7280", payout:"15–60%"},
                         ].map(r => (
                           <div key={r.label} className="flex items-center justify-between">
                             <span className="font-black text-[10px]" style={{ color:r.color }}>{r.label}</span>
@@ -2070,24 +2272,24 @@ export default function SlotMachine({
                   <div className="space-y-2.5">
                     {[
                       {
-                        icon:"⚡", color:"#22c55e", title:"CASCADE",
-                        desc:"Quando um combo ocorre, as cartas somem e novas caem. Se formar outro combo, ele paga mais: 1× → 2× → 3× → 5× → 8×",
+                        icon:"⚡", color:"#22c55e", title: t.helpMechanicCascadeTitle,
+                        desc: t.helpMechanicCascadeDesc,
                       },
                       {
-                        icon:"✨", color:"#FFA500", title:"FOIL (carta dourada)",
-                        desc:"Cartas foil NÃO são destruídas no combo — ficam no grid e acumulam. Quanto mais foils, maior a chance de Bonus Mode.",
+                        icon:"✨", color:"#FFA500", title: t.helpMechanicFoilTitle,
+                        desc: t.helpMechanicFoilDesc,
                       },
                       {
-                        icon:"🎰", color:"#a855f7", title:"BONUS MODE",
-                        desc:"4+ foils no grid final ativam 10 giros bônus com 2× de multiplicador. Durante o bônus, mais foils = mais giros extras.",
+                        icon:"🎰", color:"#a855f7", title: t.helpMechanicBonusModeTitle,
+                        desc: t.helpMechanicBonusModeDesc,
                       },
                       {
-                        icon:"🐉", color:"#FACC15", title:"DRAGUKKA (Joker)",
-                        desc:"Aparece só no Bonus Mode. Fica no grid por todas as 10 rodadas e pode substituir qualquer carta — mas só 1 vez por rodada.",
+                        icon:"🐉", color:"#FACC15", title: t.helpMechanicDragukkaTitle,
+                        desc: t.helpMechanicDragukkaDesc,
                       },
                       {
-                        icon:"🃏", color:"#38bdf8", title:"NEYMAR & CLAWD (Coringa)",
-                        desc:"Aparecem no modo normal. Podem completar qualquer combo no lugar faltando, mas somem após serem usados.",
+                        icon:"🃏", color:"#38bdf8", title: t.helpMechanicWildcardsTitle,
+                        desc: t.helpMechanicWildcardsDesc,
                       },
                     ].map(item => (
                       <div key={item.title} className="rounded-lg p-2.5 flex gap-2.5" style={{ background:"#111", border:`1px solid ${item.color}33` }}>
@@ -2104,31 +2306,31 @@ export default function SlotMachine({
                 {/* PAGE 3 — Como Depositar */}
                 {helpPage === 3 && (
                   <div className="space-y-3">
-                    <div className="text-center text-yellow-400 font-black text-xs uppercase tracking-wider mb-1">Precisa de VBMS para jogar?</div>
+                    <div className="text-center text-yellow-400 font-black text-xs uppercase tracking-wider mb-1">{t.helpDepositNeedVbmsTitle}</div>
 
                     {[
                       {
                         step:"1", color:"#22c55e",
-                        title:"Consiga VBMS",
-                        desc:'Compre VBMS na Uniswap ou ganhe jogando no site. Contract: 0xF14C1...728 (Base)',
+                        title: t.helpDepositStep1Title,
+                        desc: t.helpDepositStep1Desc,
                         icon:"💰",
                       },
                       {
                         step:"2", color:"#3b82f6",
-                        title:'Clique em "Deposit"',
-                        desc:"No topo da tela do slot, clique no botão Deposit. Escolha o valor (100, 250, 500 ou 1000 VBMS).",
+                        title: t.helpDepositStep2Title,
+                        desc: t.helpDepositStep2Desc,
                         icon:"👆",
                       },
                       {
                         step:"3", color:"#f59e0b",
-                        title:"Aprovar e Transferir",
-                        desc:"Duas transações na sua carteira: 1ª Approve (autoriza o gasto), 2ª Transfer (envia os VBMS).",
+                        title: t.helpDepositStep3Title,
+                        desc: t.helpDepositStep3Desc,
                         icon:"✅",
                       },
                       {
                         step:"4", color:"#a855f7",
-                        title:"Receba Coins",
-                        desc:"1 VBMS = 10 Coins para jogar. Coins ficam na sua conta e podem ser sacados de volta a qualquer hora.",
+                        title: t.helpDepositStep4Title,
+                        desc: t.helpDepositStep4Desc,
                         icon:"🎮",
                       },
                     ].map(item => (
@@ -2332,7 +2534,7 @@ export default function SlotMachine({
                   className="font-black text-white text-center"
                   style={{ fontSize: "clamp(12px,3.5vw,18px)", textShadow: liteMotion ? "1px 1px 0 #000" : `1px 1px 0 #000, 0 0 10px ${comboDisplay.color}` }}
                 >
-                  +{comboDisplay.winAmt.toLocaleString()} COINS
+                  +{comboDisplay.winAmt.toLocaleString()} {t.coins}
                 </div>
               </div>
             </div>
@@ -2355,7 +2557,7 @@ export default function SlotMachine({
                 <div className="px-2 py-0.5 rounded text-xs font-black border-2"
                   style={{ background:"#166534", color:"#4ade80", borderColor:"#000", boxShadow:"0 2px 0 #000" }}
                 >
-                  +{bonusWinDisplay.toLocaleString()} coins
+                  +{bonusWinDisplay.toLocaleString()} {t.coins}
                 </div>
               )}
             </div>
@@ -2373,25 +2575,25 @@ export default function SlotMachine({
             {winAmt === null ? (
               <div className="text-center">
                 <span className="subtitle-blink text-[10px] font-bold uppercase tracking-widest" style={{ color:"#f59e0b" }}>
-                  {t.winUpTo} {MAX_POSSIBLE_WIN.toLocaleString()} COINS
+                  {t.winUpTo} {maxPossibleWin.toLocaleString()} {t.coins}
                 </span>
               </div>
             ) : winAmt > 0 ? (
               <div>
                 <div className="text-lg font-black text-white" style={{ textShadow:"1px 1px 0 #000,0 0 10px #FFD700" }}>
-                  +{winAmt.toLocaleString()} COINS!
+                  +{winAmt.toLocaleString()} {t.coins}!
                 </div>
-                {isJackpot && <div className="text-xs font-black text-purple-300 jackpot-text">JACKPOT MAXIMO!</div>}
+                {isJackpot && <div className="text-xs font-black text-purple-300 jackpot-text">{tm.jackpotMax}</div>}
               </div>
             ) : (
-              <span className="text-xs font-bold" style={{ color:"#c87941" }}>Sem linhas ganhadoras</span>
+              <span className="text-xs font-bold" style={{ color:"#c87941" }}>{tm.noWinningLines}</span>
             )}
           </div>
 
           {/* BALANCE BAR — abaixo do grid */}
           <div className="shrink-0 flex items-center justify-between px-4 py-1 border-b-2 border-[#c87941]" style={{ background: dark }}>
             <span className="text-[8px] font-bold uppercase text-gray-500">{t.balance}</span>
-            <span className="text-base font-black text-green-400">{coins.toLocaleString()} coins</span>
+            <span className="text-base font-black text-green-400">{coins.toLocaleString()} {t.coins}</span>
           </div>
 
           {/* CONTROLS */}
@@ -2451,7 +2653,7 @@ export default function SlotMachine({
                     boxShadow: turbo ? '0 1px 0 #000, 0 0 6px rgba(245,158,11,0.7)' : '0 1px 0 #000',
                     zIndex: 10,
                   }}
-                  title={turbo ? 'Turbo ON' : 'Turbo OFF'}
+                  title={turbo ? t.turboOn : t.turboOff}
                 >⚡</button>
               </div>
 
@@ -2489,7 +2691,7 @@ export default function SlotMachine({
                 <div className="flex-1 text-center">
                   <div className="text-[8px] font-bold uppercase text-blue-300 leading-none">{t.bet}</div>
                   <div className="text-lg font-black text-white leading-tight">{betCost}</div>
-                  <div className="text-[8px] font-bold leading-none text-gray-500">coins</div>
+                  <div className="text-[8px] font-bold leading-none text-gray-500">{t.coins}</div>
                 </div>
                 <button
                   onClick={() => setBetIdx(i => Math.min(BET_OPTIONS.length - 1, i + 1))}
@@ -2502,7 +2704,7 @@ export default function SlotMachine({
                 onClick={() => setShowSpinLog(true)}
                 className="w-9 h-full min-h-[40px] rounded border-2 border-black font-black text-sm flex items-center justify-center flex-none"
                 style={{ background: "linear-gradient(180deg,#1e3a5f,#172554)", color: "#60a5fa", borderColor: "#3b82f6" }}
-                title="Spin Log"
+                title={t.spinLog}
               >📋</button>
             </div>
 
@@ -2515,12 +2717,12 @@ export default function SlotMachine({
                   onClick={e => e.stopPropagation()}
                 >
                   <div className="px-4 py-2.5 flex items-center justify-between border-b-2 border-blue-900" style={{ background: 'linear-gradient(180deg,#1e3a5f,#0f1f3d)' }}>
-                    <span className="font-black text-sm uppercase tracking-widest text-blue-300">📋 Spin Log</span>
+                    <span className="font-black text-sm uppercase tracking-widest text-blue-300">📋 {t.spinLog}</span>
                     <button onClick={() => setShowSpinLog(false)} className="w-6 h-6 rounded-full bg-red-600 border-2 border-black font-black text-white text-sm flex items-center justify-center">×</button>
                   </div>
                   <div className="overflow-y-auto flex-1 p-2 space-y-1">
                     {spinLog.length === 0 ? (
-                      <div className="text-center text-gray-500 text-xs py-8">No spins yet</div>
+                      <div className="text-center text-gray-500 text-xs py-8">{t.noSpinsYet}</div>
                     ) : spinLog.map((entry, i) => {
                       const isWin = entry.win > 0;
                       const mult = entry.bet > 0 ? Math.round(entry.win / entry.bet) : 0;
@@ -2535,8 +2737,8 @@ export default function SlotMachine({
                           }}
                         >
                           <span className="text-[10px] font-mono text-gray-600 shrink-0 w-16">{timeStr}</span>
-                          <span className="text-[10px] font-bold text-blue-400 shrink-0">bet {entry.bet}</span>
-                          {entry.bonus && <span className="text-[9px] bg-purple-900 text-purple-300 px-1 rounded shrink-0">BONUS</span>}
+                          <span className="text-[10px] font-bold text-blue-400 shrink-0">{t.betPrefix} {entry.bet}</span>
+                          {entry.bonus && <span className="text-[9px] bg-purple-900 text-purple-300 px-1 rounded shrink-0">{t.bonusBadge}</span>}
                           <span className="flex-1 text-[10px] truncate" style={{ color: isWin ? '#4ade80' : '#6b7280' }}>
                             {entry.combo ?? '—'}
                           </span>
@@ -2558,3 +2760,12 @@ export default function SlotMachine({
     </>
   );
 }
+
+
+
+
+
+
+
+
+

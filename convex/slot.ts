@@ -78,6 +78,7 @@ async function getOrCreateDailyStats(ctx: any, normalizedAddress: string) {
     paidSpinsUsed: 0,
     totalSpins: 0,
     totalWon: 0,
+    noComboStreak: 0,
     lastSpinTime: Date.now(),
   });
 
@@ -97,7 +98,7 @@ export const getSlotConfig = query({
   handler: async () => {
     return {
       spinCost: SLOT_SPIN_BASE_COST,
-      freeSpinsPerDay: 10,
+      freeSpinsPerDay: SLOT_FREE_SPINS_PER_DAY,
       gridSize: SLOT_TOTAL_CELLS,
       bonusFreeSpins: SLOT_BONUS_FREE_SPINS,
     };
@@ -195,8 +196,12 @@ export const spinSlot = mutation({
     const normalizedAddress = address.toLowerCase();
     const { stats } = await getOrCreateDailyStats(ctx, normalizedAddress);
 
-    // Only dev wallets can spin — all spins are free
-    if (!SLOT_DEV_ALLOWED_ADDRESSES.includes(normalizedAddress as typeof SLOT_DEV_ALLOWED_ADDRESSES[number])) {
+    // Dev-only guard: allow connected wallet or linked primary profile wallet.
+    const normalizedProfileAddress = profile.address.toLowerCase();
+    const isDevAllowed =
+      SLOT_DEV_ALLOWED_ADDRESSES.includes(normalizedAddress as typeof SLOT_DEV_ALLOWED_ADDRESSES[number]) ||
+      SLOT_DEV_ALLOWED_ADDRESSES.includes(normalizedProfileAddress as typeof SLOT_DEV_ALLOWED_ADDRESSES[number]);
+    if (!isDevAllowed) {
       throw new Error("Access denied: slot restricted to developer wallets");
     }
 
@@ -220,22 +225,33 @@ export const spinSlot = mutation({
       throw new Error(`Insufficient coins. Need ${spinCost} coins to spin.`);
     }
 
-    // Combo boost: higher chance on first spins of the day, decays as player spins more
-    // Spin 1-3: 60% | Spin 4-6: 40% | Spin 7-10: 25% | Spin 11-20: 15% | Spin 21+: 8%
+    // Combo boost: higher chance on first spins of the day + pity protection.
+    // Target frequency: around 1 combo per 5 normal spins.
     const totalSpinsToday = stats.totalSpins ?? 0;
-    const comboBoostChance = isBonusMode ? 0 : (
-      totalSpinsToday < 3  ? 0.60 :
-      totalSpinsToday < 6  ? 0.40 :
-      totalSpinsToday < 10 ? 0.25 :
-      totalSpinsToday < 20 ? 0.15 : 0.08
+    const noComboStreak = stats.noComboStreak ?? 0;
+    const baseComboChance = isBonusMode ? 0 : (
+      totalSpinsToday < 3  ? 0.75 :
+      totalSpinsToday < 6  ? 0.55 :
+      totalSpinsToday < 10 ? 0.40 :
+      totalSpinsToday < 20 ? 0.28 : 0.20
     );
+    const pityBoost = isBonusMode ? 0 : Math.min(0.5, noComboStreak * 0.12);
+    const comboBoostChance = isBonusMode ? 0 : Math.min(0.95, baseComboChance + pityBoost);
+    const forceComboNow = !isBonusMode && noComboStreak >= 4;
 
-    const resolution = resolveSlotSpin(
+    let resolution = resolveSlotSpin(
       isBonusMode,
       isBonusMode ? ((bonusState as SlotBonusState | undefined) ?? undefined) : undefined,
       buyBonusEntry ? SLOT_BONUS_FOIL_COUNT : 0,
       comboBoostChance,
     );
+
+    // Hard pity: if player misses 4 normal spins in a row, re-roll until combo appears.
+    if (forceComboNow && resolution.comboSteps.length === 0) {
+      for (let attempt = 0; attempt < 5 && resolution.comboSteps.length === 0; attempt += 1) {
+        resolution = resolveSlotSpin(false, undefined, buyBonusEntry ? SLOT_BONUS_FOIL_COUNT : 0, 1);
+      }
+    }
 
     // Flat payout — no bonus multiplier, no cascade multiplier
     const comboSteps = resolution.comboSteps.map((step) => ({
@@ -245,6 +261,8 @@ export const spinSlot = mutation({
     }));
 
     let finalWin = comboSteps.reduce((sum, step) => sum + step.reward, 0);
+    const hadCombo = comboSteps.length > 0;
+    const nextNoComboStreak = isBonusMode ? noComboStreak : (hadCombo ? 0 : noComboStreak + 1);
 
     // Max win cap: 100x betMultiplier
     const maxWin = betMultiplier * 100;
@@ -304,6 +322,7 @@ export const spinSlot = mutation({
         paidSpinsUsed: stats.paidSpinsUsed,
         totalSpins: stats.totalSpins + 1,
         totalWon: stats.totalWon + finalWin,
+        noComboStreak: nextNoComboStreak,
         lastSpinTime: Date.now(),
       });
     } else if (spinCost === 0 && isBonusMode) {
@@ -313,6 +332,7 @@ export const spinSlot = mutation({
         paidSpinsUsed: stats.paidSpinsUsed,
         totalSpins: stats.totalSpins + 1,
         totalWon: stats.totalWon + finalWin,
+        noComboStreak: noComboStreak,
         lastSpinTime: Date.now(),
       });
     } else {
@@ -322,6 +342,7 @@ export const spinSlot = mutation({
         paidSpinsUsed: stats.paidSpinsUsed + 1,
         totalSpins: stats.totalSpins + 1,
         totalWon: stats.totalWon + finalWin,
+        noComboStreak: nextNoComboStreak,
         lastSpinTime: Date.now(),
       });
     }
@@ -350,7 +371,7 @@ export const spinSlot = mutation({
       comboSteps,
       finalGrid: resolution.finalGrid,
       winAmount: finalWin,
-      maxWin: finalWin >= 50000,
+      maxWin: finalWin >= maxWin,
       foilCount: resolution.finalFoilCount,
       triggeredBonus: resolution.triggeredBonus,
       bonusSpinsAwarded: resolution.bonusSpinsAwarded,
@@ -880,3 +901,8 @@ export const adminAddBonusSpins = mutation({
     return { success: true, newBonusSpins: currentBonus + count };
   },
 });
+
+
+
+
+

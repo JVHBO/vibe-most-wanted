@@ -25,6 +25,420 @@ export type SlotCardDefinition = {
   weight: number;
 };
 
+export type SlotPatternType = "horizontal" | "vertical" | "diagonal" | "l_shape";
+
+export type SlotPattern = {
+  id: string;
+  type: SlotPatternType;
+  label: string;
+  indices: [number, number, number, number];
+};
+
+export const SLOT_PATTERN_TYPE_LABELS: Record<SlotPatternType, string> = {
+  horizontal: "Horizontal",
+  vertical: "Vertical",
+  diagonal: "Diagonal",
+  l_shape: "L-Shape",
+};
+
+export const SLOT_PATTERN_BOOST_WEIGHTS: Record<SlotPatternType, number> = {
+  horizontal: 1,
+  vertical: 1,
+  diagonal: 1.1,
+  l_shape: 1.15,
+};
+
+export const SLOT_SPECIAL_DRAGUKKA_PAYOUT = 1200;
+
+export const SLOT_PATTERNS: SlotPattern[] = [
+  { id: "horizontal_top_left", type: "horizontal", label: "Horizontal 1", indices: [0, 1, 2, 3] },
+  { id: "horizontal_top_right", type: "horizontal", label: "Horizontal 1", indices: [1, 2, 3, 4] },
+  { id: "horizontal_mid_left", type: "horizontal", label: "Horizontal 2", indices: [5, 6, 7, 8] },
+  { id: "horizontal_mid_right", type: "horizontal", label: "Horizontal 2", indices: [6, 7, 8, 9] },
+  { id: "horizontal_bottom_left", type: "horizontal", label: "Horizontal 3", indices: [10, 11, 12, 13] },
+  { id: "horizontal_bottom_right", type: "horizontal", label: "Horizontal 3", indices: [11, 12, 13, 14] },
+  { id: "diagonal_desc_left", type: "diagonal", label: "Diagonal ↘", indices: [0, 6, 12, 13] },
+  { id: "diagonal_desc_right", type: "diagonal", label: "Diagonal ↙", indices: [4, 8, 12, 11] },
+  { id: "diagonal_asc_left", type: "diagonal", label: "Diagonal ↗", indices: [10, 6, 2, 3] },
+  { id: "diagonal_asc_right", type: "diagonal", label: "Diagonal ↖", indices: [14, 8, 2, 1] },
+  { id: "vertical_1", type: "vertical", label: "Vertical 1", indices: [0, 5, 10, 11] },
+  { id: "vertical_2", type: "vertical", label: "Vertical 2", indices: [1, 6, 11, 12] },
+  { id: "vertical_3", type: "vertical", label: "Vertical 3", indices: [2, 7, 12, 13] },
+  { id: "vertical_4", type: "vertical", label: "Vertical 4", indices: [3, 8, 13, 14] },
+  { id: "vertical_5", type: "vertical", label: "Vertical 5", indices: [4, 9, 14, 13] },
+  { id: "l_top_mid_right", type: "l_shape", label: "L ↲", indices: [3, 8, 13, 12] },
+  { id: "l_bottom_left", type: "l_shape", label: "L ↱", indices: [10, 5, 0, 1] },
+  { id: "l_bottom_mid", type: "l_shape", label: "L ↱", indices: [11, 6, 1, 2] },
+  { id: "l_bottom_right", type: "l_shape", label: "L ↰", indices: [14, 9, 4, 3] },
+  { id: "l_bottom_mid_right", type: "l_shape", label: "L ↰", indices: [13, 8, 3, 2] },
+];
+
+export const SLOT_PATTERN_VISUALS = SLOT_PATTERNS.filter((pattern, index, list) => {
+  const signature = [...pattern.indices].sort((a, b) => a - b).join(",");
+  return list.findIndex((candidate) => [...candidate.indices].sort((a, b) => a - b).join(",") === signature) === index;
+});
+
+export const SLOT_PATTERN_REFERENCE_EXAMPLES: Record<SlotPatternType, [number, number, number, number]> = {
+  horizontal: [0, 1, 2, 3],
+  vertical: [1, 6, 11, 12],
+  diagonal: [0, 6, 12, 13],
+  l_shape: [3, 8, 13, 12],
+};
+
+export function getSlotPatternSignature(indices: readonly number[]): string {
+  return [...indices].sort((a, b) => a - b).join(",");
+}
+
+export function getSlotPatternForIndices(indices: readonly number[]): SlotPattern | undefined {
+  const signature = getSlotPatternSignature(indices);
+  return SLOT_PATTERNS.find((pattern) => getSlotPatternSignature(pattern.indices) === signature);
+}
+
+export function getSlotPatternLabel(pattern: SlotPattern): string {
+  return `${SLOT_PATTERN_TYPE_LABELS[pattern.type]} • ${pattern.label}`;
+}
+
+export function getSlotPatternDisplayName(type: SlotPatternType): string {
+  return SLOT_PATTERN_TYPE_LABELS[type];
+}
+
+export function getSlotPatternBoostWeight(pattern: SlotPattern): number {
+  return SLOT_PATTERN_BOOST_WEIGHTS[pattern.type];
+}
+
+export function getSlotPatternTypeList(): SlotPatternType[] {
+  return ["horizontal", "vertical", "diagonal", "l_shape"];
+}
+
+export function getSlotPatternCells(pattern: SlotPattern): number[] {
+  return [...pattern.indices];
+}
+
+export function getSlotPatternById(id: string): SlotPattern | undefined {
+  return SLOT_PATTERNS.find((pattern) => pattern.id === id);
+}
+
+export function getSlotPatternsByType(type: SlotPatternType): SlotPattern[] {
+  return SLOT_PATTERN_VISUALS.filter((pattern) => pattern.type === type);
+}
+
+export function getSlotPatternSummary() {
+  return {
+    total: SLOT_PATTERN_VISUALS.length,
+    horizontal: getSlotPatternsByType("horizontal").length,
+    vertical: getSlotPatternsByType("vertical").length,
+    diagonal: getSlotPatternsByType("diagonal").length,
+    lShape: getSlotPatternsByType("l_shape").length,
+  };
+}
+
+export function getSlotPatternGridPreview(pattern: SlotPattern): string[] {
+  return Array.from({ length: SLOT_ROWS }, (_, row) =>
+    Array.from({ length: SLOT_COLS }, (_, col) => {
+      const index = row * SLOT_COLS + col;
+      return pattern.indices.includes(index as (typeof pattern.indices)[number]) ? "■" : "·";
+    }).join(" "),
+  );
+}
+
+export function getSlotPatternPreviewMap() {
+  return SLOT_PATTERN_VISUALS.map((pattern) => ({
+    id: pattern.id,
+    type: pattern.type,
+    label: getSlotPatternLabel(pattern),
+    preview: getSlotPatternGridPreview(pattern),
+  }));
+}
+
+export function getSlotPatternReferenceRows() {
+  return getSlotPatternTypeList().map((type) => ({
+    type,
+    label: getSlotPatternDisplayName(type),
+    example: SLOT_PATTERN_REFERENCE_EXAMPLES[type].join("-"),
+  }));
+}
+
+export function getSlotShapeRulesSummary() {
+  return [
+    "Combos only trigger on 4-cell shapes.",
+    "Valid shapes: horizontal, vertical, diagonal, and L-shape.",
+    "Dragukka can complete a shape as wildcard in bonus mode.",
+    "Four dragukkas pay once and explode to avoid infinite loops.",
+  ];
+}
+
+export function getSlotPatternCatalog() {
+  return {
+    patterns: SLOT_PATTERN_VISUALS,
+    summary: getSlotPatternSummary(),
+    previews: getSlotPatternPreviewMap(),
+  };
+}
+
+export function isDragukkaCard(name: string): boolean {
+  return name === SLOT_BONUS_WILDCARD;
+}
+
+export function isNormalWildcardCard(name: string): boolean {
+  return name === "neymar" || name === "clawdmoltopenbot";
+}
+
+export function isAnySlotWildcard(name: string): boolean {
+  return isDragukkaCard(name) || isNormalWildcardCard(name);
+}
+
+export function getSlotVisiblePatternCatalog() {
+  return getSlotPatternCatalog();
+}
+
+export function getSlotPatternTooltip(pattern: SlotPattern): string {
+  return `${getSlotPatternLabel(pattern)} (${pattern.indices.join("-")})`;
+}
+
+export function getSlotPatternWeightById(id: string): number {
+  const pattern = getSlotPatternById(id);
+  return pattern ? getSlotPatternBoostWeight(pattern) : 0;
+}
+
+export function getSlotPatternOddsTable() {
+  return SLOT_PATTERN_VISUALS.map((pattern) => ({
+    id: pattern.id,
+    type: pattern.type,
+    label: getSlotPatternLabel(pattern),
+    weight: getSlotPatternBoostWeight(pattern),
+  }));
+}
+
+export function getSlotPatternPublicSummaryText(): string {
+  const summary = getSlotPatternSummary();
+  return `${summary.total} patterns • H ${summary.horizontal} • V ${summary.vertical} • D ${summary.diagonal} • L ${summary.lShape}`;
+}
+
+export function getSlotWildcardRuleText(): string {
+  return "Dragukka acts as a bonus wildcard. Neymar and Clawd act as normal-mode wildcards. Four dragukkas pay once and explode.";
+}
+
+export function getSlotPatternHelpRows() {
+  return getSlotPatternReferenceRows().map((row) => ({
+    ...row,
+    icon: row.type === "horizontal" ? "↔" : row.type === "vertical" ? "↕" : row.type === "diagonal" ? "⤡" : "∟",
+  }));
+}
+
+export function getSlotShapeRuleText(): string {
+  return getSlotShapeRulesSummary().join(" ");
+}
+
+export function getSlotPatternExplainerText() {
+  return `${getSlotShapeRuleText()} ${getSlotWildcardRuleText()}`;
+}
+
+export function getSlotPatternLegend() {
+  return SLOT_PATTERN_VISUALS.map((pattern) => ({
+    id: pattern.id,
+    label: getSlotPatternLabel(pattern),
+    indices: [...pattern.indices],
+    type: pattern.type,
+  }));
+}
+
+export function getSlotPatternUiData() {
+  return {
+    legend: getSlotPatternLegend(),
+    previews: getSlotPatternPreviewMap(),
+    references: getSlotPatternReferenceRows(),
+  };
+}
+
+export function getSlotPatternReferenceText() {
+  return getSlotPatternReferenceRows().map((row) => `${row.label}: ${row.example}`).join(" | ");
+}
+
+export function getSlotPatternPreviewSummaryText(): string {
+  return getSlotPatternPreviewMap().map((row) => `${row.label}: ${row.preview.join("/")}`).join(" | ");
+}
+
+export function getSlotPatternOddsSummaryText(): string {
+  return getSlotPatternOddsTable().map((row) => `${row.label}: ${row.weight}`).join(" | ");
+}
+
+export function getSlotPatternVisualTooltip(id: string): string | null {
+  const pattern = getSlotPatternById(id);
+  return pattern ? getSlotPatternTooltip(pattern) : null;
+}
+
+export function getSlotPatternExampleCells(type: SlotPatternType): number[] {
+  return [...SLOT_PATTERN_REFERENCE_EXAMPLES[type]];
+}
+
+export function getSlotPatternTypeLabel(type: SlotPatternType): string {
+  return SLOT_PATTERN_TYPE_LABELS[type];
+}
+
+export function getSlotPatternMeta() {
+  return {
+    labels: SLOT_PATTERN_TYPE_LABELS,
+    weights: SLOT_PATTERN_BOOST_WEIGHTS,
+    specialDragukkaPayout: SLOT_SPECIAL_DRAGUKKA_PAYOUT,
+  };
+}
+
+export function getSlotPatternDocs() {
+  return {
+    summary: getSlotPatternSummary(),
+    previews: getSlotPatternPreviewMap(),
+    references: getSlotPatternReferenceRows(),
+    rules: getSlotShapeRulesSummary(),
+  };
+}
+
+export function getSlotPatternUiSummary() {
+  return {
+    overview: getSlotPatternPublicSummaryText(),
+    references: getSlotPatternReferenceText(),
+    previews: getSlotPatternPreviewSummaryText(),
+    odds: getSlotPatternOddsSummaryText(),
+  };
+}
+
+export function getSlotPatternShapeText(pattern: SlotPattern): string {
+  return pattern.indices.join("-");
+}
+
+export function isKnownSlotPattern(indices: readonly number[]): boolean {
+  return Boolean(getSlotPatternForIndices(indices));
+}
+
+export function getSlotPatternLabelFromIndices(indices: readonly number[]): string | null {
+  const pattern = getSlotPatternForIndices(indices);
+  return pattern ? getSlotPatternLabel(pattern) : null;
+}
+
+export function getSlotPatternTypeFromIndices(indices: readonly number[]): SlotPatternType | null {
+  const pattern = getSlotPatternForIndices(indices);
+  return pattern?.type ?? null;
+}
+
+export function getSlotPatternWeightFromIndices(indices: readonly number[]): number {
+  const pattern = getSlotPatternForIndices(indices);
+  return pattern ? getSlotPatternBoostWeight(pattern) : 0;
+}
+
+export function getSlotPatternDisplayRows() {
+  return getSlotPatternPreviewMap().map((entry) => ({
+    ...entry,
+    text: entry.preview.join(" | "),
+  }));
+}
+
+export function normalizeSlotPatternIndices(indices: readonly number[]): [number, number, number, number] | null {
+  if (indices.length !== 4) return null;
+  return [indices[0]!, indices[1]!, indices[2]!, indices[3]!];
+}
+
+export function getSlotPatternSummaryBundle() {
+  return {
+    docs: getSlotPatternDocs(),
+    meta: getSlotPatternMeta(),
+    ui: getSlotPatternUiSummary(),
+  };
+}
+
+export function getSlotPatternDisplayCatalog() {
+  return {
+    patterns: SLOT_PATTERN_VISUALS,
+    ui: getSlotPatternUiData(),
+  };
+}
+
+export function getSlotShapeDisplayRows() {
+  return getSlotPatternDisplayRows();
+}
+
+export function getSlotTotalPatternWeight(): number {
+  return SLOT_PATTERN_VISUALS.reduce((sum, pattern) => sum + getSlotPatternBoostWeight(pattern), 0);
+}
+
+export function getSlotNormalizedPatternWeight(pattern: SlotPattern): number {
+  const total = getSlotTotalPatternWeight();
+  if (total <= 0) return 0;
+  return getSlotPatternBoostWeight(pattern) / total;
+}
+
+export function getSlotPatternProbabilityHints() {
+  return SLOT_PATTERN_VISUALS.map((pattern) => ({
+    id: pattern.id,
+    label: getSlotPatternLabel(pattern),
+    normalizedWeight: Number(getSlotNormalizedPatternWeight(pattern).toFixed(4)),
+  }));
+}
+
+export function getSlotPatternAnalyticsData() {
+  return {
+    totalWeight: getSlotTotalPatternWeight(),
+    hints: getSlotPatternProbabilityHints(),
+  };
+}
+
+export function getSlotShapeMetadata() {
+  return getSlotPatternMeta();
+}
+
+export function getSlotReferenceExamples() {
+  return SLOT_PATTERN_REFERENCE_EXAMPLES;
+}
+
+export function getSlotPatternDebugText(pattern: SlotPattern): string {
+  return `${pattern.id}: ${pattern.indices.join("-")}`;
+}
+
+export function getAllSlotPatternDebugText(): string[] {
+  return SLOT_PATTERN_VISUALS.map(getSlotPatternDebugText);
+}
+
+export function getSlotPatternKnowledgeText(): string {
+  return `${getSlotPatternPublicSummaryText()} ${getSlotWildcardRuleText()} ${getSlotPatternOddsSummaryText()}`;
+}
+
+export function getSlotPatternRuntimeHintsText(): string {
+  return `Boost uses valid shape weights only. ${getSlotPatternOddsSummaryText()}`;
+}
+
+export function getSlotPatternGameRulesText(): string {
+  return `${getSlotShapeRuleText()} ${getSlotWildcardRuleText()}`;
+}
+
+export function getSlotPatternFinalSummaryText(): string {
+  return `${getSlotPatternPublicSummaryText()} ${getSlotPatternGameRulesText()}`;
+}
+
+export function getSlotPatternRuleCount(): number {
+  return getSlotShapeRulesSummary().length;
+}
+
+export function getSlotPatternRule(index: number): string | null {
+  return getSlotShapeRulesSummary()[index] ?? null;
+}
+
+export function getSlotShapeRuleList() {
+  return getSlotShapeRulesSummary();
+}
+
+export function getSlotPatternRulebookText(): string {
+  return `${getSlotShapeRuleText()} ${getSlotWildcardRuleText()}`;
+}
+
+export function getSlotPatternCompactGuideText(): string {
+  return `${getSlotPatternPublicSummaryText()} ${getSlotPatternRulebookText()}`;
+}
+
+export function getSlotPatternOverviewText(): string {
+  return `${getSlotPatternPublicSummaryText()} ${getSlotPatternReferenceText()}`;
+}
+
+export function getSlotPatternCheatSheetText(): string {
+  return `${getSlotPatternOverviewText()} ${getSlotPatternOddsSummaryText()}`;
+}
 // Suit/rank data from vmw-tcg-cards.json
 export const SLOT_CARD_SUIT_RANK: Record<string, { suit: SlotSuit; rank: SlotRank }> = {
   "anon":             { suit: "hearts",   rank: "A" },
@@ -106,7 +520,7 @@ export const SLOT_BET_OPTIONS = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100] as con
 export const SLOT_BONUS_COST_MULT = 20;
 export const SLOT_BONUS_FREE_SPINS = 10;
 export const SLOT_BONUS_FOIL_COUNT = 4;
-export const SLOT_FREE_SPINS_PER_DAY = 10;
+export const SLOT_FREE_SPINS_PER_DAY = 5;
 export const SLOT_WILDCARD_CARDS: string[] = [
   "dragukka",
   "neymar",

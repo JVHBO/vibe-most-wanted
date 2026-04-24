@@ -13,24 +13,20 @@ export default function HowToCompletePage() {
         <div className="bg-vintage-charcoal/50 rounded-xl p-6 border border-vintage-gold/30 space-y-6">
           <section>
             <h2 className="text-xl font-bold text-vintage-gold mb-3">
-              Mint a VibeFID Card
+              VibeFID Card
             </h2>
             <p className="text-vintage-cream/80 mb-4">
-              VibeFID is your unique Farcaster identity card on Base chain.
-              Each card shows your Neynar social score and criminal backstory.
+              VibeFID é seu card de identidade único no Farcaster na Base chain.
+              O mint foi encerrado — todos os 572 cards foram mintados.
             </p>
-            <Link
-              href='/fid'
-              target="_blank"
-              className="inline-block bg-vintage-gold text-vintage-dark px-6 py-3 rounded-lg font-bold hover:bg-vintage-gold/80 transition text-lg"
-            >
-              Mint VibeFID
-            </Link>
+            <span className="inline-block bg-zinc-700 text-zinc-400 px-6 py-3 rounded-lg font-bold text-lg cursor-not-allowed">
+              🔒 Mint Encerrado
+            </span>
           </section>
 
           <div className="border-t border-vintage-gold/20 pt-6">
             <p className="text-vintage-cream/70 text-sm">
-              Once you mint your VibeFID, the quest will auto-verify using your connected wallet.
+              Se você já tem um VibeFID, a quest será verificada automaticamente pela sua wallet conectada.
             </p>
           </div>
         </div>
