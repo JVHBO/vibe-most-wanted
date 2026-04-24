@@ -18,6 +18,8 @@ export function isMiniappMode(): boolean {
  */
 export function isBaseAppWebView(): boolean {
   if (typeof window === 'undefined') return false;
+  // Farcaster miniapp runs inside an iframe — never treat it as Base App WebView
+  if (isMiniappMode()) return false;
   const ua = typeof navigator !== 'undefined' ? navigator.userAgent.toLowerCase() : '';
 
   // Reliable signals for Base/Coinbase in-app WebViews.
