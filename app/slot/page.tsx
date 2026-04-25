@@ -1147,7 +1147,7 @@ export default function SlotPage() {
                     textShadow: walletTab === tab ? "1px 1px 0 #000" : "none",
                   }}
                 >
-                  {tab === "deposit" ? "Depositar" : "Sacar VBMS"}
+                  {tab === "deposit" ? tr("deposit") : tr("withdraw")}
                 </button>
               ))}
             </div>
@@ -1158,8 +1158,8 @@ export default function SlotPage() {
                 buyStep === "done" ? (
                   <div className="text-center py-8">
                     <div className="text-4xl mb-2">🎰</div>
-                    <div className="font-black text-green-400 text-lg">Coins chegando!</div>
-                    <div className="text-gray-400 text-xs mt-1">Crédito em instantes via blockchain</div>
+                    <div className="font-black text-green-400 text-lg">Coins incoming!</div>
+                    <div className="text-gray-400 text-xs mt-1">Credit arriving in moments via blockchain</div>
                   </div>
                 ) : buyStep !== "idle" || depositStep !== "amount" ? (
                   <div className="text-center py-8">
@@ -1181,7 +1181,7 @@ export default function SlotPage() {
                       const selected = PAY_OPTS.find(o => o.key === buyOption)!;
                       return (
                         <div className="mb-3 relative">
-                          <label className="text-gray-400 text-xs font-bold mb-1.5 block">Trocar por coins</label>
+                          <label className="text-gray-400 text-xs font-bold mb-1.5 block">Exchange for coins</label>
                           <button
                             onClick={() => setBuyDropOpen(v => !v)}
                             className="w-full flex items-center gap-2.5 px-3 py-2.5 bg-[#0a0a0a] border-2 border-[#c87941]/60 rounded text-left"
@@ -1221,10 +1221,10 @@ export default function SlotPage() {
                                     <span className="text-gray-600">(≈ ${(per100Stable * 1000).toFixed(2)})</span>
                                   )}
                                 </>
-                              ) : <span>carregando taxa...</span>}
+                              ) : <span>loading rate...</span>}
                               {walletBalDisplay && (
                                 <span className="ml-auto text-gray-400">
-                                  saldo: <span className="text-blue-400 font-bold">{walletBalDisplay}</span>
+                                  balance: <span className="text-blue-400 font-bold">{walletBalDisplay}</span>
                                 </span>
                               )}
                             </div>
@@ -1236,7 +1236,7 @@ export default function SlotPage() {
                     {/* Input de quantidade */}
                     <div className="mb-3">
                       <label className="text-white text-xs font-bold mb-1.5 block">
-                        {buyOption === "vbms-deposit" ? "Quantidade (VBMS)" : "Quantidade de Coins"}
+                        {buyOption === "vbms-deposit" ? "Amount (VBMS)" : "Coin Amount"}
                       </label>
                       {buyOption === "vbms-deposit" ? (
                         <>
@@ -1247,8 +1247,8 @@ export default function SlotPage() {
                             placeholder="100" min="1" max={DEPOSIT_MAX}
                           />
                           <div className="flex justify-between text-xs mt-1">
-                            <span className="text-gray-500">Saldo: <span className="text-green-400 font-bold">{currentVBMSBalance.toFixed(2)} VBMS</span></span>
-                            <span className="text-gray-600">Máx: {DEPOSIT_MAX}</span>
+                            <span className="text-gray-500">Balance: <span className="text-green-400 font-bold">{currentVBMSBalance.toFixed(2)} VBMS</span></span>
+                            <span className="text-gray-600">Max: {DEPOSIT_MAX}</span>
                           </div>
                           <div className="grid grid-cols-4 gap-2 mt-2">
                             {DEPOSIT_PRESETS.map(p => (
@@ -1275,7 +1275,7 @@ export default function SlotPage() {
                       return coins > 0 ? (
                         <div className="bg-[#0a0a0a] rounded-lg p-3 mb-3 border border-[#c87941]/20 text-xs">
                           <div className="flex justify-between text-gray-400 mb-1.5">
-                            <span>Você recebe</span>
+                            <span>You receive</span>
                             <span className="text-yellow-400 font-black">{coins.toLocaleString()} coins</span>
                           </div>
                           <div className="flex justify-between font-black text-sm border-t border-[#c87941]/20 pt-1.5">
@@ -1299,14 +1299,14 @@ export default function SlotPage() {
                         disabled={!depositAmount || Number(depositAmount) <= 0 || Number(depositAmount) > Math.min(currentVBMSBalance, DEPOSIT_MAX)}
                         className="w-full py-3 font-black text-sm uppercase border-2 border-black disabled:opacity-50"
                         style={{ background:"linear-gradient(180deg,#22c55e,#15803d)", color:"#fff", textShadow:"1px 1px 0 #000" }}>
-                        Depositar VBMS
+                        Deposit VBMS
                       </button>
                     ) : (
                       <button onClick={handleBuyCoins}
                         disabled={buyIsETH ? per100ETH === 0 : per100Stable === 0}
                         className="w-full py-3 font-black text-sm uppercase border-2 border-black disabled:opacity-50"
                         style={{ background:"linear-gradient(180deg,#c87941,#7a4520)", color:"#fff", textShadow:"1px 1px 0 #000" }}>
-                        Comprar Coins
+                        Buy Coins
                       </button>
                     )}
                   </>
@@ -1315,7 +1315,7 @@ export default function SlotPage() {
                 withdrawStep === "amount" ? (
                   <>
                     <div className="mb-3">
-                      <label className="text-white text-xs font-bold mb-1 block">Fichas do Slot (coins)</label>
+                      <label className="text-white text-xs font-bold mb-1 block">Slot Coins</label>
                       <input
                         type="number" value={withdrawAmount}
                         onChange={e => setWithdrawAmount(e.target.value)}
@@ -1323,8 +1323,8 @@ export default function SlotPage() {
                         placeholder="100" min="100"
                       />
                       <div className="flex justify-between text-xs mt-1">
-                        <span className="text-gray-500">Fichas: <span className="text-blue-400 font-bold">{(userProfile?.coins || 0).toLocaleString()}</span></span>
-                        <span className="text-gray-600">Mín: 100</span>
+                        <span className="text-gray-500">Coins: <span className="text-blue-400 font-bold">{(userProfile?.coins || 0).toLocaleString()}</span></span>
+                        <span className="text-gray-600">Min: 100</span>
                       </div>
                     </div>
                     <div className="grid grid-cols-4 gap-2 mb-4">
@@ -1337,7 +1337,7 @@ export default function SlotPage() {
                       disabled={!withdrawAmount || Number(withdrawAmount) < 100 || Number(withdrawAmount) > (userProfile?.coins || 0)}
                       className="w-full py-3 font-black text-sm uppercase border-2 border-black disabled:opacity-50"
                       style={{ background:"linear-gradient(180deg,#3b82f6,#1d4ed8)", color:"#fff", textShadow:"1px 1px 0 #000" }}>
-                      Sacar (claim on-chain)
+                      Withdraw (claim on-chain)
                     </button>
                   </>
                 ) : (
