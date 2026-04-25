@@ -1844,7 +1844,7 @@ export default function SlotMachine({
                           <div className="relative flex-1 overflow-hidden" style={{ background:"#111" }}>
                             {cImg ? (
                               // eslint-disable-next-line @next/next/no-img-element
-                              <img src={cImg} alt="" aria-label={cLabel} className="w-full h-full object-contain object-center" decoding="async" />
+                              <img src={cImg} alt="" aria-label={cLabel} className="w-full h-full object-cover object-center" decoding="async" />
                             ) : (
                               <div className="flex items-center justify-center h-full text-[8px] text-gray-300 text-center px-0.5">{cLabel.toUpperCase()}</div>
                             )}
@@ -1870,7 +1870,7 @@ export default function SlotMachine({
                   return (
                     <div key={c.baccarat+"_foil"} className={`relative ${liteMotion ? "" : "foil-card"} flex flex-col overflow-hidden rounded`} style={{ border:`${rs.borderW}px solid #FFA500`, background: rs.bg, aspectRatio:"3/4", boxShadow: liteMotion ? "0 0 4px #FFA50055" : `0 0 15px #FFA50088` }}>
                       <div className="relative flex-1 overflow-hidden" style={{ background:"#111" }}>
-                        {cImg && <img src={cImg} alt="" aria-label={cLabel} className="w-full h-full object-contain object-center" decoding="async" />}
+                        {cImg && <img src={cImg} alt="" aria-label={cLabel} className="w-full h-full object-cover object-center" decoding="async" />}
                         {liteMotion ? (
                           <>
                             <div className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(135deg, rgba(255,255,255,0.28) 0%, rgba(255,215,0,0.18) 28%, transparent 46%, rgba(34,211,238,0.18) 70%, rgba(255,165,0,0.24) 100%)" }} />
@@ -2547,7 +2547,7 @@ export default function SlotMachine({
 
           {/* REEL AREA — flex-1 preenche o espaço disponível */}
           <div
-            className="flex-1 min-h-[270px] relative overflow-hidden"
+            className="flex-1 min-h-[240px] relative overflow-hidden"
             style={{
               background: isBonusActive
                 ? "linear-gradient(180deg,#1a0040 0%,#0d001f 40%,#050010 70%,#000 100%)"

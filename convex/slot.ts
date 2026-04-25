@@ -227,11 +227,11 @@ export const spinSlot = mutation({
     // Target frequency: around 1 combo per 3 normal spins.
     const totalSpinsToday = stats.totalSpins ?? 0;
     const noComboStreak = stats.noComboStreak ?? 0;
-    const baseComboChance = isBonusMode ? 0 : (
-      totalSpinsToday < 3  ? 0.90 :
-      totalSpinsToday < 6  ? 0.72 :
-      totalSpinsToday < 10 ? 0.55 :
-      totalSpinsToday < 20 ? 0.42 : 0.32
+    const baseComboChance = isBonusMode ? 0.65 : (
+      totalSpinsToday < 3  ? 0.95 :
+      totalSpinsToday < 6  ? 0.82 :
+      totalSpinsToday < 10 ? 0.68 :
+      totalSpinsToday < 20 ? 0.55 : 0.45
     );
     const pityBoost = isBonusMode ? 0 : Math.min(0.5, noComboStreak * 0.18);
     const comboBoostChance = isBonusMode ? 0 : Math.min(0.97, baseComboChance + pityBoost);

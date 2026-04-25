@@ -45,6 +45,19 @@ const ERC20_APPROVE_ABI = [
 ] as const;
 const DEPOSIT_MAX = 10000;
 
+const SLOT_DISCLAIMER: Record<string, { title: string; body: string; checkLabel: string; accept: string }> = {
+  en:      { title: "⚠️ Play Responsibly", body: "Casino games carry risk. The house always wins in the long run — do not treat slots as an investment. Tukka Slots is designed for low bets and pure fun. Play only while it's fun.", checkLabel: "I understand the risks and want to play for fun only.", accept: "Let's play!" },
+  "pt-BR": { title: "⚠️ Jogue com Responsabilidade", body: "Jogos de cassino envolvem riscos. A casa sempre ganha a longo prazo — não trate slots como investimento. O Tukka Slots foi feito para apostas baixas e diversão pura. Jogue apenas enquanto for divertido.", checkLabel: "Entendo os riscos e quero jogar apenas por diversão.", accept: "Vamos jogar!" },
+  es:      { title: "⚠️ Juega Responsablemente", body: "Los juegos de casino conllevan riesgos. La casa siempre gana a largo plazo — no trates los slots como una inversión. Tukka Slots está diseñado para apuestas bajas y pura diversión. Juega solo mientras sea divertido.", checkLabel: "Entiendo los riesgos y quiero jugar solo por diversión.", accept: "¡A jugar!" },
+  hi:      { title: "⚠️ जिम्मेदारी से खेलें", body: "कैसीनो गेम में जोखिम होता है। लंबे समय में हमेशा घर जीतता है — स्लॉट्स को निवेश न समझें। Tukka Slots कम दांव और शुद्ध मनोरंजन के लिए बना है। तभी तक खेलें जब तक मजा आए।", checkLabel: "मैं जोखिम समझता हूं और केवल मनोरंजन के लिए खेलना चाहता हूं।", accept: "चलो खेलते हैं!" },
+  ru:      { title: "⚠️ Играйте Ответственно", body: "Азартные игры несут риск. Заведение всегда выигрывает в долгосрочной перспективе — не рассматривайте слоты как инвестицию. Tukka Slots создан для маленьких ставок и чистого удовольствия. Играйте, только пока это приносит радость.", checkLabel: "Я понимаю риски и хочу играть только ради удовольствия.", accept: "Играть!" },
+  "zh-CN": { title: "⚠️ 理性游戏", body: "赌场游戏存在风险。从长远来看庄家总是赢家——不要将老虎机视为投资。Tukka Slots 专为低额投注和纯粹娱乐而设计。只在感到快乐时游玩。", checkLabel: "我了解风险，只想娱乐。", accept: "开始游戏！" },
+  id:      { title: "⚠️ Bermain dengan Bijak", body: "Permainan kasino memiliki risiko. Rumah selalu menang dalam jangka panjang — jangan anggap slot sebagai investasi. Tukka Slots dirancang untuk taruhan kecil dan kesenangan murni. Bermainlah hanya selama masih menyenangkan.", checkLabel: "Saya memahami risikonya dan ingin bermain hanya untuk bersenang-senang.", accept: "Ayo main!" },
+  fr:      { title: "⚠️ Jouez Responsablement", body: "Les jeux de casino comportent des risques. La maison gagne toujours sur le long terme — ne traitez pas les slots comme un investissement. Tukka Slots est conçu pour de petites mises et le pur plaisir. Jouez uniquement tant que c'est amusant.", checkLabel: "Je comprends les risques et veux jouer uniquement pour le plaisir.", accept: "On joue !" },
+  ja:      { title: "⚠️ 責任あるプレイ", body: "カジノゲームにはリスクがあります。長期的には常にハウスが勝ちます。スロットを投資として扱わないでください。Tukka Slotsは低い賭け金と純粋な楽しみのために設計されています。楽しい間だけプレイしてください。", checkLabel: "リスクを理解し、楽しみのためだけにプレイします。", accept: "プレイ開始！" },
+  it:      { title: "⚠️ Gioca Responsabilmente", body: "I giochi da casinò comportano rischi. Il banco vince sempre nel lungo periodo — non trattare gli slot come un investimento. Tukka Slots è progettato per puntate basse e puro divertimento. Gioca solo finché è divertente.", checkLabel: "Capisco i rischi e voglio giocare solo per divertimento.", accept: "Giochiamo!" },
+};
+
 // Translations
 const translations = {
   en: {
@@ -240,6 +253,20 @@ export default function SlotPage() {
   const { userProfile } = useProfile();
   // Detecta se está dentro do MiniappFrame do site (desktop)
   const isInFrame = useMiniappFrameContext();
+
+  // Disclaimer — show once per device (skip in replay mode)
+  const [showDisclaimer, setShowDisclaimer] = useState(false);
+  const [disclaimerChecked, setDisclaimerChecked] = useState(false);
+  useEffect(() => {
+    if (replaySid) return;
+    if (typeof window !== "undefined" && !localStorage.getItem("slotDisclaimerSeen")) {
+      setShowDisclaimer(true);
+    }
+  }, [replaySid]);
+  function acceptDisclaimer() {
+    localStorage.setItem("slotDisclaimerSeen", "1");
+    setShowDisclaimer(false);
+  }
 
   // VBMS hooks
   const { balance: vbmsBalance, refetch: refetchVBMS } = useFarcasterVBMSBalance(address || '');
@@ -654,8 +681,37 @@ export default function SlotPage() {
 
   if (!address) return <WalletGateScreen />;
 
+  const disclaimerLang = SLOT_DISCLAIMER[lang] ?? SLOT_DISCLAIMER["en"]!;
+
   return (
     <>
+      {/* ── DISCLAIMER MODAL ── */}
+      {showDisclaimer && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.88)" }}>
+          <div className="w-full max-w-sm rounded-2xl border-2 border-yellow-500 p-6 flex flex-col gap-4" style={{ background: "#0d0500", boxShadow: "0 0 40px rgba(200,121,65,0.4)" }}>
+            <div className="text-center text-xl font-black text-yellow-400">{disclaimerLang.title}</div>
+            <p className="text-sm text-gray-300 leading-relaxed text-center">{disclaimerLang.body}</p>
+            <label className="flex items-center gap-3 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                id="disclaimer-check"
+                checked={disclaimerChecked}
+                onChange={e => setDisclaimerChecked(e.target.checked)}
+                className="w-5 h-5 accent-yellow-400 cursor-pointer"
+              />
+              <span className="text-sm text-gray-300">{disclaimerLang.checkLabel}</span>
+            </label>
+            <button
+              onClick={acceptDisclaimer}
+              disabled={!disclaimerChecked}
+              className="w-full h-12 rounded-xl border-2 border-black font-black text-sm uppercase tracking-widest disabled:opacity-40 disabled:cursor-not-allowed transition-opacity"
+              style={{ background: "linear-gradient(180deg,#ffd700,#c87941)", color: "#020617", boxShadow: "0 4px 0 #000" }}
+            >
+              {disclaimerLang.accept}
+            </button>
+          </div>
+        </div>
+      )}
       <style jsx global>{`
         @keyframes floatUp {
           0%   { transform: translateY(0) scale(1); opacity: 0.15; }

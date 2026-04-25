@@ -542,8 +542,8 @@ function forcePatternCombo(grid: SlotCard[], isBonusMode: boolean): void {
 }
 
 
-const NORMAL_FOIL_CHANCE = 0.15;
-const BONUS_FOIL_CHANCE = 0.07;                  // reduzido de 0.15 — menos foils no bonus
+const NORMAL_FOIL_CHANCE = 0.07;
+const BONUS_FOIL_CHANCE = 0.04;
 const BONUS_WEIGHT_MULTIPLIER = 2.0;
 const BONUS_WILDCARD_SPAWN_CHANCE = 0.02;        // 2% por célula
 const BONUS_WILDCARD_FORCE_SPAWN_CHANCE = 0.08;  // 8% de forçar uma dragukka se nenhuma existe

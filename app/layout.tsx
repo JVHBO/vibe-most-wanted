@@ -1,3 +1,4 @@
+import { Analytics } from "@vercel/analytics/next";
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Cinzel_Decorative, Playfair_Display_SC, Rajdhani } from "next/font/google";
 import "./globals.css";
@@ -168,6 +169,7 @@ export default function RootLayout({
           </NeynarMiniAppProvider>
           </ThemeProvider>
         </ErrorBoundary>
+      <Analytics />
       </body>
     </html>
   );
