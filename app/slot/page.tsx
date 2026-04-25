@@ -251,6 +251,15 @@ export default function SlotPage() {
     api.slot.getSpinsBySession,
     replaySid ? { sessionId: replaySid } : "skip"
   );
+
+  const [replayPfp, setReplayPfp] = useState<string | undefined>();
+  useEffect(() => {
+    if (!replayUser || /^0x[0-9a-fA-F]{10,}/.test(replayUser)) return;
+    fetch(`https://haatz.quilibrium.com/v2/farcaster/user/by-username?username=${encodeURIComponent(replayUser)}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d?.user?.pfp_url) setReplayPfp(d.user.pfp_url); })
+      .catch(() => {});
+  }, [replayUser]);
   const replaySpins = replaySpinsRaw?.map((s: { spinId: string; finalGrid: string[]; winAmount: number; foilCount: number; triggeredBonus: boolean }) => ({
     spinId: String(s.spinId),
     finalGrid: s.finalGrid,
@@ -1045,6 +1054,7 @@ export default function SlotPage() {
             isFrameMode={isInFrame}
             replaySpins={replaySpins}
             replayUsername={replayUser}
+            replayPfp={replayPfp}
           />
         </div>
       </div>

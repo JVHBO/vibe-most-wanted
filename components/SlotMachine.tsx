@@ -415,6 +415,7 @@ type SlotMachineProps = {
   isFrameMode?: boolean;
   replaySpins?: ReplaySpinData[];
   replayUsername?: string;
+  replayPfp?: string;
 };
 
 type SlotGridCardProps = {
@@ -873,6 +874,7 @@ export default function SlotMachine({
   isFrameMode = false,
   replaySpins,
   replayUsername,
+  replayPfp,
 }: SlotMachineProps) {
   const { isConnected, address } = useAccount();
   const { userProfile, refreshProfile } = useProfile();
@@ -903,6 +905,7 @@ export default function SlotMachine({
   const [isJackpot, setIsJackpot]   = useState(false);
   const [betIdx, setBetIdx]         = useState(0);
   const [showBonusConfirm, setShowBonusConfirm] = useState(false);
+  const [showNoCoinsModal, setShowNoCoinsModal] = useState(false);
   const [foilCountDisplay, setFoilCountDisplay] = useState(0);
   const [showBonusAnimation, setShowBonusAnimation] = useState(false);
   const [comboDisplay, setComboDisplay] = useState<{ name: string; color: string; winAmt: number } | null>(null);
@@ -1008,13 +1011,7 @@ export default function SlotMachine({
   const [replayDone, setReplayDone] = useState(false);
   const replayIndexRef = useRef(0);
 
-  // Access control (dev-only): allow either connected wallet or linked primary profile wallet.
-  // In replay mode, access is always granted — anyone can watch a shared replay.
-  const isAllowedAddress =
-    isReplayMode ||
-    isDeveloperSlotAddress(address) ||
-    isDeveloperSlotAddress(userProfile?.address);
-  const isAllowed = isAllowedAddress;
+  const isAllowed = true;
 
   const columnHasLockedCells = useCallback((col: number) => {
     for (let row = 0; row < ROWS; row += 1) {
@@ -1406,6 +1403,7 @@ export default function SlotMachine({
     if (!effectiveAddress) { toast.error(t.connectWallet); return; }
     if (!isAllowed) { toast.error(t.accessDenied); return; }
     if (isSpinning) return;
+    if (freeLeft === 0 && !forceBonusMode && coins < betCost) { setShowNoCoinsModal(true); return; }
 
     const isFreeOnly = isFree;
 
@@ -1585,7 +1583,12 @@ export default function SlotMachine({
                 finishSpinVisuals(res.finalGrid, res.winAmount, res.maxWin, details, res.triggeredBonus);
                 resolve();
               } catch (e) {
-                toast.error(getConvexSlotErrorMessage(e));
+                const errMsg = getConvexSlotErrorMessage(e);
+                if (String((e as any)?.data?.message ?? (e as any)?.message ?? "").includes("Insufficient coins")) {
+                  setShowNoCoinsModal(true);
+                } else {
+                  toast.error(errMsg);
+                }
                 reject(e);
               }
             })().catch(reject);
@@ -1778,19 +1781,16 @@ export default function SlotMachine({
         }
         .foil-suspense-col { animation: ${liteMotion ? 'none' : 'foil-suspense-pulse 0.38s ease-in-out infinite'}; z-index: 5; }
         /* Epic foil fly-in from grid position */
-        @keyframes epic-fly {
-          0%   { transform: translate(var(--sx), var(--sy)) scale(0.5); opacity:0; }
-          60%  { opacity:1; }
-          100% { transform: translate(0,0) scale(1); opacity:1; }
+        @keyframes foil-card-pop {
+          0%   { transform: translateY(40px) scale(0.6); opacity:0; }
+          65%  { transform: translateY(-6px) scale(1.08); opacity:1; }
+          100% { transform: translateY(0) scale(1); opacity:1; }
         }
-        .epic-foil-fly { animation: ${liteMotion ? 'none' : 'epic-fly 1.1s cubic-bezier(.34,1.56,.64,1) both'}; animation-delay: ${liteMotion ? '0ms' : 'var(--delay)'}; }
-        /* Epic foil group spin */
-        @keyframes epic-spin {
-          0%   { transform: translate(0,0) scale(1) rotateY(0deg); }
-          40%  { transform: translate(0,0) scale(1.15) rotateY(180deg); }
-          100% { transform: translate(0,0) scale(1) rotateY(360deg); }
+        .epic-foil-card-pop { animation: ${liteMotion ? 'none' : 'foil-card-pop 0.55s cubic-bezier(.34,1.56,.64,1) both'}; animation-delay: ${liteMotion ? '0ms' : 'var(--delay)'}; }
+        @keyframes foil-glow-pulse {
+          0%,100% { opacity:0.6; }
+          50%     { opacity:1; }
         }
-        .epic-foil-spin { animation: ${liteMotion ? 'none' : 'epic-spin 1.8s cubic-bezier(.34,1.2,.64,1) both'}; animation-delay: ${liteMotion ? '0ms' : 'var(--delay)'}; }
         /* Bonus text pop */
         @keyframes epic-bonus-pop {
           0%   { transform: scale(0); opacity:0; }
@@ -2164,31 +2164,29 @@ export default function SlotMachine({
         );
       })()}
 
-      {/* EPIC FOIL OVERLAY — 4 foil cards flip 3D in-place side by side */}
+      {/* EPIC FOIL OVERLAY — foil cards centralizadas + BONUS text */}
       {epicFoilCards && epicFoilPhase && (
-        <div className="fixed inset-0 z-[600] flex items-center justify-center overflow-hidden pointer-events-none"
-          style={{ background: 'rgba(0,0,0,0.75)', backdropFilter: getOverlayBackdropFilter(isBaseApp, 4) }}>
-          <div className="relative" style={{ width: 'min(86vw, 360px)', aspectRatio: '5 / 3' }}>
-            {epicFoilCards.map((fc, i) => {
+        <div className="fixed inset-0 z-[600] flex flex-col items-center justify-center gap-6 overflow-hidden pointer-events-none"
+          style={{ background: 'rgba(0,0,0,0.82)', backdropFilter: getOverlayBackdropFilter(isBaseApp, 4) }}>
+          {/* Glow pulse radial */}
+          <div style={{ position:'absolute', inset:0, background:'radial-gradient(ellipse at 50% 50%, rgba(255,165,0,0.18) 0%, transparent 70%)', animation: liteMotion ? 'none' : 'foil-glow-pulse 1.2s ease-in-out infinite' }} />
+          {/* Cards row — max 5, centralizadas */}
+          <div style={{ display:'flex', gap: 10, alignItems:'center', justifyContent:'center', position:'relative', zIndex:1 }}>
+            {epicFoilCards.slice(0, 5).map((fc, i) => {
               const rs = RS[fc.card.rarity] ?? RS.Common;
-              const cellWidth = 100 / COLS;
-              const cellHeight = 100 / ROWS;
               return (
                 <div
                   key={fc.idx}
-                  className={epicFoilPhase === 'fly' ? 'epic-foil-fly' : 'epic-foil-spin'}
+                  className="epic-foil-card-pop"
                   style={{
-                    position: 'absolute',
-                    left: `calc(${fc.col * cellWidth}% + 4px)`,
-                    top: `calc(${fc.row * cellHeight}% + 4px)`,
-                    width: `calc(${cellWidth}% - 8px)`,
-                    height: `calc(${cellHeight}% - 8px)`,
+                    width: 64, height: 88,
                     borderRadius: 8,
                     overflow: 'hidden',
-                    border: `3px solid ${rs.border}`,
-                    boxShadow: `0 0 20px ${rs.border}88, 0 0 40px #FFA50055`,
+                    border: `3px solid #FFA500`,
+                    boxShadow: `0 0 18px #FFA500aa, 0 0 40px #FFA50044`,
                     background: rs.bg,
-                    '--delay': `${i * 0.08}s`,
+                    flexShrink: 0,
+                    '--delay': `${i * 0.1}s`,
                   } as React.CSSProperties}
                 >
                   {fc.img && (
@@ -2199,18 +2197,48 @@ export default function SlotMachine({
                 </div>
               );
             })}
-            {epicFoilPhase === 'spin' && (
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="text-center epic-bonus-text">
-                  <div className="font-black uppercase tracking-widest" style={{ fontSize: 32, color:'#FFD700', textShadow:'0 0 20px #FFD700, 0 0 40px #FFA500' }}>
-                    {t.bonusTitle}
-                  </div>
-                  <div className="font-black text-white text-sm uppercase tracking-widest mt-1" style={{ textShadow:'0 0 10px #a855f7' }}>
-                    {t.freeSpins}
-                  </div>
-                </div>
-              </div>
-            )}
+          </div>
+          {/* BONUS text */}
+          <div className="epic-bonus-text text-center" style={{ position:'relative', zIndex:1 }}>
+            <div className="font-black uppercase tracking-widest" style={{ fontSize: 38, color:'#FFD700', textShadow:'0 0 24px #FFD700, 0 0 50px #FFA500, 0 0 80px #FFA50066' }}>
+              {t.bonusTitle}
+            </div>
+            <div className="font-black text-white text-sm uppercase tracking-widest mt-1" style={{ opacity: 0.85 }}>
+              {t.freeSpins}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal SEM COINS */}
+      {showNoCoinsModal && (
+        <div className="fixed inset-0 z-[350] flex items-center justify-center p-6 bg-black/85" onClick={() => setShowNoCoinsModal(false)}>
+          <div className="w-full max-w-xs rounded-2xl border-2 border-red-500 p-5 flex flex-col gap-4" style={{ background: '#0d0500', boxShadow: '0 0 30px rgba(239,68,68,0.4)' }} onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between">
+              <span className="font-black text-base uppercase tracking-widest text-red-400">Sem coins!</span>
+              <button onClick={() => setShowNoCoinsModal(false)} className="w-6 h-6 rounded-full bg-red-600 border-2 border-black font-black text-white text-sm flex items-center justify-center">×</button>
+            </div>
+            <div className="text-center">
+              <div className="text-gray-400 text-sm mb-1">{t.balance}</div>
+              <div className="text-2xl font-black text-red-400">{coins.toLocaleString()} {t.coins}</div>
+              <div className="text-gray-500 text-xs mt-1">Precisa de {betCost.toLocaleString()} {t.coins} para girar</div>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => { setShowNoCoinsModal(false); onWalletOpen?.(); }}
+                className="flex-1 h-11 rounded-lg border-2 border-black font-black text-sm uppercase tracking-widest"
+                style={{ background: 'linear-gradient(180deg,#f59e0b,#b45309)', color: '#000', boxShadow: '0 3px 0 #000' }}
+              >
+                {t.deposit} VBMS
+              </button>
+              <button
+                onClick={() => setShowNoCoinsModal(false)}
+                className="px-4 h-11 rounded-lg border-2 border-gray-600 font-black text-sm text-gray-400"
+                style={{ background: '#1a1a1a', boxShadow: '0 3px 0 #000' }}
+              >
+                ✕
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -2542,7 +2570,7 @@ export default function SlotMachine({
             </div>
 
             {/* Cards grid — renderizado por coluna para permitir strip animation sem rerender do grid inteiro */}
-            <div className="absolute inset-0 mx-3 my-1 flex" style={{ gap: `${REEL_ROW_GAP_PX}px` }}>
+            <div className="absolute inset-0 mx-[18px] my-1 flex" style={{ gap: `${REEL_ROW_GAP_PX}px` }}>
               {Array.from({ length: COLS }, (_, col) => {
                 const columnStopped = stopped.has(col);
                 const useStrip = !columnStopped && !columnHasLockedCells(col);
@@ -2699,8 +2727,8 @@ export default function SlotMachine({
             )}
           </div>
 
-          {/* BALANCE BAR — abaixo do grid */}
-          <div className="shrink-0 flex items-center justify-between px-4 py-1 border-b-2 border-[#c87941]" style={{ background: dark }}>
+          {/* BALANCE BAR — abaixo do grid, oculto em replay */}
+          {!isReplayMode && <div className="shrink-0 flex items-center justify-between px-4 py-1 border-b-2 border-[#c87941]" style={{ background: dark }}>
             <div className="flex items-center gap-2">
               <span className="text-[8px] font-bold uppercase text-gray-500">{t.balance}</span>
               {/* Daily boost badge */}
@@ -2731,7 +2759,7 @@ export default function SlotMachine({
               )}
             </div>
             <span className="text-base font-black text-green-400">{coins.toLocaleString()} {t.coins}</span>
-          </div>
+          </div>}
 
           {/* CONTROLS */}
           <div
@@ -2753,15 +2781,25 @@ export default function SlotMachine({
                   </div>
                 ) : (
                   <div className="flex items-center gap-3">
-                    <div
-                      className="px-3 py-1 rounded font-black text-xs tracking-widest uppercase"
-                      style={{ background: "rgba(168,85,247,0.2)", border: "1px solid #a855f7", color: "#a855f7" }}
-                    >
-                      🎬 REPLAY {replayIndex}/{replaySpins?.length ?? 0}
+                    {replayPfp ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={replayPfp} alt={replayUsername ?? ''} className="w-8 h-8 rounded-full border-2 border-purple-500 object-cover shrink-0" />
+                    ) : replayUsername ? (
+                      <div className="w-8 h-8 rounded-full border-2 border-purple-500 bg-purple-900 flex items-center justify-center text-xs font-black text-white shrink-0">
+                        {replayUsername.slice(0, 2).toUpperCase()}
+                      </div>
+                    ) : null}
+                    <div className="flex flex-col">
+                      {replayUsername && (
+                        <span className="text-sm font-black text-white">@{replayUsername}</span>
+                      )}
+                      <div
+                        className="px-2 py-0.5 rounded font-black text-[10px] tracking-widest uppercase w-fit"
+                        style={{ background: "rgba(168,85,247,0.2)", border: "1px solid #a855f7", color: "#a855f7" }}
+                      >
+                        🎬 REPLAY {replayIndex}/{replaySpins?.length ?? 0}
+                      </div>
                     </div>
-                    {replayUsername && (
-                      <span className="text-xs text-gray-400 font-bold">@{replayUsername}</span>
-                    )}
                   </div>
                 )}
               </div>

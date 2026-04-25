@@ -196,14 +196,6 @@ export const spinSlot = mutation({
     const normalizedAddress = address.toLowerCase();
     const { stats } = await getOrCreateDailyStats(ctx, normalizedAddress);
 
-    // Dev-only guard: allow connected wallet or linked primary profile wallet.
-    const normalizedProfileAddress = profile.address.toLowerCase();
-    const isDevAllowed =
-      SLOT_DEV_ALLOWED_ADDRESSES.includes(normalizedAddress as typeof SLOT_DEV_ALLOWED_ADDRESSES[number]) ||
-      SLOT_DEV_ALLOWED_ADDRESSES.includes(normalizedProfileAddress as typeof SLOT_DEV_ALLOWED_ADDRESSES[number]);
-    if (!isDevAllowed) {
-      throw new Error("Access denied: slot restricted to developer wallets");
-    }
 
     // BUY BONUS entry: spin normal com 4 foils forçados, cobra 20× a aposta
     // Bonus spin (isBonusMode): free — já foi pago na entry
@@ -226,18 +218,18 @@ export const spinSlot = mutation({
     }
 
     // Combo boost: higher chance on first spins of the day + pity protection.
-    // Target frequency: around 1 combo per 5 normal spins.
+    // Target frequency: around 1 combo per 3 normal spins.
     const totalSpinsToday = stats.totalSpins ?? 0;
     const noComboStreak = stats.noComboStreak ?? 0;
     const baseComboChance = isBonusMode ? 0 : (
-      totalSpinsToday < 3  ? 0.75 :
-      totalSpinsToday < 6  ? 0.55 :
-      totalSpinsToday < 10 ? 0.40 :
-      totalSpinsToday < 20 ? 0.28 : 0.20
+      totalSpinsToday < 3  ? 0.90 :
+      totalSpinsToday < 6  ? 0.72 :
+      totalSpinsToday < 10 ? 0.55 :
+      totalSpinsToday < 20 ? 0.42 : 0.32
     );
-    const pityBoost = isBonusMode ? 0 : Math.min(0.5, noComboStreak * 0.12);
-    const comboBoostChance = isBonusMode ? 0 : Math.min(0.95, baseComboChance + pityBoost);
-    const forceComboNow = !isBonusMode && noComboStreak >= 4;
+    const pityBoost = isBonusMode ? 0 : Math.min(0.5, noComboStreak * 0.18);
+    const comboBoostChance = isBonusMode ? 0 : Math.min(0.97, baseComboChance + pityBoost);
+    const forceComboNow = !isBonusMode && noComboStreak >= 3;
 
     let resolution = resolveSlotSpin(
       isBonusMode,

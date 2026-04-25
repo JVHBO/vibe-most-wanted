@@ -757,6 +757,17 @@ export function createInitialSlotGrid(
     }
   }
 
+  // Cap foils at SLOT_BONUS_FOIL_COUNT in normal mode
+  if (!isBonusMode && forceFoilCount === 0) {
+    const foilIndices = grid.map((c, i) => c.hasFoil ? i : -1).filter(i => i >= 0);
+    if (foilIndices.length > SLOT_BONUS_FOIL_COUNT) {
+      const shuffled = [...foilIndices].sort(() => Math.random() - 0.5);
+      for (let k = SLOT_BONUS_FOIL_COUNT; k < shuffled.length; k++) {
+        grid[shuffled[k]!] = { ...grid[shuffled[k]!]!, hasFoil: false };
+      }
+    }
+  }
+
   return grid;
 }
 
@@ -898,6 +909,23 @@ function cascadeGrid(
     const finalColumn = [...newCards, ...survivors];
     for (let row = 0; row < SLOT_ROWS; row += 1) {
       afterGrid[row * SLOT_COLS + col] = finalColumn[row]!;
+    }
+  }
+
+  // Cap foils at SLOT_BONUS_FOIL_COUNT in normal mode
+  if (!isBonusMode) {
+    const foilIndices = afterGrid.map((c, i) => c.hasFoil ? i : -1).filter(i => i >= 0);
+    if (foilIndices.length > SLOT_BONUS_FOIL_COUNT) {
+      // Remove foil from randomly chosen excess cards (prefer fill cards over survivors)
+      const excess = foilIndices.length - SLOT_BONUS_FOIL_COUNT;
+      const foilFillIndices = fillIndices.filter(i => afterGrid[i]?.hasFoil);
+      const candidates = foilFillIndices.length >= excess
+        ? foilFillIndices
+        : [...foilFillIndices, ...foilIndices.filter(i => !fillIndices.includes(i))];
+      for (let k = 0; k < excess && k < candidates.length; k++) {
+        const idx = candidates[k]!;
+        afterGrid[idx] = { ...afterGrid[idx]!, hasFoil: false };
+      }
     }
   }
 

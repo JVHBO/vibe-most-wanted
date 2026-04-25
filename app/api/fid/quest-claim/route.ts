@@ -3,12 +3,15 @@ import { ConvexHttpClient } from "convex/browser";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 
-const VMW_CONVEX_URL = process.env.NEXT_PUBLIC_CONVEX_URL!;
 const NEYNAR_API_KEY = process.env.NEYNAR_API_KEY || "";
 const NEYNAR_BASE = "https://api.neynar.com/v2";
 const VMW_SECRET = process.env.VMW_INTERNAL_SECRET || "";
 
-const convex = new ConvexHttpClient(VMW_CONVEX_URL);
+let _convex: ConvexHttpClient | null = null;
+function getConvex() {
+  if (!_convex) _convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+  return _convex;
+}
 
 async function verifyFollowMe(creatorFid: number, completerFid: number): Promise<boolean> {
   // Check if completer follows creator
@@ -61,7 +64,7 @@ async function verifyLikeCast(castUrl: string, completerFid: number): Promise<bo
 
 async function verifyUseMiniapp(completerAddress: string): Promise<boolean> {
   // Check if completer has recent activity (last 7 days) in VMW
-  const profile = await convex.query(api.profiles.getProfile, { address: completerAddress });
+  const profile = await getConvex().query(api.profiles.getProfile, { address: completerAddress });
   if (!profile) return false;
   const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
   return (profile.lastActiveDate || 0) > weekAgo;
@@ -86,7 +89,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get quest details first to validate
-    const quests = await convex.query(api.playerQuests.getActiveQuests, { limit: 1 });
+    const quests = await getConvex().query(api.playerQuests.getActiveQuests, { limit: 1 });
     // We'll just proceed — payQuestReward will validate everything server-side
 
     // Verify the action via Neynar
@@ -99,7 +102,7 @@ export async function POST(request: NextRequest) {
           // targetUrl is the creator's FID as string or profile URL
           // Extract FID from targetUrl or use creatorFid from quest
           // Get quest to get creatorFid
-          const activeQuests = await convex.query(api.playerQuests.getQuestsForCompleter, {
+          const activeQuests = await getConvex().query(api.playerQuests.getQuestsForCompleter, {
             completerFid,
             limit: 50,
           });
@@ -146,7 +149,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Pay the reward via secured Convex mutation
-    const result = await convex.mutation(api.playerQuests.payQuestReward, {
+    const result = await getConvex().mutation(api.playerQuests.payQuestReward, {
       secret: VMW_SECRET,
       questId: questId as Id<"playerQuests">,
       completerAddress,
