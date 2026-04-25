@@ -16,6 +16,7 @@ import { NeynarMiniAppProvider } from "@/contexts/NeynarMiniAppProvider";
 import { MiniappFrame } from "@/components/MiniappFrame";
 import GlobalBanGuard from "@/components/GlobalBanGuard";
 import { GlobalProfileInit } from "@/components/GlobalProfileInit";
+import { Analytics } from "@vercel/analytics/next";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -168,6 +169,7 @@ export default function RootLayout({
           </NeynarMiniAppProvider>
           </ThemeProvider>
         </ErrorBoundary>
+        <Analytics />
       </body>
     </html>
   );
