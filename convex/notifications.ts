@@ -315,17 +315,17 @@ export const removeToken = mutation({
 
 const GAMING_TIPS = [
   { title: "💰 Daily Login Bonus!", body: "Claim your free coins today! Don't let your daily reward expire 🎁" },
-  { title: "🎰 Free Spin Waiting!", body: "Your Daily Roulette spin is ready! Win VBMS, cards & rare prizes 🍀" },
-  { title: "✉️ Send a VibeMail!", body: "Drop a personalized message on the blockchain. Add music & effects! 🎵" },
-  { title: "🎯 Attack & Steal Coins!", body: "Attack leaderboard players to steal their VBMS! Higher rank = bigger reward 👑" },
-  { title: "🛡️ Protect Your Coins!", body: "Set up your Defense Deck before going offline. Empty deck = easy target! 🃏" },
-  { title: "⚡ Level Up for More Spins!", body: "Higher Aura level = more bonus roulette spins every day. Keep grinding! 🐉" },
-  { title: "🎁 Free Card Today!", body: "Grab your FREE card from the Shop every day. No VBMS needed — just tap! 🃏" },
-  { title: "🤖 Mecha Arena is Live!", body: "Build your deck and crush opponents! Bet VBMS and win big ⚔️" },
-  { title: "👹 Raid Boss is Waiting!", body: "Team up to defeat the Raid Boss! VibeFID holders deal bonus damage 💥" },
-  { title: "🃏 Baccarat is Live!", body: "Bet VBMS on Player or Banker and double your coins! New round every minute 🎴" },
-  { title: "🎰 Double Spins on ARB!", body: "Switch to Arbitrum for 2x daily roulette spins! More chances to win 🔥" },
-  { title: "✉️ Got VibeMail?", body: "Check your inbox! Someone may have sent you VBMS coins with a message 👀" },
+  { title: "🎰 Daily Roulette!", body: "Your free spin is waiting! Win VBMS, cards & rare prizes 🍀" },
+  { title: "✉️ VibeMail!", body: "Drop a personalized message on the blockchain. Add music & effects! 🎵" },
+  { title: "🎯 Attack Mode!", body: "Attack leaderboard players to steal their VBMS! Higher rank = bigger reward 👑" },
+  { title: "🛡️ Defense Deck!", body: "Set up your Defense Deck before going offline. Empty deck = easy target! 🃏" },
+  { title: "⚡ Aura Level!", body: "Higher Aura level = more bonus roulette spins every day. Keep grinding! 🐉" },
+  { title: "🎁 Free Card!", body: "Grab your FREE card from the Shop every day. No VBMS needed — just tap! 🃏" },
+  { title: "⚔️ Vibe Clash!", body: "Build your deck and crush opponents in Mecha Arena! Bet VBMS and win big 🤖" },
+  { title: "👹 Raid Boss!", body: "Team up to defeat the Raid Boss! VibeFID holders deal bonus damage 💥" },
+  { title: "🎴 Baccarat!", body: "Bet VBMS on Player or Banker and double your coins! New round every minute 🃏" },
+  { title: "🎰 Tukka Slots!", body: "Spin the reels, collect foils and trigger the Bonus Round for massive VBMS wins! 💰" },
+  { title: "🏆 Leaderboard!", body: "Check the leaderboard and see where you stand. Top players get attacked more — stay sharp! 👀" },
 ];
 
 /**

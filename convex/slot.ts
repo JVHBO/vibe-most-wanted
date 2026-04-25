@@ -195,6 +195,13 @@ export const spinSlot = mutation({
     const normalizedAddress = address.toLowerCase();
     const { stats } = await getOrCreateDailyStats(ctx, normalizedAddress);
 
+    // Validate free spin availability server-side
+    if (isFreeSpin && !isBonusMode) {
+      const remaining = Math.max(0, SLOT_FREE_SPINS_PER_DAY - stats.freeSpinsUsed);
+      if (remaining <= 0) {
+        throw new Error("No free spins remaining today.");
+      }
+    }
 
     // BUY BONUS entry: spin normal com 4 foils forçados, cobra 20× a aposta
     // Bonus spin (isBonusMode): free — já foi pago na entry
