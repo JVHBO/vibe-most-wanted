@@ -187,7 +187,7 @@ export default function SlotReplay({ spins, totalWin, username, pfp, sid, winTyp
               }}
               type="button"
             >
-              🎬 Ver Replay
+              🎬 View Replay
             </button>
             <button className="btnPlay" onClick={() => router.push('/slot')} type="button">
               🎰 Quero Jogar

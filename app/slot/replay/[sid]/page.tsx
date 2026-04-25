@@ -91,7 +91,7 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
         version: '1',
         imageUrl,
         button: {
-          title: 'Ver Replay',
+          title: 'View Replay',
           action: {
             type: 'launch_miniapp',
             name: '$VBMS',
@@ -103,7 +103,7 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
         version: '1',
         imageUrl,
         button: {
-          title: 'Ver Replay',
+          title: 'View Replay',
           action: {
             type: 'launch_miniapp',
             name: '$VBMS',

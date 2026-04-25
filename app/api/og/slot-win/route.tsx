@@ -60,21 +60,6 @@ export async function GET(request: Request) {
           )}
         </div>
 
-        {/* BOTTOM CENTER — @username */}
-        {username && (
-          <div style={{
-            position: 'absolute',
-            bottom: 36, left: 0, right: 0,
-            display: 'flex', justifyContent: 'center',
-            fontFamily: '"Arial Black", Arial, sans-serif',
-            fontSize: 48,
-            fontWeight: 900,
-            color: '#ffffff',
-            textShadow: '3px 3px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000',
-          }}>
-            @{username}
-          </div>
-        )}
       </div>
     ),
     { width: W, height: H }
