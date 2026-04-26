@@ -9,7 +9,7 @@ import { privateKeyToAccount } from 'viem/accounts';
  * Auth: Bearer CRON_SECRET
  */
 
-const SLOT_SHOP_BASE = '0x9D7e843F2c096434747B453381105f85D1cf2E9e' as const;
+const SLOT_SHOP_BASE = '0x1c9F41d7818aBa8CF2cABaE604D028Ec20d8828C' as const;
 const SLOT_SHOP_ARB  = '0x3736a48Bd8CE9BeE0602052B48254Fc44ffC0daA' as const;
 const USDC_BASE      = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913' as const;
 const USDN_ARB       = '0x4ecf61a6c2fab8a047ceb3b3b263b401763e9d49' as const;

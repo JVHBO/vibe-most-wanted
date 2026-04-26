@@ -10,8 +10,8 @@ const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
-const PRIVATE_KEY = '0xae6b2ed121d89cd2115e4d8adfadbb960b6264d041479c1f21e1d7531182c895';
-const DEV_ADDRESS = '0x81CE8c5168895Be0a75C653571ba929941faC16d'; // same signer = dev
+const PRIVATE_KEY = process.env.VBMS_SIGNER_PRIVATE_KEY || '0x324282eb211e3be00641b7fc399f1a4323a97a0b0f1218c79f6025b9993e0588';
+const DEV_ADDRESS = '0x21c8AbF88f15f1a43CC42a78C8f616a3C2370A70'; // new signer wallet
 
 // v2: price per 100 coins
 // 0.000307 ETH / 1M coins → per 100 coins = 0.000307 / 10000 = 0.0000000307 ETH = 30727 wei

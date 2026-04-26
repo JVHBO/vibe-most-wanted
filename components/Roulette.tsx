@@ -15,7 +15,6 @@ import { CONTRACTS, POOL_ABI } from '@/lib/contracts';
 import { encodeFunctionData, parseEther, erc20Abi } from 'viem';
 import { dataSuffix as ATTRIBUTION_SUFFIX, BUILDER_CODE } from '@/lib/hooks/useWriteContractWithAttribution';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { useArbValidator, ARB_CLAIM_TYPE } from '@/lib/hooks/useArbValidator';
 import { getFarcasterProvider as getFarcasterSdkProvider, isBaseAppWebView, isMiniappMode, isWarpcastClient } from '@/lib/utils/miniapp';
 
 
@@ -291,7 +290,6 @@ export function Roulette({ onClose, pfpUrl, onChainChange, showHeader = true, on
   const stableAddress = address || lastAddressRef.current;
 
   const { lang } = useLanguage();
-  const { validateOnArb } = useArbValidator();
   const publicClient = usePublicClient({ chainId: CONTRACTS.CHAIN_ID });
   const isBaseApp = isBaseAppWebView();
   const t = rouletteTranslations[lang as keyof typeof rouletteTranslations] || rouletteTranslations.en;
@@ -317,7 +315,6 @@ export function Roulette({ onClose, pfpUrl, onChainChange, showHeader = true, on
   );
   const spinMutation = useMutation(api.roulette.spin);
   const recordPaidSpinMutation = useMutation(api.roulette.recordPaidSpin);
-  const setPreferredChainMutation = useMutation(api.missions.setPreferredChain);
   const canBuyPaidSpinData = useQuery(
     api.roulette.canBuyPaidSpin,
     address ? { address } : "skip"
@@ -331,7 +328,6 @@ export function Roulette({ onClose, pfpUrl, onChainChange, showHeader = true, on
   const canSpin = canSpinData?.canSpin ?? false;
   const spinsRemaining = canSpinData?.spinsRemaining ?? 0;
   const isVibeFidHolder = canSpinData?.isVibeFidHolder ?? false;
-  const isArbMode = canSpinData?.isArbMode ?? false;
   const [isClaiming, setIsClaiming] = useState(false);
   const [isClaimed, setIsClaimed] = useState(false);
   const [showOdds, setShowOdds] = useState(false);
@@ -351,38 +347,13 @@ export function Roulette({ onClose, pfpUrl, onChainChange, showHeader = true, on
   const ballYRef = useRef(0);
   const canSpinRef = useRef(false);
   const isSpinningRef = useRef(false);
-  const [arbSupported, setArbSupported] = useState(false);
   // Pre-fetched claim data — loaded as soon as result appears so mobile doesn't block wallet popup
   const [preFetchedClaim, setPreFetchedClaim] = useState<{ amount: number; nonce: string; signature: string; spinId: any } | null>(null);
   const [isPreFetching, setIsPreFetching] = useState(false);
 
-  const [localChain, setLocalChain] = useState<'base' | 'arbitrum'>('arbitrum');
-  useEffect(() => {
-    const c = (profileDashboard as any)?.preferredChain;
-    if (c) setLocalChain(c);
-  }, [(profileDashboard as any)?.preferredChain]);
-  const currentChain = localChain;
+  const currentChain = 'base' as const;
 
-  useEffect(() => {
-    if (!isMiniappMode()) { setArbSupported(true); return; }
-    const checkArb = async () => {
-      try {
-        const ctx = await sdk.context;
-        setArbSupported(isWarpcastClient(ctx?.client?.clientFid));
-      } catch { setArbSupported(false); }
-    };
-    const timer = setTimeout(checkArb, 300);
-    return () => clearTimeout(timer);
-  }, []);
-
-  const handleSwitchChain = async (chain: 'base' | 'arbitrum') => {
-    setLocalChain(chain);
-    if (!address) return;
-    try { await setPreferredChainMutation({ address, chain }); }
-    catch (e) { console.error('Failed to switch chain:', e); }
-  };
-
-  useEffect(() => { onChainChange?.(currentChain); }, [currentChain]); // eslint-disable-line
+  useEffect(() => { onChainChange?.('base'); }, []); // eslint-disable-line
 
   // Check for Farcaster SDK — only in actual Farcaster miniapp (iframe), NOT Base App
   useEffect(() => {
@@ -693,13 +664,7 @@ export function Roulette({ onClose, pfpUrl, onChainChange, showHeader = true, on
     lastTickSegment.current = -1;
 
     try {
-      // Base App (RN WebView) doesn't support ARB — default to base chain
-      const chain = (profileDashboard as any)?.preferredChain || (isBaseApp ? "base" : "arbitrum");
-      // Arb: validation TX before spin (Base doesn't need TX on spin, only on claim)
-      if (chain === "arbitrum") {
-        await validateOnArb(0, ARB_CLAIM_TYPE.ROULETTE_SPIN);
-      }
-      const response = await spinMutation({ address: stableAddress, chain });
+      const response = await spinMutation({ address: stableAddress, chain: 'base' });
 
       if (response.success && response.prizeIndex !== null) {
         // Calculate final rotation
@@ -1160,39 +1125,6 @@ export function Roulette({ onClose, pfpUrl, onChainChange, showHeader = true, on
         </div>
       )}
 
-      {/* Chain selector — Normal / Ultra */}
-      {arbSupported && (
-        <div className="flex justify-center pt-3 pb-1">
-          <div style={{ display:'flex', gap:'4px', background:'rgba(0,0,0,0.5)', padding:'4px', borderRadius:'10px', border:'1px solid rgba(255,215,0,0.15)' }}>
-            <button
-              onClick={() => handleSwitchChain('base')}
-              style={{
-                display:'flex', alignItems:'center', gap:'4px',
-                padding:'5px 14px', borderRadius:'7px', fontSize:'11px', fontWeight:'700', letterSpacing:'0.06em',
-                cursor:'pointer', border:'none',
-                background: currentChain === 'base' ? '#0052FF' : 'transparent',
-                color: currentChain === 'base' ? '#fff' : 'rgba(255,255,255,0.4)',
-              }}
-            >
-              <img src="/images/base-chain.png" width="11" height="11" style={{ borderRadius:'50%', pointerEvents:'none' }} alt="" />
-              Normal
-            </button>
-            <button
-              onClick={() => handleSwitchChain('arbitrum')}
-              style={{
-                display:'flex', alignItems:'center', gap:'4px',
-                padding:'5px 12px', borderRadius:'7px', fontSize:'11px', fontWeight:'700', letterSpacing:'0.06em',
-                cursor:'pointer', border:'none',
-                background: currentChain === 'arbitrum' ? '#12AAFF' : 'transparent',
-                color: currentChain === 'arbitrum' ? '#000' : 'rgba(255,255,255,0.4)',
-              }}
-            >
-              <img src="/images/arb-chain.png" width="11" height="11" style={{ borderRadius:'50%', pointerEvents:'none' }} alt="" />
-              Ultra
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* Odds modal */}
       {showOdds && (
@@ -1267,7 +1199,7 @@ export function Roulette({ onClose, pfpUrl, onChainChange, showHeader = true, on
               </div>
               {/* Ball — always rendered, positioned via DOM refs (zero React re-renders during animation) */}
               {(() => {
-                const isArb = currentChain === 'arbitrum';
+                const isArb = false;
                 const glowColor = isArb ? 'rgba(40,160,240,0.55)' : 'rgba(68,119,255,0.55)';
                 const sphereGrad = isArb
                   ? 'radial-gradient(circle at 34% 28%, #d0f0ff 0%, #28a0f0 22%, #0060a8 56%, #000e1e 100%)'
@@ -1352,12 +1284,11 @@ export function Roulette({ onClose, pfpUrl, onChainChange, showHeader = true, on
           {!isSpinning && (
             <div className="mb-1 flex flex-col items-center gap-0.5">
               {(() => {
-                // Mirror Convex formula: base = (vibeFID?3:1) + auraBonus, arb = base×2
                 const freeBase = (isVibeFidHolder ? 3 : 1);
-                const freeCount = isArbMode ? freeBase * 2 : freeBase;
+                const freeCount = freeBase;
                 const paidCount = Math.max(0, spinsRemaining - freeCount);
                 const NetworkIcon = ({ size = 14 }: { size?: number }) => (
-                  <img src={currentChain === 'arbitrum' ? '/images/arb-chain.png' : '/images/base-chain.png'}
+                  <img src="/images/base-chain.png"
                        width={size} height={size} style={{ borderRadius: '50%', pointerEvents: 'none' }} alt="" />
                 );
                 return (
@@ -1368,10 +1299,6 @@ export function Roulette({ onClose, pfpUrl, onChainChange, showHeader = true, on
                       <span style={{ color: '#FFD700', fontSize: '13px', fontWeight: '800', textShadow: '0 0 8px rgba(255,215,0,0.6)', marginLeft: '2px' }}>
                         ×{spinsRemaining}
                       </span>
-                      {/* ARB 2x badge */}
-                      {isArbMode && (
-                        <span style={{ fontSize: '9px', fontWeight: '700', color: '#12AAFF', background: 'rgba(18,170,255,0.15)', border: '1px solid rgba(18,170,255,0.4)', borderRadius: '4px', padding: '1px 4px' }}>2x</span>
-                      )}
                       {/* Inline "+" buy button */}
                       {canBuyPaidSpinData?.canBuy && (
                         <button
@@ -1429,7 +1356,7 @@ export function Roulette({ onClose, pfpUrl, onChainChange, showHeader = true, on
           >
             {/* 3D sphere — gradient body + spinning logo + specular highlight */}
             {(() => {
-              const isArb = currentChain === 'arbitrum';
+              const isArb = false;
               const glow = Math.abs(ballY) > 55 ? 'rgba(255,215,0,0.9)' : (isArb ? `rgba(40,160,240,${0.4 + Math.abs(ballY)/120})` : `rgba(68,119,255,${0.4 + Math.abs(ballY)/120})`);
               const border = Math.abs(ballY) > 55 ? '#FFD700' : (isArb ? 'rgba(40,160,240,0.95)' : 'rgba(68,119,255,0.95)');
               return (

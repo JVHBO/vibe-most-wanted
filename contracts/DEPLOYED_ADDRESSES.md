@@ -126,3 +126,8 @@ NEXT_PUBLIC_VBMS_BETTING=0x668c8d288b8670fdb9005fa91be046e4c2585af4
 - Address: `0x3736a48Bd8CE9BeE0602052B48254Fc44ffC0daA`
 - pricePerHundredETH: 30727717995 wei
 - pricePerHundredUSDC/USDN: 72
+
+## SlotCoinShop v2 (Base)
+- Address: `0x1c9F41d7818aBa8CF2cABaE604D028Ec20d8828C`
+- pricePerHundredETH: 30727717995 wei
+- pricePerHundredUSDC/USDN: 72

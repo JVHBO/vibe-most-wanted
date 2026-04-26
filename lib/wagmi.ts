@@ -11,10 +11,13 @@ import {
 } from '@rainbow-me/rainbowkit/wallets';
 import { connectorsForWallets } from '@rainbow-me/rainbowkit';
 
-// Use Alchemy RPC if available for better reliability
-const BASE_RPC_URL = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY
-  ? `https://base-mainnet.g.alchemy.com/v2/${process.env.NEXT_PUBLIC_ALCHEMY_API_KEY}`
+const ALCHEMY_KEY = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY;
+const BASE_RPC_URL = ALCHEMY_KEY
+  ? `https://base-mainnet.g.alchemy.com/v2/${ALCHEMY_KEY}`
   : process.env.NEXT_PUBLIC_BASE_RPC_URL || 'https://mainnet.base.org';
+const ARB_RPC_URL = ALCHEMY_KEY
+  ? `https://arb-mainnet.g.alchemy.com/v2/${ALCHEMY_KEY}`
+  : 'https://arb1.arbitrum.io/rpc';
 const walletConnectProjectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || '';
 const hasValidWalletConnectProjectId = /^[a-f0-9]{32}$/i.test(walletConnectProjectId);
 
@@ -64,7 +67,7 @@ export const config = createConfig({
   chains: [base, arbitrum],
   transports: {
     [base.id]: http(BASE_RPC_URL),
-    [arbitrum.id]: http(),
+    [arbitrum.id]: http(ARB_RPC_URL),
   },
   connectors: allConnectors,
   ssr: true,

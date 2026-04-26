@@ -195,13 +195,8 @@ export const spinSlot = mutation({
     const normalizedAddress = address.toLowerCase();
     const { stats } = await getOrCreateDailyStats(ctx, normalizedAddress);
 
-    // Validate free spin availability server-side
-    if (isFreeSpin && !isBonusMode) {
-      const remaining = Math.max(0, SLOT_FREE_SPINS_PER_DAY - stats.freeSpinsUsed);
-      if (remaining <= 0) {
-        throw new Error("No free spins remaining today.");
-      }
-    }
+    // If frontend claims free spin but quota is exhausted, treat as paid spin
+    const freeSpin = isFreeSpin && !isBonusMode && stats.freeSpinsUsed < SLOT_FREE_SPINS_PER_DAY;
 
     // BUY BONUS entry: spin normal com 4 foils forçados, cobra 20× a aposta
     // Bonus spin (isBonusMode): free — já foi pago na entry
@@ -213,7 +208,7 @@ export const spinSlot = mutation({
       spinCost = Math.round(betMultiplier * SLOT_BONUS_COST_MULT);
     } else if (isBonusMode) {
       spinCost = 0; // bonus spins são free após a entry
-    } else if (isFreeSpin) {
+    } else if (freeSpin) {
       spinCost = 0; // free daily spin
     }
 
@@ -234,7 +229,7 @@ export const spinSlot = mutation({
       totalSpinsToday < 20 ? 0.55 : 0.45
     );
     const pityBoost = isBonusMode ? 0 : Math.min(0.5, noComboStreak * 0.18);
-    const comboBoostChance = isBonusMode ? 0 : Math.min(0.97, baseComboChance + pityBoost);
+    const comboBoostChance = Math.min(0.97, baseComboChance + pityBoost);
     const forceComboNow = !isBonusMode && noComboStreak >= 3;
 
     let resolution = resolveSlotSpin(
@@ -313,7 +308,7 @@ export const spinSlot = mutation({
     }
 
     // Track stats: free daily spins vs paid spins vs bonus spins
-    if (isFreeSpin && !isBonusMode) {
+    if (freeSpin) {
       // Daily free spin
       await ctx.db.patch(stats._id, {
         freeSpinsUsed: stats.freeSpinsUsed + 1,

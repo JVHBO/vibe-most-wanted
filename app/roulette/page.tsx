@@ -145,9 +145,6 @@ function PrizeOddsModal({ onClose }: { onClose: () => void }) {
           {/* Bonus info — inline, no dropdown */}
           <div className="mt-2 pt-2 border-t border-white/10 space-y-1">
             <p className="text-white/70 text-[8px] leading-tight">
-              <span className="text-blue-400 font-bold">Ultra (ARB):</span> 2× spins on Arbitrum chain
-            </p>
-            <p className="text-white/70 text-[8px] leading-tight">
               <span className="text-purple-400 font-bold">VibeFID:</span> +2 spins per day
             </p>
             <p className="text-white/70 text-[8px] leading-tight">
@@ -168,7 +165,7 @@ export default function RoulettePage() {
   const isReconnecting = useReconnectTimeout(status);
   const [showFloating, setShowFloating] = useState(false);
   const [showOdds, setShowOdds] = useState(false);
-  const [chainMode, setChainMode] = useState<'base' | 'arbitrum'>('arbitrum');
+  const chainMode = 'base' as const;
 
   // Trigger floating on win (expose via custom event from Roulette)
   useEffect(() => {
@@ -253,10 +250,7 @@ export default function RoulettePage() {
 
       <div
         className="relative flex h-[100dvh] min-h-[100dvh] flex-col overflow-hidden overscroll-none"
-        style={{ background: chainMode === 'base'
-          ? 'radial-gradient(ellipse at 50% 20%, #00112b 0%, #060609 70%)'
-          : 'radial-gradient(ellipse at 50% 20%, #1a0a2e 0%, #060609 70%)',
-          transition: 'background 0.8s ease' }}
+        style={{ background: 'radial-gradient(ellipse at 50% 20%, #00112b 0%, #060609 70%)' }}
       >
         {/* Floating background on win */}
         <FloatingBackground win={showFloating} />
@@ -293,7 +287,7 @@ export default function RoulettePage() {
 
         {/* Roulette content */}
         <div className="relative z-10 flex-1 min-h-0 flex flex-col">
-          <Roulette onChainChange={setChainMode} showHeader={false} />
+          <Roulette showHeader={false} />
         </div>
       </div>
     </>
