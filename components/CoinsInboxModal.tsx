@@ -107,6 +107,12 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
   // Get daily claim limits from contract
   const { remaining: dailyRemaining, resetTime, isLoading: isLoadingLimits, hasError: hasLimitError, refetch: refetchDailyLimit } = useDailyClaimInfo(address as `0x${string}` | undefined);
 
+  // Transaction history for Recent Rewards section
+  const transactionHistory = useQuery(
+    api.coinsInbox.getTransactionHistory,
+    address ? { address, limit: 20 } : 'skip'
+  );
+
   // Get Convex-side daily conversion count limits
   const vbmsDashboard = useQuery(api.vbmsClaim.getPlayerEconomy, address ? { address } : "skip");
   const dailyConvertCountUsed = vbmsDashboard?.dailyConvertCountUsed ?? 0;
@@ -437,193 +443,195 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
   // SSR check
   if (typeof window === 'undefined') return null;
 
+  const ICON_MAP: Record<string, { icon: string; color: string }> = {
+    pve:              { icon: '⚔️', color: '#22C55E' },
+    pvp:              { icon: '🎮', color: '#22C55E' },
+    attack_win:       { icon: '🗡️', color: '#22C55E' },
+    attack:           { icon: '🗡️', color: '#22C55E' },
+    mission:          { icon: '🎯', color: '#22C55E' },
+    daily_quest:      { icon: '📜', color: '#22C55E' },
+    weekly_quest:     { icon: '📜', color: '#22C55E' },
+    boss:             { icon: '👹', color: '#DC2626' },
+    raid_boss_reward: { icon: '👹', color: '#DC2626' },
+    buy_pack:         { icon: '🎴', color: '#A855F7' },
+    poker_cpu:        { icon: '🃏', color: '#A855F7' },
+    pvp_entry:        { icon: '🎲', color: '#DC2626' },
+    leaderboard:      { icon: '🏆', color: '#FFD700' },
+    blockchain:       { icon: '⛓️', color: '#00C6FF' },
+    slot:             { icon: '🎰', color: '#FFD700' },
+    mecha_arena:      { icon: '🎰', color: '#FFD700' },
+    shame:            { icon: '🔔', color: '#C0C0C0' },
+    earn:             { icon: '💰', color: '#22C55E' },
+    claim:            { icon: '📥', color: '#22C55E' },
+    convert:          { icon: '🔄', color: '#00C6FF' },
+    spend:            { icon: '💸', color: '#DC2626' },
+    bonus:            { icon: '⭐', color: '#FFD700' },
+  };
+
+  const getHistoryIcon = (type: string, source?: string) => {
+    const src = source ?? '';
+    const key = Object.keys(ICON_MAP).find(k => src.includes(k) || type?.includes(k));
+    return ICON_MAP[key ?? 'earn'];
+  };
+
+  const timeAgo = (ts: number) => {
+    const mins = Math.floor((Date.now() - ts) / 60000);
+    if (mins < 60) return `${mins}m ago`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `${hrs}h ago`;
+    return `${Math.floor(hrs / 24)}d ago`;
+  };
+
   return (
     <>
       {createPortal(
-        <div
-          className="fixed inset-0 flex items-center justify-center bg-black/85"
-          style={{ zIndex: Z_INDEX.modal }}
-          onClick={onClose}
-        >
-          <div
-            className="relative bg-[#1E1E1E] border-4 border-black shadow-[6px_6px_0px_#000] max-w-sm w-full mx-4 max-h-[90vh] overflow-y-auto"
-            onClick={(e) => e.stopPropagation()}
-          >
-        {/* Header bar - gold strip */}
-        <div className="bg-[#FFD700] border-b-4 border-black px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-black flex items-center justify-center border-2 border-black">
-              <NextImage src="/images/icons/convert.svg" alt="Convert" width={20} height={20} className="w-5 h-5" style={{ filter: 'brightness(0) saturate(100%) invert(91%) sepia(50%) saturate(800%) hue-rotate(5deg)' }} />
-            </div>
-            <div>
-              <h2 className="text-lg font-display font-bold text-black leading-none">{t('convertTitle')}</h2>
-              <p className="text-[10px] font-bold text-black/60 uppercase tracking-wider">{t('convertSubtitle')}</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            {/* History button */}
-            <button
-              onClick={() => setShowHistory(true)}
-              className="w-9 h-9 bg-black text-[#FFD700] border-2 border-black flex items-center justify-center hover:bg-[#333] transition shadow-[2px_2px_0px_rgba(0,0,0,0.4)]"
-              title="Histórico"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M3 3v18h18" /><path d="m19 9-5 5-4-4-3 3" />
-              </svg>
-            </button>
-            {/* Close button */}
-            <button
-              onClick={onClose}
-              className="w-9 h-9 text-red-500 hover:text-red-400 font-bold flex items-center justify-center transition-all text-base leading-none"
-            >
-              ✕
-            </button>
-          </div>
-        </div>
+        <div className="fixed inset-0 bg-vintage-black flex flex-col" style={{ zIndex: 50 }}>
+          <div className="flex flex-col h-full max-w-sm w-full mx-auto">
 
-        <div className="p-4 space-y-3">
-          {/* COINS Balance */}
-          <div className="bg-[#1A4A1A] border-3 border-black shadow-[3px_3px_0px_#000] p-3 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <NextImage src="/images/icons/coins.svg" alt="Coins" width={24} height={24} className="w-6 h-6" />
-              <span className="text-xs font-bold text-[#00FF85] uppercase tracking-wider">{t('convertCoins')}</span>
+            {/* Header */}
+            <div className="flex items-center bg-[#1a1a1a] border-b-4 border-black">
+              <button
+                onClick={onClose}
+                className="bg-[#CC2222] px-4 py-4 font-modern font-bold text-sm text-white uppercase tracking-wide"
+              >
+                ← BACK
+              </button>
+              <h1 className="flex-1 text-center font-display font-black text-vintage-gold uppercase tracking-widest text-sm py-4">
+                REDEEM
+              </h1>
+              <div className="w-[76px]" />
             </div>
-            <div className="text-right">
-              <div className="text-2xl font-bold text-white font-mono">{testvbmsBalance.toLocaleString()}</div>
-              <div className="text-[10px] text-[#00FF85]/60 font-bold uppercase">{t('convertToConvert')}</div>
-            </div>
-          </div>
 
-          {/* Daily Limits */}
-          <div className="bg-[#252525] border-2 border-[#444] p-3">
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-[#aaa] font-bold uppercase tracking-wide">{t('convertDailyLimit')}</span>
-              <span className={`font-bold font-mono ${exceedsDailyLimit ? 'text-[#FF3B3B]' : 'text-[#00FF85]'}`}>
-                {isLoadingLimits ? '...' : `${Number(dailyRemaining).toLocaleString()} VBMS`}
-              </span>
-            </div>
-            <div className="flex items-center justify-between text-xs mt-1">
-              <span className="text-[#666]">{t('convertResetsIn')}</span>
-              <span className="text-[#aaa] font-mono">{getResetTimeString()}</span>
-            </div>
-            {exceedsDailyLimit && testvbmsBalance >= 100 && (
-              <div className="mt-2 p-2 bg-[#FF3B3B]/20 border border-[#FF3B3B]/50 text-[10px] text-[#FF6666] text-center font-bold">
-                Balance ({testvbmsBalance.toLocaleString()}) exceeds limit ({Number(dailyRemaining).toLocaleString()})
-              </div>
-            )}
-            {isOnCooldown && (
-              <div className="mt-2 p-2 bg-orange-900/40 border border-orange-500/40 text-[10px] text-orange-300 text-center font-bold">
-                Cooldown: {Math.floor(cooldown / 60)}:{String(cooldown % 60).padStart(2, '0')}
-              </div>
-            )}
-            {limitUnavailable && (
-              <div className="mt-2 p-2 bg-yellow-900/30 border border-yellow-500/40 text-[10px] text-yellow-300 text-center font-bold">
-                Daily limit reached. Try again later.
-              </div>
-            )}
-            <div className="flex items-center justify-between text-xs mt-2 pt-2 border-t border-[#333]">
-              <span className="text-[#aaa] font-bold uppercase tracking-wide">Conversions today</span>
-              <span className={`font-bold font-mono ${conversionsLeft === 0 ? 'text-[#FF3B3B]' : 'text-[#00FF85]'}`}>
-                {dailyConvertCountUsed}/{dailyConvertCountLimit}
-              </span>
-            </div>
-            {conversionsLeft === 0 && (
-              <div className="mt-2 p-2 bg-[#FF3B3B]/20 border border-[#FF3B3B]/50 text-[10px] text-[#FF6666] text-center font-bold">
-                Daily conversion limit reached. Increase your Aura level for more.
-              </div>
-            )}
-          </div>
+            {/* Scrollable content — pt-[80px] pb-[64px] to clear fixed header and nav */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-4 pb-[64px]">
 
-          {/* DEX Info Banner */}
-          <div className="bg-[#0A1628] border-2 border-[#12AAFF]/40 p-3 flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2 min-w-0">
-              <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-[#12AAFF] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-              </svg>
-              <span className="text-[11px] font-bold text-[#12AAFF]/80">{(t as (k: string) => string)('convertDexInfo')}</span>
-            </div>
-            <a
-              href="/dex"
-              onClick={onClose}
-              className="shrink-0 px-3 py-1.5 bg-[#12AAFF] border-2 border-black text-black font-black text-[10px] uppercase tracking-wider shadow-[2px_2px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000] transition-all whitespace-nowrap"
-            >
-              {(t as (k: string) => string)('convertDexButton')} →
-            </a>
-          </div>
+              {/* Hero — claimable balance */}
+              <div className="text-center rounded-xl p-4" style={{ background: 'linear-gradient(135deg, #2d1b4e, #1E3A8A)', border: '1px solid rgba(255,215,0,0.2)' }}>
+                <p className="font-modern uppercase tracking-wide text-white/40" style={{ fontSize: 9 }}>{(t as (k: string) => string)('redeemClaimableBalance')}</p>
+                <p className="font-modern font-black text-vintage-gold leading-none my-1" style={{ fontSize: 32 }}>
+                  {testvbmsBalance.toLocaleString()} <span style={{ fontSize: 18 }}>$VBMS</span>
+                </p>
+                <p className="font-modern text-purple-400" style={{ fontSize: 10 }}>
+                  + {(userProfile?.stats?.aura ?? 0).toLocaleString()} Aura
+                </p>
+                {inboxAmount > 0 && (
+                  <p className="font-modern text-vintage-gold/60 mt-2" style={{ fontSize: 10 }}>
+                    +{inboxAmount.toLocaleString()} no inbox pendente
+                  </p>
+                )}
+              </div>
 
-          {/* Action Buttons */}
-          <div className="space-y-2">
-          {testvbmsBalance >= 100 ? (
-              <>
-                {/* Amount Input */}
-                <div className="space-y-1.5">
-                  <label className="text-[10px] text-[#aaa] font-bold uppercase tracking-wider">{t('convertAmountLabel')}</label>
+              {/* Convert section — only when balance ≥ 100 */}
+              {testvbmsBalance >= 100 && (
+                <div className="rounded-xl p-4 space-y-3" style={{ background: '#1a1a1a', border: '1px solid rgba(255,215,0,0.15)' }}>
+                  <p className="font-modern uppercase tracking-wide" style={{ fontSize: 9, color: 'rgba(255,215,0,0.5)' }}>
+                    {(t as (k: string) => string)('convertTitle')} → VBMS
+                  </p>
+                  <div className="flex justify-between">
+                    <span className="font-modern text-vintage-silver" style={{ fontSize: 10 }}>{(t as (k: string) => string)('convertDailyLimit')}</span>
+                    <span className={`font-modern font-bold ${exceedsDailyLimit ? 'text-neo-attack' : 'text-neo-win'}`} style={{ fontSize: 10 }}>
+                      {isLoadingLimits ? '...' : `${Number(dailyRemaining).toLocaleString()} VBMS`}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="font-modern text-vintage-silver" style={{ fontSize: 10 }}>{(t as (k: string) => string)('convertResetsIn')}</span>
+                    <span className="font-modern text-vintage-silver" style={{ fontSize: 10 }}>{getResetTimeString()}</span>
+                  </div>
                   <div className="flex gap-2">
                     <input
                       type="number"
                       value={convertAmount}
                       onChange={(e) => setConvertAmount(e.target.value)}
-                      placeholder="Enter amount..."
+                      placeholder={(t as (k: string) => string)('convertAmountLabel')}
                       min="100"
                       max={Math.min(testvbmsBalance, dailyRemainingNum)}
-                      className="flex-1 px-3 py-2 bg-[#2C2C2C] border-2 border-[#555] text-white text-sm focus:border-[#FFD700] focus:outline-none font-mono"
+                      className="flex-1 px-3 py-2 rounded-lg text-white text-sm focus:outline-none font-modern"
+                      style={{ background: '#252525', border: '1px solid #444', fontSize: 13 }}
                     />
                     <button
                       onClick={() => setConvertAmount(Math.min(testvbmsBalance, dailyRemainingNum).toString())}
-                      className="px-3 py-2 bg-[#FFD700] border-2 border-black text-black text-xs font-bold shadow-[2px_2px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000] transition-all"
+                      className="px-3 py-2 rounded-lg font-modern font-bold text-black text-xs"
+                      style={{ background: '#FFD700' }}
                     >
-                      {t('convertMax')}
+                      {(t as (k: string) => string)('convertMax')}
                     </button>
                   </div>
-                  {exceedsBalance && <p className="text-[#FF3B3B] text-xs font-bold">Exceeds balance ({testvbmsBalance.toLocaleString()})</p>}
-                  {exceedsDailyLimit && !exceedsBalance && <p className="text-[#FF3B3B] text-xs font-bold">Exceeds daily limit ({Math.floor(dailyRemainingNum).toLocaleString()})</p>}
+                  {exceedsBalance && <p className="font-modern text-neo-attack" style={{ fontSize: 10 }}>{(t as (k: string) => string)('convertMinRequired')}</p>}
+                  {exceedsDailyLimit && !exceedsBalance && <p className="font-modern text-neo-attack" style={{ fontSize: 10 }}>{(t as (k: string) => string)('convertDailyLimit')} ({Math.floor(dailyRemainingNum).toLocaleString()})</p>}
+                  {isOnCooldown && <p className="font-modern text-orange-400 text-center" style={{ fontSize: 10 }}>Cooldown: {Math.floor(cooldown / 60)}:{String(cooldown % 60).padStart(2, '0')}</p>}
+                  {conversionsLeft === 0 && <p className="font-modern text-neo-attack text-center" style={{ fontSize: 10 }}>Limite de conversões diárias atingido</p>}
+                  <button
+                    onClick={handleConvertTESTVBMS}
+                    disabled={!canConvertTESTVBMS || isProcessing}
+                    className="w-full py-3 rounded-lg font-modern font-black text-sm uppercase tracking-wide"
+                    style={{
+                      background: canConvertTESTVBMS ? '#FFD700' : '#333',
+                      color: canConvertTESTVBMS ? '#000' : '#666',
+                      opacity: isProcessing ? 0.7 : 1,
+                      cursor: (!canConvertTESTVBMS || isProcessing) ? 'not-allowed' : 'pointer',
+                    }}
+                  >
+                    {(t as (k: string) => string)('convertButton')} {selectedAmount > 0 ? selectedAmount.toLocaleString() : '0'} → VBMS
+                  </button>
+                  {stuckPending > 0 && !canRecover && (
+                    <p className="font-modern text-vintage-silver text-center" style={{ fontSize: 10 }}>
+                      {stuckPending.toLocaleString()} coins pendentes — recovery em {Math.ceil((30 * 60 * 1000 - (Date.now() - stuckTimestamp)) / 60000)} min
+                    </p>
+                  )}
                 </div>
-                {/* Convert Button */}
-                <button
-                  onClick={handleConvertTESTVBMS}
-                  disabled={!canConvertTESTVBMS || isProcessing}
-                  className={`w-full py-3 px-4 font-bold text-sm flex items-center justify-between transition-all ${
-                    canConvertTESTVBMS
-                      ? 'bg-[#FFD700] border-3 border-black text-black shadow-[4px_4px_0px_#000] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_#000]'
-                      : 'bg-[#333] border-2 border-[#555] text-[#666] cursor-not-allowed'
-                  }`}
-                >
-                  <span className="flex items-center gap-2">
-                    <NextImage src="/images/icons/convert.svg" alt="" width={16} height={16} className="w-4 h-4" style={{ filter: 'brightness(0)' }} />
-                    {t('convertButton')} {selectedAmount > 0 ? selectedAmount.toLocaleString() : '0'} → VBMS
-                  </span>
-                  <span className="text-[10px] bg-black text-[#FFD700] border border-[#FFD700] px-2 py-0.5 font-mono font-bold">Gas</span>
-                </button>
-              </>
-            ) : (
-              <div className="text-center py-4 bg-[#252525] border-2 border-[#444]">
-                <p className="text-[#aaa] text-xs font-bold">{t('convertMinRequired')}</p>
+              )}
+
+              {/* Recent Rewards */}
+              <div className="space-y-2">
+                <p className="font-modern uppercase tracking-wide" style={{ fontSize: 9, color: 'rgba(255,215,0,0.5)' }}>
+                  {(t as (k: string) => string)('redeemRecentRewards')}
+                </p>
+                {transactionHistory === undefined ? (
+                  <div className="text-center py-6">
+                    <div className="w-6 h-6 border-2 border-vintage-gold border-t-transparent rounded-full animate-spin mx-auto" />
+                  </div>
+                ) : transactionHistory && transactionHistory.length > 0 ? (
+                  transactionHistory.map((item: any, i: number) => {
+                    const { icon, color } = getHistoryIcon(item.type, item.source);
+                    return (
+                      <div
+                        key={i}
+                        className="flex items-center gap-2.5 rounded-xl"
+                        style={{ background: '#1A1A1A', border: `1px solid ${color}20`, padding: '9px 12px' }}
+                      >
+                        <span style={{ fontSize: 22, flexShrink: 0 }}>{icon}</span>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-modern font-bold text-white truncate" style={{ fontSize: 12 }}>{item.description || item.type}</p>
+                          <p className="font-modern" style={{ fontSize: 9, color: 'rgba(255,255,255,0.35)' }}>{timeAgo(item.createdAt ?? item.timestamp ?? Date.now())}</p>
+                        </div>
+                        <span className="font-modern font-bold shrink-0" style={{ fontSize: 12, color: (item.amount ?? 0) >= 0 ? '#22C55E' : '#DC2626' }}>
+                          {(item.amount ?? 0) >= 0 ? '+' : ''}{(item.amount ?? 0).toLocaleString()} $VBMS
+                        </span>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div className="text-center py-8">
+                    <p style={{ fontSize: 32 }}>🎴</p>
+                    <p className="font-modern mt-2" style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)' }}>
+                      {(t as (k: string) => string)('redeemEmpty')}
+                    </p>
+                  </div>
+                )}
               </div>
-            )
-          }
 
-
-          {/* Stuck pending conversion — show info only, auto-recovered on modal open after 30min */}
-          {stuckPending > 0 && !canRecover && (
-            <div className="mt-3 border-2 border-[#555] bg-[#1a1a1a] p-3">
-              <p className="text-white font-bold text-xs mb-1">
-                {stuckPending.toLocaleString()} coins pending conversion
-              </p>
-              <p className="text-[#888] text-[11px]">
-                Auto-recovery in {Math.ceil((30 * 60 * 1000 - (Date.now() - stuckTimestamp)) / 60000)} min
-                — transaction may still confirm
-              </p>
             </div>
-          )}
 
-          </div>
-        </div>
+            {/* Footer */}
+            <p className="font-modern text-center py-3" style={{ fontSize: 9, color: 'rgba(255,255,255,0.2)' }}>
+              {(t as (k: string) => string)('redeemFooter')}
+            </p>
+
           </div>
         </div>,
         document.querySelector('[data-phone-body]') || document.body
       )}
 
-      {/* Transaction History Modal - Separate Portal */}
       {showHistory && address && (
         <CoinsHistoryModal
           isOpen={showHistory}

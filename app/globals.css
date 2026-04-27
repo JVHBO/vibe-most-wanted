@@ -1,8 +1,95 @@
-@import url('https://fonts.googleapis.com/css2?family=Alfa+Slab+One&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Cinzel+Decorative:wght@400;700;900&family=Playfair+Display+SC:wght@400;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ═══════════════════════════════════════════════════════════════════════
+   VIBE MOST WANTED — Design System Tokens
+   ═══════════════════════════════════════════════════════════════════════ */
+:root {
+  /* Colors: Base */
+  --color-black:         #0C0C0C;
+  --color-charcoal:      #1A1A1A;
+  --color-deep-black:    #121212;
+  --color-gold:          #FFD700;
+  --color-gold-dark:     #C9A227;
+  --color-gold-metallic: #B8860B;
+  --color-gold-burnt:    #8B7355;
+  --color-silver:        #C0C0C0;
+  --color-neon-blue:     #00C6FF;
+  --color-wine:          #4a1a1a;
+  --color-felt-green:    #0d3d2d;
+  --color-purple:        #2d1b4e;
+  --color-ice:           #F5F5F5;
+  --color-white:         #FFFFFF;
+
+  /* Colors: Semantic */
+  --color-win:     #22C55E;
+  --color-attack:  #DC2626;
+  --color-profile: #1D4ED8;
+  --color-warn:    #F59E0B;
+
+  /* Rarity */
+  --rarity-common:    #C0C0C0;
+  --rarity-rare:      #00C6FF;
+  --rarity-epic:      #A855F7;
+  --rarity-legendary: #FFD700;
+
+  /* Shadows */
+  --shadow-gold:       0 0 20px rgba(255,215,0,0.5);
+  --shadow-gold-lg:    0 0 30px rgba(255,215,0,0.7);
+  --shadow-gold-xl:    0 0 60px rgba(255,165,0,0.9), 0 0 100px rgba(255,215,0,0.7);
+  --shadow-neon:       0 0 20px rgba(0,198,255,0.6);
+  --shadow-card-inner: inset 0 0 10px rgba(255,215,5,0.3);
+  --shadow-panel:      0 4px 32px rgba(0,0,0,0.8);
+
+  /* Borders */
+  --border-gold:        1px solid rgba(255,215,0,0.3);
+  --border-gold-active: 2px solid #FFD700;
+  --border-gold-medium: 2px solid rgba(255,215,0,0.5);
+
+  /* Border Radius */
+  --radius-sm:   6px;
+  --radius-md:   8px;
+  --radius-lg:   12px;
+  --radius-xl:   16px;
+  --radius-full: 9999px;
+
+  /* Typography */
+  --font-vintage: 'Cinzel Decorative', serif;
+  --font-display: 'Playfair Display SC', serif;
+  --font-modern:  'Rajdhani', sans-serif;
+  --font-body:    var(--font-geist-sans), system-ui, sans-serif;
+  --font-mono:    var(--font-geist-mono), 'Courier New', monospace;
+
+  --text-xs:   11px;
+  --text-sm:   13px;
+  --text-base: 16px;
+  --text-lg:   18px;
+  --text-xl:   20px;
+  --text-2xl:  24px;
+  --text-3xl:  30px;
+  --text-4xl:  36px;
+
+  --tracking-tight:   -0.02em;
+  --tracking-normal:   0em;
+  --tracking-wide:     0.05em;
+  --tracking-wider:    0.1em;
+  --tracking-widest:   0.2em;
+
+  --leading-tight:  1.2;
+  --leading-normal: 1.5;
+
+  /* Transitions */
+  --transition-fast: all 0.15s ease-in-out;
+  --transition-base: all 0.3s ease-in-out;
+
+  /* Z-index */
+  --z-nav:   40;
+  --z-modal: 100;
+  --z-toast: 200;
+}
 
 /* Bloqueia drag nativo de imagem em toda a app */
 img {
@@ -94,11 +181,12 @@ body {
   max-width: 100vw;
   overflow-x: visible;
   box-sizing: border-box;
+  font-family: var(--font-geist-sans), sans-serif;
   /* Smoother text on mobile */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   /* Dark background before React hydrates — prevents white flash in Base App and WebViews */
-  background-color: #1E1E1E;
+  background-color: #0C0C0C;
   color: #ffffff;
 }
 
@@ -155,6 +243,128 @@ body > * {
 .animate-card-attack {
   animation: card-attack 0.5s ease-out forwards;
 }
+
+/* ── Typography utility classes ──────────────────────────────────────────── */
+.t-game-title {
+  font-family: var(--font-vintage);
+  font-size: var(--text-4xl);
+  font-weight: 900;
+  letter-spacing: var(--tracking-wider);
+  color: var(--color-gold);
+  text-shadow: 0 0 30px rgba(255,215,0,0.5);
+  line-height: var(--leading-tight);
+}
+.t-section-heading {
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  font-weight: 700;
+  letter-spacing: var(--tracking-wide);
+  color: var(--color-gold);
+  line-height: var(--leading-tight);
+}
+.t-card-name {
+  font-family: var(--font-display);
+  font-size: var(--text-base);
+  font-weight: 700;
+  letter-spacing: var(--tracking-wide);
+  color: var(--color-ice);
+  line-height: var(--leading-tight);
+}
+.t-nav {
+  font-family: var(--font-modern);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  letter-spacing: var(--tracking-wide);
+  color: var(--color-gold);
+}
+.t-stat {
+  font-family: var(--font-modern);
+  font-size: var(--text-xl);
+  font-weight: 700;
+  color: var(--color-gold);
+}
+.t-body {
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  font-weight: 400;
+  color: var(--color-silver);
+  line-height: var(--leading-normal);
+}
+.t-caption {
+  font-family: var(--font-body);
+  font-size: var(--text-xs);
+  font-weight: 400;
+  color: rgba(192,192,192,0.7);
+  line-height: var(--leading-normal);
+}
+.t-mono {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  font-weight: 400;
+  color: var(--color-silver);
+}
+.t-cta {
+  font-family: var(--font-modern);
+  font-size: var(--text-base);
+  font-weight: 700;
+  letter-spacing: var(--tracking-wider);
+  text-transform: uppercase;
+}
+.t-rarity {
+  font-family: var(--font-display);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  letter-spacing: var(--tracking-widest);
+  text-transform: uppercase;
+}
+
+/* ── Component patterns ──────────────────────────────────────────────────── */
+.vbms-panel {
+  background: var(--color-charcoal);
+  border: var(--border-gold-medium);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-panel);
+}
+.vbms-btn-primary {
+  background: var(--color-gold);
+  color: var(--color-black);
+  border: none;
+  border-radius: var(--radius-md);
+  padding: 12px 24px;
+  font-family: var(--font-display);
+  font-size: var(--text-base);
+  font-weight: 700;
+  letter-spacing: var(--tracking-wide);
+  box-shadow: var(--shadow-gold);
+  transition: var(--transition-fast);
+  cursor: pointer;
+}
+.vbms-btn-primary:hover { background: var(--color-gold-dark); box-shadow: var(--shadow-gold-lg); }
+.vbms-btn-ghost {
+  background: transparent;
+  color: var(--color-gold);
+  border: 2px solid rgba(255,215,0,0.4);
+  border-radius: var(--radius-md);
+  padding: 12px 24px;
+  font-family: var(--font-modern);
+  font-size: var(--text-base);
+  font-weight: 600;
+  transition: var(--transition-fast);
+  cursor: pointer;
+}
+.vbms-btn-ghost:hover { background: rgba(255,215,0,0.1); border-color: var(--color-gold); box-shadow: var(--shadow-gold); }
+.vbms-btn-win    { background: var(--color-win);    color: #fff; border: none; border-radius: var(--radius-md); padding: 12px 24px; font-family: var(--font-modern); font-weight: 700; transition: var(--transition-fast); cursor: pointer; }
+.vbms-btn-attack { background: var(--color-attack); color: #fff; border: none; border-radius: var(--radius-md); padding: 12px 24px; font-family: var(--font-modern); font-weight: 700; transition: var(--transition-fast); cursor: pointer; }
+
+/* Reusable animation helpers */
+.anim-glow     { animation: vbms-glow 1s ease-in-out infinite; }
+.anim-shake    { animation: vbms-shake 0.5s ease-in-out; }
+.anim-fade-in  { animation: vbms-fade-in 0.2s ease-in-out; }
+.anim-float-up { animation: vbms-float-up 0.8s ease-out forwards; }
+@keyframes vbms-glow     { 0%,100%{box-shadow:var(--shadow-gold)}50%{box-shadow:var(--shadow-gold-xl)} }
+@keyframes vbms-shake    { 0%,100%{transform:translateX(0)}10%,30%,50%,70%,90%{transform:translateX(-5px)}20%,40%,60%,80%{transform:translateX(5px)} }
+@keyframes vbms-fade-in  { from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)} }
+@keyframes vbms-float-up { 0%{opacity:1;transform:translateY(0) scale(1)}50%{opacity:1;transform:translateY(-20px) scale(1.25)}100%{opacity:0;transform:translateY(-80px) scale(0.8)} }
 
 /* Hide/customize scrollbars globally for cleaner UI */
 * {

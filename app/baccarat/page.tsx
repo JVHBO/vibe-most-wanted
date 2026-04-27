@@ -816,15 +816,15 @@ export default function BaccaratPage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-vintage-charcoal via-vintage-deep-black to-vintage-black flex flex-col">
       {/* Header */}
-      <div className="bacc-header border-b-4 border-black px-4 py-2 bg-[#1a1a1a]">
-        <div className="max-w-lg mx-auto relative flex items-center justify-between">
+      <div style={{ background: 'rgba(26,26,26,0.97)', borderBottom: '2px solid rgba(255,215,0,0.25)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', height: 52, display: 'flex', alignItems: 'center', padding: '0 12px', flexShrink: 0 }}>
+        <div className="max-w-lg mx-auto relative flex items-center justify-between w-full">
           <Link
             href="/"
-            className="px-2 py-1 bg-[#CC2222] hover:bg-[#AA1111] text-white text-[11px] font-black uppercase tracking-widest transition-all z-10"
+            style={{ background: '#CC2222', color: '#fff', borderRadius: 6, padding: '5px 12px', fontSize: 11, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', textDecoration: 'none', flexShrink: 0 }}
           >
-            {t('baccaratBack')}
+            ← {(t as (k: string) => string)('back')}
           </Link>
-          <h1 className="absolute left-1/2 -translate-x-1/2 font-display font-black text-[#FFD700] text-base uppercase tracking-widest pointer-events-none">
+          <h1 className="absolute left-1/2 -translate-x-1/2 font-display font-black text-[#FFD700] uppercase tracking-widest pointer-events-none" style={{ fontSize: 16 }}>
             {t('baccaratTitle') as string}
           </h1>
           <div className="flex items-center gap-2">

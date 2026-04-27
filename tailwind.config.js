@@ -32,6 +32,8 @@ module.exports = {
         'vintage': ['"Cinzel Decorative"', 'serif'],
         'display': ['"Playfair Display SC"', 'serif'],
         'modern': ['Rajdhani', 'sans-serif'],
+        'body': ['var(--font-geist-sans)', 'sans-serif'],
+        'mono': ['var(--font-geist-mono)', 'monospace'],
       },
       boxShadow: {
         'gold': '0 0 20px rgba(255, 215, 0, 0.5)',

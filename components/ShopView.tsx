@@ -56,18 +56,19 @@ export function ShopView({ address }: ShopViewProps) {
       )}
 
       {/* TOP HUD */}
-      <div className="absolute top-0 left-0 right-0 z-10 p-3">
-        <div className="relative flex items-center justify-between">
+      <div className="absolute top-0 left-0 right-0 z-10" style={{ background: 'rgba(26,26,26,0.97)', borderBottom: '2px solid rgba(255,215,0,0.25)', backdropFilter: 'blur(12px)', height: 52 }}>
+        <div className="relative flex items-center justify-between h-full px-3">
           <Link
             href="/"
             onClick={() => AudioManager.buttonNav()}
             onMouseEnter={() => AudioManager.buttonHover()}
-            className="px-2 py-1 bg-[#CC2222] hover:bg-[#AA1111] text-white text-[11px] font-black uppercase tracking-widest transition-all z-10"
+            className="text-white text-[11px] font-black uppercase tracking-widest transition-all z-10 flex-shrink-0"
+            style={{ background: '#CC2222', borderRadius: 6, padding: '5px 12px' }}
           >
             {(t as (k: string) => string)('raidBossBack')}
           </Link>
 
-          <h1 className="absolute left-1/2 -translate-x-1/2 font-display font-black text-[#FFD700] text-base uppercase tracking-widest pointer-events-none">{t('shopTitle') as string}</h1>
+          <h1 className="absolute left-1/2 -translate-x-1/2 font-modern font-black text-[#FFD700] uppercase tracking-widest pointer-events-none" style={{ fontSize: 16 }}>{t('shopTitle') as string}</h1>
 
           <div className="w-10" />
         </div>

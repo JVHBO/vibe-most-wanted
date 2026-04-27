@@ -2,11 +2,8 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { AudioManager } from "@/lib/audio-manager";
-
-const SOCIAL_TIP_KEY = 'navSocialTipSeen';
 
 interface InboxStatus {
   coins: number;
@@ -29,192 +26,141 @@ export function GameNavBar({
   setCurrentView,
   inboxStatus,
   hasClaimableMissions,
-  safeAreaInsets,
 }: GameNavBarProps) {
   const { t } = useLanguage();
   const router = useRouter();
-  const [showSocialTip, setShowSocialTip] = useState(false);
 
-  useEffect(() => {
-    try {
-      if (!localStorage.getItem(SOCIAL_TIP_KEY)) {
-        setShowSocialTip(true);
-      }
-    } catch {}
-  }, []);
+  const play = (fn: () => void) => { if (soundEnabled) fn(); };
 
-  const dismissTip = () => {
-    setShowSocialTip(false);
-    try { localStorage.setItem(SOCIAL_TIP_KEY, '1'); } catch {}
+  const isHome   = currentView === 'game';
+  const isRedeem = currentView === 'inbox';
+  const showRedeemDot = !!(inboxStatus && inboxStatus.coins >= 100);
+
+  const btnBase: React.CSSProperties = {
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: 3,
+    padding: '8px 4px',
+    borderRadius: 8,
+    border: 'none',
+    cursor: 'pointer',
+    fontFamily: "'Rajdhani', sans-serif",
+    fontSize: 10,
+    fontWeight: 700,
+    letterSpacing: '0.06em',
+    transition: 'all 0.15s',
+    width: '100%',
   };
 
-  const baseBtn = `flex-1 min-w-0 ${isInFarcaster ? 'px-1 py-2 flex flex-col items-center justify-center gap-0.5' : 'px-2 md:px-6 py-2 md:py-3 flex items-center gap-2'} rounded-lg font-modern font-semibold transition-all ${isInFarcaster ? 'text-[10px] leading-tight' : 'text-xs md:text-base'}`;
-  const activeClass = 'bg-vintage-gold text-vintage-black';
-  const homeActiveClass = 'bg-blue-700 text-white';
-  const inactiveClass = 'bg-vintage-black text-vintage-gold hover:bg-vintage-gold/10 border border-vintage-gold/30';
+  const activeHome: React.CSSProperties  = { background: '#1e40af', color: '#fff' };
+  const activeGold: React.CSSProperties  = { background: '#FFD700', color: '#0C0C0C' };
+  const inactive: React.CSSProperties    = { background: 'transparent', color: '#FFD700', border: '1px solid rgba(255,215,0,0.2)' };
+  const inactiveShop: React.CSSProperties = { background: 'rgba(124,58,237,0.15)', color: '#a78bfa', border: '1px solid rgba(124,58,237,0.4)' };
 
-  const HomeIcon = ({ size }: { size: string }) => (
-    <svg className={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-      <polyline points="9 22 9 12 15 12 15 22" />
-    </svg>
+  const hoverIn  = (e: React.MouseEvent<HTMLElement>, active: boolean) => {
+    if (!active) (e.currentTarget as HTMLElement).style.background = 'rgba(255,215,0,0.1)';
+  };
+  const hoverOut = (e: React.MouseEvent<HTMLElement>, active: boolean, isShop?: boolean) => {
+    if (!active) (e.currentTarget as HTMLElement).style.background = isShop ? 'rgba(124,58,237,0.15)' : 'transparent';
+  };
+
+  const DotNotif = () => (
+    <div style={{
+      position: 'absolute', top: -2, right: -2,
+      width: 9, height: 9, background: '#ef4444',
+      borderRadius: '50%', border: '1px solid #FFD700',
+    }} />
   );
-
-  const ClaimIcon = ({ size }: { size: string }) => (
-    <svg className={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="3" y="10" width="18" height="12" rx="2" />
-      <path d="M12 10V4" />
-      <path d="M12 4c-2 0-4 2-4 4h4" />
-      <path d="M12 4c2 0 4 2 4 4h-4" />
-      <line x1="12" y1="10" x2="12" y2="22" />
-      <line x1="3" y1="15" x2="21" y2="15" />
-    </svg>
-  );
-
-  const LeaderboardIcon = ({ size }: { size: string }) => (
-    <svg className={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M6 9H3a1 1 0 0 0-1 1v2a4 4 0 0 0 4 4h1" />
-      <path d="M18 9h3a1 1 0 0 1 1 1v2a4 4 0 0 1-4 4h-1" />
-      <path d="M6 3h12v6a6 6 0 0 1-12 0V3z" />
-      <path d="M9 19h6v3H9z" />
-      <line x1="7" y1="22" x2="17" y2="22" />
-    </svg>
-  );
-
-  const ShopIcon = ({ size }: { size: string }) => (
-    <svg className={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
-      <line x1="3" y1="6" x2="21" y2="6" />
-      <path d="M16 10a4 4 0 0 1-8 0" />
-    </svg>
-  );
-
-  const QuestsIcon = ({ size }: { size: string }) => (
-    <svg className={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="12" r="10" />
-      <circle cx="12" cy="12" r="6" />
-      <circle cx="12" cy="12" r="2" />
-    </svg>
-  );
-
-  // Use SDK safeAreaInsets.bottom when available (Warpcast real device), CSS env() as fallback
-  const navInsetBottom = safeAreaInsets?.bottom ?? 0;
 
   return (
     <div
-      className={isInFarcaster
-        ? 'fixed bottom-0 left-0 right-0 z-[100]'
-        : 'mb-3 md:mb-6 relative z-40'
-      }
+      className={isInFarcaster ? 'fixed bottom-0 left-0 right-0 z-[100]' : 'mb-3 md:mb-6'}
     >
       <div
-        className={`tour-nav-bar bg-vintage-charcoal/95 backdrop-blur-lg ${isInFarcaster ? 'rounded-none border-t-2' : 'rounded-xl border-2'} border-vintage-gold/30 ${isInFarcaster ? 'pt-1 px-1 pb-0' : 'p-2'} flex gap-1`}
+        className="tour-nav-bar flex"
+        style={{
+          background: 'rgba(26,26,26,0.97)',
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
+          borderTop: '2px solid rgba(255,215,0,0.25)',
+          padding: '8px 8px 12px',
+          gap: 4,
+        }}
       >
-
-        {/* Home */}
-        <button
-          onClick={() => { if (soundEnabled) AudioManager.buttonClick(); setCurrentView('game'); }}
-          onMouseEnter={() => soundEnabled && AudioManager.buttonHover()}
-          className={`${baseBtn} ${currentView === 'game' ? homeActiveClass + ' nav-btn-home-active' : inactiveClass}`}
-        >
-          {isInFarcaster ? (
-            <>
-              <span className="text-[10px] font-bold whitespace-nowrap">{t('title')}</span>
-              <HomeIcon size="w-5 h-5" />
-            </>
-          ) : (
-            <>
-              <HomeIcon size="w-5 h-5 md:w-6 md:h-6" />
-              <span className="hidden sm:inline">{t('title')}</span>
-            </>
-          )}
-        </button>
-
-        {/* Claim/Inbox — desktop only; Farcaster has it in-content */}
-        {!isInFarcaster && (
+        {/* HOME */}
+        <div style={{ flex: 1, position: 'relative' }}>
           <button
-            onClick={() => { if (soundEnabled) AudioManager.buttonClick(); setCurrentView('inbox'); }}
-            onMouseEnter={() => soundEnabled && AudioManager.buttonHover()}
-            className={`relative ${baseBtn} ${currentView === 'inbox' ? activeClass : inactiveClass}`}
+            style={{ ...btnBase, ...(isHome ? activeHome : inactive) }}
+            onClick={() => { play(AudioManager.buttonClick); setCurrentView('game'); }}
+            onMouseEnter={(e) => { play(AudioManager.buttonHover); hoverIn(e, isHome); }}
+            onMouseLeave={(e) => hoverOut(e, isHome)}
           >
-            {inboxStatus && inboxStatus.coins >= 100 && (
-              <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse border border-vintage-gold z-10" />
-            )}
-            <ClaimIcon size="w-5 h-5 md:w-6 md:h-6" />
-            <span className="hidden sm:inline">{(t as (k: string) => string)('navClaim')}</span>
+            <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+              <polyline points="9 22 9 12 15 12 15 22" />
+            </svg>
+            HOME
           </button>
-        )}
+        </div>
 
-        {/* Leaderboard */}
-        <button
-          onClick={() => { if (soundEnabled) AudioManager.buttonClick(); router.push('/leaderboard'); }}
-          onMouseEnter={() => soundEnabled && AudioManager.buttonHover()}
-          className={`${baseBtn} ${inactiveClass}`}
-        >
-          {isInFarcaster ? (
-            <>
-              <span className="text-[9px] font-bold whitespace-nowrap">{t('leaderboard')}</span>
-              <LeaderboardIcon size="w-5 h-5" />
-            </>
-          ) : (
-            <>
-              <LeaderboardIcon size="w-5 h-5 md:w-6 md:h-6" />
-              <span className="hidden sm:inline">{t('leaderboard')}</span>
-            </>
-          )}
-        </button>
+        {/* REDEEM */}
+        <div style={{ flex: 1, position: 'relative' }}>
+          <button
+            style={{ ...btnBase, ...(isRedeem ? activeGold : inactive) }}
+            onClick={() => { play(AudioManager.buttonClick); setCurrentView('inbox'); }}
+            onMouseEnter={(e) => { play(AudioManager.buttonHover); hoverIn(e, isRedeem); }}
+            onMouseLeave={(e) => hoverOut(e, isRedeem)}
+          >
+            <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="10" width="18" height="12" rx="2" />
+              <path d="M12 10V4" />
+              <path d="M12 4c-2 0-4 2-4 4h4" />
+              <path d="M12 4c2 0 4 2 4 4h-4" />
+              <line x1="12" y1="10" x2="12" y2="22" />
+              <line x1="3" y1="15" x2="21" y2="15" />
+            </svg>
+            REDEEM
+          </button>
+          {showRedeemDot && <DotNotif />}
+        </div>
 
-        {/* Shop */}
-        <Link
-          href="/shop"
-          onClick={() => { if (soundEnabled) AudioManager.buttonClick(); }}
-          onMouseEnter={() => soundEnabled && AudioManager.buttonHover()}
-          className={`${baseBtn} ${inactiveClass}`}
-        >
-          {isInFarcaster ? (
-            <>
-              <span className="text-[10px] font-bold whitespace-nowrap">{t('navShop')}</span>
-              <ShopIcon size="w-5 h-5" />
-            </>
-          ) : (
-            <>
-              <ShopIcon size="w-5 h-5 md:w-6 md:h-6" />
-              <span className="hidden sm:inline">{t('navShop')}</span>
-            </>
-          )}
-        </Link>
+        {/* EARN */}
+        <div style={{ flex: 1, position: 'relative' }}>
+          <button
+            style={{ ...btnBase, ...inactive }}
+            onClick={() => { play(AudioManager.buttonClick); router.push('/quests'); }}
+            onMouseEnter={(e) => { play(AudioManager.buttonHover); hoverIn(e, false); }}
+            onMouseLeave={(e) => hoverOut(e, false)}
+          >
+            <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10" />
+              <circle cx="12" cy="12" r="6" />
+              <circle cx="12" cy="12" r="2" />
+            </svg>
+            EARN
+          </button>
+          {hasClaimableMissions && <DotNotif />}
+        </div>
 
-        {/* Quests / Social */}
-        <Link
-          href="/quests"
-          onClick={() => { if (soundEnabled) AudioManager.buttonClick(); dismissTip(); }}
-          onMouseEnter={() => soundEnabled && AudioManager.buttonHover()}
-          className={`tour-wanted-btn relative ${baseBtn} ${showSocialTip ? 'animate-pulse ring-2 ring-yellow-400 ring-offset-1 ring-offset-black ' : ''}${inactiveClass}`}
-        >
-          {showSocialTip && (
-            <span className="absolute -top-8 left-1/2 -translate-x-1/2 z-[150] pointer-events-none flex flex-col items-center">
-              <span className="bg-yellow-400 text-black text-[9px] font-black rounded px-1.5 py-0.5 whitespace-nowrap shadow-lg">
-                {(t as (k: string) => string)('navSocialTip')}
-              </span>
-              <span className="w-0 h-0 border-l-[4px] border-r-[4px] border-t-[4px] border-l-transparent border-r-transparent border-t-yellow-400" />
-            </span>
-          )}
-          {isInFarcaster ? (
-            <>
-              <span className="text-[10px] font-bold whitespace-nowrap">{(t as (k: string) => string)('navWanted')}</span>
-              <QuestsIcon size="w-5 h-5" />
-            </>
-          ) : (
-            <>
-              <QuestsIcon size="w-5 h-5 md:w-6 md:h-6" />
-              <span className="hidden sm:inline">{(t as (k: string) => string)('navWanted')}</span>
-            </>
-          )}
-          {hasClaimableMissions && (
-            <span className="absolute -top-1 -right-1 bg-red-500 rounded-full w-3 h-3 animate-pulse border border-vintage-gold" />
-          )}
-        </Link>
-
+        {/* SHOP */}
+        <div style={{ flex: 1, position: 'relative' }}>
+          <Link
+            href="/shop"
+            onClick={() => play(AudioManager.buttonClick)}
+            onMouseEnter={(e) => { play(AudioManager.buttonHover); hoverIn(e, false); }}
+            onMouseLeave={(e) => hoverOut(e, false, true)}
+            style={{ ...btnBase, ...inactiveShop, textDecoration: 'none' }}
+          >
+            <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+              <line x1="3" y1="6" x2="21" y2="6" />
+              <path d="M16 10a4 4 0 0 1-8 0" />
+            </svg>
+            SHOP
+          </Link>
+        </div>
       </div>
     </div>
   );

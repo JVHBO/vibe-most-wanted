@@ -197,16 +197,16 @@ function BurnCardsPageContent() {
       <div className="absolute inset-0 bg-gradient-to-b from-red-950/30 via-vintage-deep-black to-black" />
 
       {/* TOP HUD */}
-      <div className="absolute top-0 left-0 right-0 z-20 p-3 bg-vintage-charcoal/80 border-b border-red-500/30 backdrop-blur-sm">
-        <div className="flex items-center justify-between">
+      <div className="absolute top-0 left-0 right-0 z-20" style={{ background: 'rgba(26,26,26,0.97)', borderBottom: '2px solid rgba(255,215,0,0.25)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', height: 52, display: 'flex', alignItems: 'center', padding: '0 12px' }}>
+        <div className="flex items-center justify-between w-full">
           <button
             onClick={() => router.push("/shop")}
-            className="group px-3 py-2 bg-black/50 hover:bg-red-500/10 text-red-400 hover:text-red-300 border border-red-500/20 hover:border-red-500/50 rounded transition-all duration-200 text-xs font-bold uppercase tracking-wider"
+            style={{ background: '#CC2222', color: '#fff', border: 'none', borderRadius: 6, padding: '5px 12px', fontSize: 11, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', cursor: 'pointer', flexShrink: 0 }}
           >
-            <span className="group-hover:-translate-x-0.5 inline-block transition-transform">←</span> Shop
+            ← SHOP
           </button>
 
-          <h1 className="text-xl font-display font-bold text-red-400">
+          <h1 style={{ fontFamily: "'Rajdhani', sans-serif", fontSize: 16, fontWeight: 900, color: '#FFD700', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
             {filterNothing ? "BURN NOTHING PACKS" : "BURN CARDS"}
           </h1>
 

@@ -423,25 +423,26 @@ const convex = useConvex();
       <div className="absolute inset-0 bg-gradient-to-b from-vintage-charcoal via-vintage-deep-black to-black" />
 
       {/* ===== TOP HUD ===== */}
-      <div className="absolute top-0 left-0 right-0 z-[250] p-3 bg-gradient-to-b from-black via-black/90 to-transparent backdrop-blur-sm">
-        <div className="max-w-4xl mx-auto flex items-center justify-between">
+      <div className="absolute top-0 left-0 right-0 z-[250]" style={{ background: 'rgba(26,26,26,0.97)', borderBottom: '2px solid rgba(255,215,0,0.25)', backdropFilter: 'blur(12px)', height: 52 }}>
+        <div className="max-w-4xl mx-auto flex items-center justify-between h-full px-3">
           {/* Left: Back button */}
           <Link
             href="/"
             onClick={() => AudioManager.buttonClick()}
-            className="px-2 py-1 bg-[#CC2222] hover:bg-[#AA1111] text-white text-[11px] font-black uppercase tracking-widest transition-all z-10"
+            className="text-white text-[11px] font-black uppercase tracking-widest transition-all flex-shrink-0"
+            style={{ background: '#CC2222', borderRadius: 6, padding: '5px 12px' }}
           >
-            ← BACK
+            ← {t('back')}
           </Link>
 
           {/* Center: Title */}
           <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-2 pointer-events-none">
-            <h1 className="font-display font-black text-[#FFD700] text-base uppercase tracking-widest">
+            <h1 className="font-modern font-black text-[#FFD700] uppercase tracking-widest" style={{ fontSize: 16 }}>
               Aura Ranking
             </h1>
             <button
               onClick={() => setShowLeaderboardRewardsModal(true)}
-              className="w-5 h-5 rounded-full bg-vintage-gold/10 border border-vintage-gold/30 text-vintage-burnt-gold hover:text-vintage-gold hover:border-vintage-gold/50 text-xs font-bold flex items-center justify-center transition-all"
+              className="w-5 h-5 rounded-full bg-vintage-gold/10 border border-vintage-gold/30 text-vintage-burnt-gold hover:text-vintage-gold hover:border-vintage-gold/50 text-xs font-bold flex items-center justify-center transition-all pointer-events-auto"
             >
               ?
             </button>

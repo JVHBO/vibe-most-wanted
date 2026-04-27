@@ -228,25 +228,10 @@ export default function HomePage() {
       .bg-vintage-charcoal\\/80 { background: #1E1E1E !important; backdrop-filter: none !important; border: none !important; border-bottom: 2px solid #000 !important; border-radius: 0 !important; }
       .bg-vintage-charcoal\\/95 { background: #1E1E1E !important; backdrop-filter: none !important; }
       .border-vintage-gold\\/30 { border-color: transparent !important; }
-      /* GameHeader — ID override (vence neobrutalism !important) */
-      #th-hdr button { background: #1E1E1E !important; border: none !important; box-shadow: none !important; border-radius: 0 !important; transform: none !important; color: #FACC15 !important; }
-      #th-hdr button:hover { background: rgba(255,255,255,0.05) !important; box-shadow: none !important; transform: none !important; color: #FACC15 !important; }
-      #th-hdr button * { color: #FACC15 !important; }
-      #th-hdr .tour-settings-gear svg, #th-hdr .tour-settings-gear svg * { stroke: #FACC15 !important; color: #FACC15 !important; }
-      #th-hdr .tour-settings-btn { border-right: 1.5px solid #000 !important; }
-      #th-hdr .tour-settings-gear { border-left: 1.5px solid #000 !important; }
-      #th-hdr .tour-docs-btn { background: #1E1E1E !important; border: none !important; box-shadow: none !important; border-radius: 0 !important; transform: none !important; color: #FACC15 !important; border-left: 1.5px solid #000 !important; }
-      #th-hdr .tour-docs-btn:hover { background: rgba(255,255,255,0.05) !important; box-shadow: none !important; transform: none !important; }
-      #th-hdr .tour-docs-btn svg, #th-hdr .tour-docs-btn svg * { stroke: #FACC15 !important; }
-      #th-hdr .tour-dex-btn span { font-size: 14px !important; font-weight: 600 !important; }
+      /* GameHeader — apenas reset de transform/shadow do neobrutalism */
+      #th-hdr button { box-shadow: none !important; transform: none !important; }
+      #th-hdr button:hover { box-shadow: none !important; transform: none !important; }
       #th-hdr .tour-dex-btn > div:last-child { display: none !important; }
-      /* Compactar todos os itens do header */
-      #th-hdr button, #th-hdr .tour-docs-btn { height: 40px !important; }
-      #th-hdr .tour-settings-gear, #th-hdr .tour-docs-btn { width: 40px !important; }
-      #th-hdr .tour-dex-btn { min-width: 0 !important; padding: 4px 10px !important; }
-      #th-hdr .tour-settings-btn { padding: 4px 8px !important; }
-      #th-hdr [class*="max-w-\\[120px\\]"] { max-width: 80px !important; }
-      #th-hdr [class*="flex-wrap"] { flex-wrap: nowrap !important; gap: 4px !important; }
       @keyframes spinCW    { 0% { transform: rotate(0deg); }    100% { transform: rotate(360deg); } }
       @keyframes slotWinPop { 0%{opacity:0;transform:scale(0.8)} 100%{opacity:1;transform:scale(1)} }
       @keyframes pulseGlow { 0%,100% { opacity: 0.08; } 50% { opacity: 0.16; } }
@@ -278,7 +263,7 @@ export default function HomePage() {
     `}</style>
 
       {!showWalletGate && (
-      <div id="th-hdr">
+      <div id="th-hdr" style={{ position: 'relative', zIndex: 60 }}>
         <GameHeader
           isInFarcaster={isInFarcaster}
           soundEnabled={soundEnabled}
@@ -748,27 +733,25 @@ export default function HomePage() {
 
       {/* BOTTOM NAV */}
       {!showWalletGate && (
-      <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 100, background: '#1E1E1E', borderTop: '2px solid #000', padding: '4px', display: 'flex', alignItems: 'stretch', gap: 0, height: 60 }}>
+      <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 100, background: 'rgba(26,26,26,0.97)', borderTop: '2px solid rgba(255,215,0,0.25)', padding: '8px 8px 12px', display: 'flex', gap: 4, backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)' }}>
         {[
-          { label: 'HOME',   icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>, onClick: () => safeNavigate('/') },
-          { label: 'REDEEM', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="10" width="18" height="12" rx="2"/><path d="M12 10V4"/><path d="M12 4c-2 0-4 2-4 4h4"/><path d="M12 4c2 0 4 2 4 4h-4"/><line x1="12" y1="10" x2="12" y2="22"/><line x1="3" y1="15" x2="21" y2="15"/></svg>, onClick: () => setShowCoinsInbox(true), hasDot: ((inboxStatus?.coinsInbox ?? 0) > 0) || ((inboxStatus?.coins ?? 0) >= 100) },
-          { label: 'EARN',   icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>, onClick: () => safeNavigate('/quests'), hasDot: hasClaimableMissions },
-          { label: 'SHOP',   icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>, onClick: () => safeNavigate('/shop') },
-        ].reduce<React.ReactNode[]>((acc, { label, icon, onClick, hasDot }: any, i, arr) => {
-          acc.push(
-            <div key={label} onClick={onClick}
-              style={{ flex: 1, position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3, cursor: 'pointer', color: '#FACC15', padding: '4px 2px' }}
-            >
-              {hasDot && <span style={{ position: 'absolute', top: 4, right: '12%', width: 7, height: 7, borderRadius: '50%', background: '#ef4444', animation: allowHomeMotion ? 'redDot 1.2s ease-in-out infinite' : undefined, zIndex: 10, border: '1px solid #fff' }} />}
-              <span style={{ fontSize: 8, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.5 }}>{label}</span>
+          { label: 'HOME',   icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>, onClick: () => { if (showCoinsInbox) setShowCoinsInbox(false); else safeNavigate('/'); }, isHome: !showCoinsInbox, hasDot: false },
+          { label: 'REDEEM', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="10" width="18" height="12" rx="2"/><path d="M12 10V4"/><path d="M12 4c-2 0-4 2-4 4h4"/><path d="M12 4c2 0 4 2 4 4h-4"/><line x1="12" y1="10" x2="12" y2="22"/><line x1="3" y1="15" x2="21" y2="15"/></svg>, onClick: () => setShowCoinsInbox(true), isRedeem: showCoinsInbox, hasDot: ((inboxStatus?.coinsInbox ?? 0) > 0) || ((inboxStatus?.coins ?? 0) >= 100) },
+          { label: 'EARN',   icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>, onClick: () => safeNavigate('/quests'), hasDot: hasClaimableMissions },
+          { label: 'SHOP',   icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>, onClick: () => safeNavigate('/shop'), isShop: true },
+        ].map(({ label, icon, onClick, hasDot, isHome, isRedeem, isShop }: any) => {
+          const active = isHome || isRedeem;
+          const bg = isHome ? '#1e40af' : isRedeem ? '#FFD700' : 'transparent';
+          const color = isHome ? '#fff' : isRedeem ? '#0C0C0C' : '#FFD700';
+          const border = active ? 'none' : '1px solid rgba(255,215,0,0.2)';
+          return (
+            <div key={label} onClick={onClick} style={{ flex: 1, position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3, cursor: 'pointer', color, background: bg, border, borderRadius: 8, padding: '8px 4px', fontFamily: "'Rajdhani', sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', transition: 'all 0.15s' }}>
+              {hasDot && <span style={{ position: 'absolute', top: -2, right: -2, width: 9, height: 9, borderRadius: '50%', background: '#ef4444', border: '1px solid #FFD700', zIndex: 10 }} />}
               {icon}
+              {label}
             </div>
           );
-          if (i < arr.length - 1) acc.push(
-            <div key={`sep-${i}`} style={{ width: 1.5, background: 'rgba(0,0,0,0.8)', alignSelf: 'stretch', margin: '6px 0' }} />
-          );
-          return acc;
-        }, [])}
+        })}
       </div>
       )}
     </div>

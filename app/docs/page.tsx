@@ -50,16 +50,17 @@ export default function DocsPage() {
     <div className="h-screen flex flex-col bg-vintage-black text-white overflow-hidden">
 
       {/* ── TOP BAR ── */}
-      <div className="flex-shrink-0 flex items-center justify-between gap-2 px-3 py-2 border-b-2 border-black bg-[#111]">
+      <div className="flex-shrink-0 flex items-center justify-between gap-2 px-3" style={{ background: 'rgba(26,26,26,0.97)', borderBottom: '2px solid rgba(255,215,0,0.25)', backdropFilter: 'blur(12px)', height: 52 }}>
         <Link
           href="/"
           onClick={() => AudioManager.buttonClick()}
-          className="px-3 py-1.5 bg-[#CC2222] hover:bg-[#AA1111] text-white text-[11px] font-bold uppercase tracking-wider transition-colors rounded-md"
+          className="px-3 py-1.5 text-white text-[11px] font-bold uppercase tracking-wider transition-colors rounded-md flex-shrink-0"
+          style={{ background: '#CC2222', borderRadius: 6 }}
         >
-          ← BACK
+          ← {t('back')}
         </Link>
 
-        <h1 className="text-sm font-display font-bold text-vintage-gold uppercase tracking-widest drop-shadow-[1px_1px_0px_#000]">
+        <h1 className="flex-1 text-center font-modern font-black text-vintage-gold uppercase tracking-widest" style={{ fontSize: 16 }}>
           {t("documentation")}
         </h1>
 
