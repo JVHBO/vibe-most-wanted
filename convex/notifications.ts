@@ -320,7 +320,7 @@ const GAMING_TIPS = [
   { title: "🎯 Attack Mode!", body: "Attack leaderboard players to steal their VBMS! Higher rank = bigger reward 👑" },
   { title: "🛡️ Defense Deck!", body: "Set up your Defense Deck before going offline. Empty deck = easy target! 🃏" },
   { title: "⚡ Aura Level!", body: "Higher Aura level = more bonus roulette spins every day. Keep grinding! 🐉" },
-  { title: "🎁 Free Card!", body: "Grab your FREE card from the Shop every day. No VBMS needed — just tap! 🃏" },
+  { title: "🎁 Free Card!", body: "Grab your FREE card from the Shop every day. No VBMS needed — just tap!" },
   { title: "⚔️ Vibe Clash!", body: "Build your deck and crush opponents in Mecha Arena! Bet VBMS and win big 🤖" },
   { title: "👹 Raid Boss!", body: "Team up to defeat the Raid Boss! VibeFID holders deal bonus damage 💥" },
   { title: "🎴 Baccarat!", body: "Bet VBMS on Player or Banker and double your coins! New round every minute 🃏" },
