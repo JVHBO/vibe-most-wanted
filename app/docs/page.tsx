@@ -57,7 +57,7 @@ export default function DocsPage() {
           className="px-3 py-1.5 text-white text-[11px] font-bold uppercase tracking-wider transition-colors rounded-md flex-shrink-0"
           style={{ background: '#CC2222', borderRadius: 6 }}
         >
-          ← {t('back')}
+          ← Back
         </Link>
 
         <h1 className="flex-1 text-center font-modern font-black text-vintage-gold uppercase tracking-widest" style={{ fontSize: 16 }}>
