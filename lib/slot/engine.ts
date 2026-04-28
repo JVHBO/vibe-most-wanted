@@ -49,19 +49,19 @@ const NORMAL_WILDCARDS = new Set(["neymar", "clawdmoltopenbot"]);
 // Payout em % da aposta (rank combo = 4 cartas diferentes do mesmo rank)
 // Quad (4 idênticas) paga 3x esses valores
 const RANK_COMBO_PAYOUT: Record<SlotRank, number> = {
-  "A":  400,   // Ás — raro, paga 4x a aposta
-  "K":  200,   // Rei
-  "Q":  160,
-  "J":  120,
-  "10": 100,
-  "9":  80,
-  "8":  60,
-  "7":  40,
-  "6":  25,
-  "5":  18,
-  "4":  14,
-  "3":  10,
-  "2":  8,
+  "A":  700,
+  "K":  500,
+  "Q":  400,
+  "J":  320,
+  "10": 260,
+  "9":  215,
+  "8":  175,
+  "7":  140,
+  "6":  110,
+  "5":  90,
+  "4":  70,
+  "3":  50,
+  "2":  30,
 };
 
 // Each rank has:
@@ -819,11 +819,12 @@ function getSlotComboReward(
   _matchedIndices: number[],
   _wildcardIndices: number[],
   _grid: SlotCard[],
-  _cascadeStep: number,
+  cascadeStep: number,
 ): number {
   // combo.bonus.value is the payout percentage of bet (e.g., 10 = 10% of bet)
-  // No cascade multiplier, no bonus multiplier — flat payout
-  return Math.max(1, combo.bonus.value);
+  // Cascade multiplier: each step increases payout (1x, 1.5x, 2.25x, 3.4x, 5x, 7.5x...)
+  const cascadeMult = Math.pow(1.5, cascadeStep);
+  return Math.max(1, Math.round(combo.bonus.value * cascadeMult));
 }
 
 function findNextCombo(
