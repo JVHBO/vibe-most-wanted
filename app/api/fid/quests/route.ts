@@ -2,8 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "@/convex/_generated/api";
 
-const VMW_CONVEX_URL = process.env.NEXT_PUBLIC_CONVEX_URL!;
-const convex = new ConvexHttpClient(VMW_CONVEX_URL);
+function getConvexClient() {
+  const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
+  if (!convexUrl) {
+    throw new Error("NEXT_PUBLIC_CONVEX_URL not configured");
+  }
+  return new ConvexHttpClient(convexUrl);
+}
 
 /**
  * GET /api/fid/quests?fid=123
@@ -16,6 +21,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    const convex = getConvexClient();
     const quests = await convex.query(api.playerQuests.getQuestsForCompleter, {
       completerFid: parseInt(fid),
       limit: 20,
