@@ -7,7 +7,8 @@
  */
 
 import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import { mutation, query, action, internalMutation } from "./_generated/server";
+import { internal } from "./_generated/api";
 import { isBlacklisted } from "./blacklist";
 
 /**
@@ -17,40 +18,138 @@ import { isBlacklisted } from "./blacklist";
 // Maximum entry limit for Mecha Arena
 const MAX_BETTING_CREDITS = 10000;
 
-export const addBettingCredits = mutation({
+const VBMS_TOKEN_BASE = "0xb03439567cd22f278b21e1ffcdfb8e1696763827";
+const VBMS_POOL_TROLL = "0x062b914668f3fd35c3ae02e699cb82e1cf4be18b";
+const BASE_RPC = "https://mainnet.base.org";
+const ERC20_TRANSFER_TOPIC = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef";
+const TX_HASH_REGEX = /^0x[a-fA-F0-9]{64}$/;
+
+function amountToWeiString(amount: number): string {
+  if (!Number.isFinite(amount) || amount <= 0) throw new Error("Invalid deposit amount.");
+  const [whole, fraction = ""] = amount.toString().split(".");
+  const normalizedFraction = (fraction + "0".repeat(18)).slice(0, 18);
+  return (BigInt(whole) * 10n ** 18n + BigInt(normalizedFraction)).toString();
+}
+
+async function verifyBaseVBMSTransfer(
+  txHash: string,
+  expectedFrom: string,
+  expectedAmountWei: string,
+): Promise<void> {
+  const receiptResp = await fetch(BASE_RPC, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "eth_getTransactionReceipt", params: [txHash] }),
+  });
+  const { result: receipt } = await receiptResp.json() as any;
+  if (!receipt) throw new Error("Transaction receipt not found.");
+  if (receipt.status !== "0x1") throw new Error("Transaction failed on-chain.");
+
+  const expectedFromLower = expectedFrom.toLowerCase();
+  const expectedToLower = VBMS_POOL_TROLL.toLowerCase();
+  const expectedAmount = BigInt(expectedAmountWei);
+
+  for (const log of receipt.logs || []) {
+    if ((log.address || "").toLowerCase() !== VBMS_TOKEN_BASE) continue;
+    if (log.topics?.[0] !== ERC20_TRANSFER_TOPIC) continue;
+    const fromTopic = log.topics?.[1];
+    const toTopic = log.topics?.[2];
+    if (!fromTopic || !toTopic) continue;
+
+    const actualFrom = ("0x" + fromTopic.slice(26)).toLowerCase();
+    const actualTo = ("0x" + toTopic.slice(26)).toLowerCase();
+    const actualAmount = BigInt(log.data);
+
+    if (actualFrom === expectedFromLower && actualTo === expectedToLower && actualAmount >= expectedAmount) {
+      return;
+    }
+  }
+
+  throw new Error("No matching VBMS transfer to pool found in transaction logs.");
+}
+
+async function recordSecurityEvent(
+  ctx: any,
+  args: { address: string; status: "accepted" | "rejected"; reason?: string; txHash?: string; amount?: number },
+) {
+  await ctx.runMutation(internal.securityEvents.record, {
+    address: args.address,
+    feature: "bettingCredits",
+    action: "addBettingCredits",
+    status: args.status,
+    reason: args.reason,
+    txHash: args.txHash,
+    amount: args.amount,
+  });
+}
+
+export const addBettingCredits: any = action({
   args: {
     address: v.string(),
     amount: v.number(),
     txHash: v.string(),
   },
-  handler: async (ctx, args) => {
+  handler: async (ctx: any, args: { address: string; amount: number; txHash: string }): Promise<any> => {
     const { address, amount, txHash } = args;
     const normalizedAddress = address.toLowerCase();
 
-    // Blacklist check
+    if (isBlacklisted(normalizedAddress)) {
+      await recordSecurityEvent(ctx, { address, amount, txHash, status: "rejected", reason: "blacklisted_address" });
+      throw new Error("Address is banned");
+    }
+
+    if (!TX_HASH_REGEX.test(txHash)) {
+      await recordSecurityEvent(ctx, { address, amount, txHash, status: "rejected", reason: "invalid_tx_hash" });
+      throw new Error("Invalid transaction hash");
+    }
+
+    if (amount > MAX_BETTING_CREDITS) {
+      await recordSecurityEvent(ctx, { address, amount, txHash, status: "rejected", reason: "amount_above_limit" });
+      throw new Error(`Maximum entry is ${MAX_BETTING_CREDITS} VBMS`);
+    }
+
+    try {
+      await verifyBaseVBMSTransfer(txHash, address, amountToWeiString(amount));
+    } catch (error: any) {
+      await recordSecurityEvent(ctx, { address, amount, txHash, status: "rejected", reason: error?.message || "verification_failed" });
+      throw error;
+    }
+
+    await recordSecurityEvent(ctx, { address, amount, txHash, status: "accepted", reason: "onchain_transfer_verified" });
+    return await ctx.runMutation(internal.bettingCredits.creditVerifiedBettingCredits, args);
+  },
+});
+
+export const creditVerifiedBettingCredits = internalMutation({
+  args: {
+    address: v.string(),
+    amount: v.number(),
+    txHash: v.string(),
+  },
+  handler: async (ctx: any, args: { address: string; amount: number; txHash: string }): Promise<any> => {
+    const { address, amount, txHash } = args;
+    const normalizedAddress = address.toLowerCase();
+
     if (isBlacklisted(normalizedAddress)) {
       throw new Error("Address is banned");
     }
 
-    // Enforce maximum entry limit
     if (amount > MAX_BETTING_CREDITS) {
       throw new Error(`Maximum entry is ${MAX_BETTING_CREDITS} VBMS`);
     }
 
-    // Check if this txHash was already processed (check bettingTransactions, not bettingCredits)
     const existingTx = await ctx.db
       .query("bettingTransactions")
-      .withIndex("by_txHash", (q) => q.eq("txHash", txHash))
+      .withIndex("by_txHash", (q: any) => q.eq("txHash", txHash))
       .first();
 
     if (existingTx) {
       throw new Error("Transaction already processed");
     }
 
-    // Check total balance won't exceed maximum
     let credits = await ctx.db
       .query("bettingCredits")
-      .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
+      .withIndex("by_address", (q: any) => q.eq("address", normalizedAddress))
       .first();
 
     const currentBalance = credits?.balance || 0;
@@ -59,25 +158,22 @@ export const addBettingCredits = mutation({
     }
 
     if (credits) {
-      // Add to existing balance
       await ctx.db.patch(credits._id, {
         balance: credits.balance + amount,
         totalDeposited: (credits.totalDeposited || 0) + amount,
         lastDeposit: Date.now(),
       });
     } else {
-      // Create new balance
       await ctx.db.insert("bettingCredits", {
         address: normalizedAddress,
         balance: amount,
         totalDeposited: amount,
         totalWithdrawn: 0,
         lastDeposit: Date.now(),
-        txHash, // Store this tx
+        txHash,
       });
     }
 
-    // Log the deposit
     await ctx.db.insert("bettingTransactions", {
       address: normalizedAddress,
       type: "deposit",

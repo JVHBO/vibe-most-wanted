@@ -1377,6 +1377,21 @@ export default defineSchema({
     .index("by_timestamp", ["timestamp"])
     .index("by_source", ["source", "timestamp"]),
 
+  // Security events for exploit tracing and denied direct Convex calls
+  securityEvents: defineTable({
+    address: v.string(),
+    feature: v.string(),
+    action: v.string(),
+    status: v.union(v.literal("accepted"), v.literal("rejected")),
+    reason: v.optional(v.string()),
+    txHash: v.optional(v.string()),
+    amount: v.optional(v.number()),
+    timestamp: v.number(),
+  })
+    .index("by_address", ["address", "timestamp"])
+    .index("by_feature", ["feature", "timestamp"])
+    .index("by_status", ["status", "timestamp"])
+    .index("by_txHash", ["txHash"]),
   // Shame clicks for the exploiter shame list
   // Players can shame exploiters and earn 10 VBMS per shame (max 10 total)
   shameClicks: defineTable({

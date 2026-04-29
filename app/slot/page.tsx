@@ -580,7 +580,7 @@ export default function SlotPage() {
       const txHash = await transfer(contract, amountWei);
 
       // Credit coins in Convex after real tx confirmed
-      await convex.mutation(api.slot.depositVBMS, { address, amount, txHash });
+      await convex.action(api.slot.depositVBMS, { address, amount, txHash });
 
       setDepositStep("done");
       toast.success(tr("depositSuccess"));

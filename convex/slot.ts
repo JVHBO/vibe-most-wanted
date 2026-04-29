@@ -467,12 +467,98 @@ export const getSlotHistory = query({
   },
 });
 
+const VBMS_TOKEN_BASE = "0xb03439567cd22f278b21e1ffcdfb8e1696763827";
+const VBMS_POOL_TROLL = "0x062b914668f3fd35c3ae02e699cb82e1cf4be18b";
+const ERC20_TRANSFER_TOPIC = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef";
+const TX_HASH_REGEX = /^0x[a-fA-F0-9]{64}$/;
+
+function amountToWeiString(amount: number): string {
+  if (!Number.isFinite(amount) || amount <= 0) throw new Error("Invalid deposit amount.");
+  const [whole, fraction = ""] = amount.toString().split(".");
+  const normalizedFraction = (fraction + "0".repeat(18)).slice(0, 18);
+  return (BigInt(whole) * 10n ** 18n + BigInt(normalizedFraction)).toString();
+}
+
+async function verifyBaseVBMSTransfer(txHash: string, expectedFrom: string, expectedAmountWei: string): Promise<{ actualFrom: string; actualTo: string; actualAmount: string }> {
+  const receiptResp = await fetch(BASE_RPC, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "eth_getTransactionReceipt", params: [txHash] }),
+  });
+  const { result: receipt } = await receiptResp.json() as any;
+  if (!receipt) throw new Error("Transaction receipt not found.");
+  if (receipt.status !== "0x1") throw new Error("Transaction failed on-chain.");
+
+  const expectedFromLower = expectedFrom.toLowerCase();
+  const expectedToLower = VBMS_POOL_TROLL.toLowerCase();
+  const expectedAmount = BigInt(expectedAmountWei);
+
+  for (const log of receipt.logs || []) {
+    if ((log.address || "").toLowerCase() !== VBMS_TOKEN_BASE) continue;
+    if (log.topics?.[0] !== ERC20_TRANSFER_TOPIC) continue;
+    const fromTopic = log.topics?.[1];
+    const toTopic = log.topics?.[2];
+    if (!fromTopic || !toTopic) continue;
+
+    const actualFrom = ("0x" + fromTopic.slice(26)).toLowerCase();
+    const actualTo = ("0x" + toTopic.slice(26)).toLowerCase();
+    const actualAmount = BigInt(log.data);
+
+    if (actualFrom === expectedFromLower && actualTo === expectedToLower && actualAmount >= expectedAmount) {
+      return { actualFrom, actualTo, actualAmount: actualAmount.toString() };
+    }
+  }
+
+  throw new Error("No matching VBMS transfer to pool found in transaction logs.");
+}
+
+async function recordSlotSecurityEvent(
+  ctx: any,
+  args: { address: string; status: "accepted" | "rejected"; reason?: string; txHash?: string; amount?: number },
+) {
+  await ctx.runMutation(internal.securityEvents.record, {
+    address: args.address,
+    feature: "slot",
+    action: "depositVBMS",
+    status: args.status,
+    reason: args.reason,
+    txHash: args.txHash,
+    amount: args.amount,
+  });
+}
 /**
- * Deposit VBMS tokens to get coins (1 VBMS = 1 coin)
+ * Deposit VBMS tokens to get coins (1 VBMS = 1 coin).
+ * Public entrypoint is an action so the on-chain transfer can be verified before crediting.
  */
-export const depositVBMS = mutation({
+export const depositVBMS: any = action({
   args: { address: v.string(), amount: v.number(), txHash: v.string() },
-  handler: async (ctx, { address, amount, txHash }) => {
+  handler: async (ctx: any, { address, amount, txHash }: { address: string; amount: number; txHash: string }): Promise<any> => {
+    const { isBlacklisted } = await import("./blacklist");
+    if (isBlacklisted(address)) {
+      await recordSlotSecurityEvent(ctx, { address, amount, txHash, status: "rejected", reason: "blacklisted_address" });
+      throw new Error("Address is banned.");
+    }
+    if (!TX_HASH_REGEX.test(txHash)) {
+      await recordSlotSecurityEvent(ctx, { address, amount, txHash, status: "rejected", reason: "invalid_tx_hash" });
+      throw new Error("Invalid transaction hash.");
+    }
+
+    const expectedAmountWei = amountToWeiString(amount);
+    try {
+      await verifyBaseVBMSTransfer(txHash, address, expectedAmountWei);
+    } catch (error: any) {
+      await recordSlotSecurityEvent(ctx, { address, amount, txHash, status: "rejected", reason: error?.message || "verification_failed" });
+      throw error;
+    }
+
+    await recordSlotSecurityEvent(ctx, { address, amount, txHash, status: "accepted", reason: "onchain_transfer_verified" });
+    return await ctx.runMutation(internal.slot.creditVerifiedVBMSDeposit, { address, amount, txHash });
+  },
+});
+
+export const creditVerifiedVBMSDeposit = internalMutation({
+  args: { address: v.string(), amount: v.number(), txHash: v.string() },
+  handler: async (ctx: any, { address, amount, txHash }: { address: string; amount: number; txHash: string }): Promise<any> => {
     const { isBlacklisted } = await import("./blacklist");
     if (isBlacklisted(address)) throw new Error("Address is banned.");
 
@@ -481,14 +567,14 @@ export const depositVBMS = mutation({
       throw new Error("Profile not found");
     }
 
-    // Idempotency: don't double-credit the same tx
     const existing = await ctx.db.query("coinTransactions")
-      .withIndex("by_txHash", (q) => q.eq("txHash", txHash))
+      .withIndex("by_txHash", (q: any) => q.eq("txHash", txHash))
       .first();
     if (existing) return { success: true, coinsAdded: 0, newBalance: profile.coins || 0, duplicate: true };
 
+    const normalizedAddress = address.toLowerCase();
     const currentCoins = profile.coins || 0;
-    const coinAmount = amount; // 1:1
+    const coinAmount = amount;
 
     await ctx.db.patch(profile._id, {
       coins: currentCoins + coinAmount,
@@ -496,15 +582,15 @@ export const depositVBMS = mutation({
     });
 
     await ctx.db.insert("coinTransactions", {
-      address,
+      address: normalizedAddress,
       type: "earn",
       amount: coinAmount,
       source: "vbms_deposit",
-      description: `Depositou ${amount} VBMS → ${coinAmount} coins`,
+      description: `Depositou ${amount} VBMS -> ${coinAmount} coins`,
       balanceBefore: currentCoins,
       balanceAfter: currentCoins + coinAmount,
       timestamp: Date.now(),
-      ...(txHash ? { txHash } : {}),
+      txHash,
     });
 
     return {
@@ -514,7 +600,6 @@ export const depositVBMS = mutation({
     };
   },
 });
-
 /**
  * Withdraw coins to get VBMS tokens back (1 coin = 1 VBMS)
  */
@@ -925,8 +1010,3 @@ export const adminAddBonusSpins = mutation({
     return { success: true, newBonusSpins: currentBonus + count };
   },
 });
-
-
-
-
-

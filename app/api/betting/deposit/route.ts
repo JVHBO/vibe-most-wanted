@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
 
     // Add betting credits in Convex
     const convex = new ConvexHttpClient(CONVEX_URL);
-    const result = await convex.mutation(api.bettingCredits.addBettingCredits, {
+    const result = await convex.action(api.bettingCredits.addBettingCredits, {
       address,
       amount: parseFloat(amount),
       txHash,

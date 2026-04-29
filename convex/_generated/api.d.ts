@@ -70,6 +70,7 @@ import type * as rooms from "../rooms.js";
 import type * as roulette from "../roulette.js";
 import type * as roundBetting from "../roundBetting.js";
 import type * as scheduledTips from "../scheduledTips.js";
+import type * as securityEvents from "../securityEvents.js";
 import type * as sessions from "../sessions.js";
 import type * as shopAnnouncement from "../shopAnnouncement.js";
 import type * as slot from "../slot.js";
@@ -150,6 +151,7 @@ declare const fullApi: ApiFromModules<{
   roulette: typeof roulette;
   roundBetting: typeof roundBetting;
   scheduledTips: typeof scheduledTips;
+  securityEvents: typeof securityEvents;
   sessions: typeof sessions;
   shopAnnouncement: typeof shopAnnouncement;
   slot: typeof slot;
