@@ -471,20 +471,21 @@ export const getSlotHistory = query({
  * Deposit VBMS tokens to get coins (1 VBMS = 1 coin)
  */
 export const depositVBMS = mutation({
-  args: { address: v.string(), amount: v.number(), txHash: v.optional(v.string()) },
+  args: { address: v.string(), amount: v.number(), txHash: v.string() },
   handler: async (ctx, { address, amount, txHash }) => {
+    const { isBlacklisted } = await import("./blacklist");
+    if (isBlacklisted(address)) throw new Error("Address is banned.");
+
     const profile = await getProfileByAddress(ctx, address);
     if (!profile) {
       throw new Error("Profile not found");
     }
 
     // Idempotency: don't double-credit the same tx
-    if (txHash) {
-      const existing = await ctx.db.query("coinTransactions")
-        .withIndex("by_txHash", (q) => q.eq("txHash", txHash))
-        .first();
-      if (existing) return { success: true, coinsAdded: 0, newBalance: profile.coins || 0, duplicate: true };
-    }
+    const existing = await ctx.db.query("coinTransactions")
+      .withIndex("by_txHash", (q) => q.eq("txHash", txHash))
+      .first();
+    if (existing) return { success: true, coinsAdded: 0, newBalance: profile.coins || 0, duplicate: true };
 
     const currentCoins = profile.coins || 0;
     const coinAmount = amount; // 1:1
@@ -580,12 +581,41 @@ export const prepareWithdraw = action({
   },
 });
 
+const MAX_WITHDRAW_PER_TX = 200_000; // mirrors vbmsClaim MAX_CLAIM_AMOUNT
+
+function getWithdrawDailyLimit(aura: number): number {
+  if (aura >= 52000) return 750_000;
+  if (aura >= 28000) return 650_000;
+  if (aura >= 14000) return 500_000;
+  if (aura >= 6000)  return 400_000;
+  if (aura >= 2500)  return 300_000;
+  if (aura >= 800)   return 200_000;
+  if (aura >= 510)   return 150_000;
+  return 100_000;
+}
+
 // Internal version of withdrawVBMS for use by prepareWithdraw action
 export const withdrawVBMSInternal = internalMutation({
   args: { address: v.string(), amount: v.number() },
   handler: async (ctx, { address, amount }) => {
+    const { isBlacklisted } = await import("./blacklist");
+    if (isBlacklisted(address)) throw new Error("Address is banned.");
+
+    if (amount > MAX_WITHDRAW_PER_TX) throw new Error(`Max ${MAX_WITHDRAW_PER_TX} VBMS per transaction.`);
+
     const profile = await getProfileByAddress(ctx, address);
     if (!profile) throw new Error("Profile not found");
+
+    // Daily limit check
+    const aura = profile.stats?.aura ?? 0;
+    const dailyLimit = getWithdrawDailyLimit(aura);
+    const today = new Date().toISOString().slice(0, 10);
+    const isToday = profile.dailyConvertDate === today;
+    const dailyUsed = isToday ? (profile.dailyConvertedVBMS || 0) : 0;
+    if (dailyUsed + amount > dailyLimit) {
+      throw new Error(`Daily VBMS limit reached. Used: ${dailyUsed}, Limit: ${dailyLimit}`);
+    }
+
     const coinCost = amount;
     const currentCoins = profile.coins || 0;
     if (currentCoins < coinCost) throw new Error(`Insufficient coins. Need ${coinCost} coins for ${amount} VBMS`);
@@ -593,6 +623,8 @@ export const withdrawVBMSInternal = internalMutation({
     await ctx.db.patch(profile._id, {
       coins: currentCoins - coinCost,
       lifetimeSpent: (profile.lifetimeSpent || 0) + coinCost,
+      dailyConvertedVBMS: dailyUsed + amount,
+      dailyConvertDate: today,
     });
     await ctx.db.insert("coinTransactions", {
       address,

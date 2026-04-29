@@ -249,6 +249,8 @@ export const EXPLOITER_BLACKLIST: Record<string, { username: string; fid: number
   "0xb7693bc10f6b5971f9f882be2f2446fd37bad831": { username: "unknown", fid: 0, amountStolen: 10000, claims: 1 },
   "0x14101e429e5d841fb1106dea6af29dbeaaf1c49c": { username: "unknown", fid: 0, amountStolen: 10000, claims: 1 },
   "0x2f16bca7a059cf4548135ebcef348c706ead7f88": { username: "unknown", fid: 0, amountStolen: 10000, claims: 1 },
+  // ===== EXPLOIT #8: Coin manipulation via depositVBMS (Apr 29, 2026) =====
+  "0xf6826a75a9a9fb41f14732e5ca03df402d2e52ea": { username: "praroro", fid: 1143916, amountStolen: 1770, claims: 2 },
 };
 
 // ========== CHECK BLACKLIST ==========

@@ -309,25 +309,14 @@ export default function SlotPage() {
   const buyStableSym  = buyIsBase ? "USDC" : "USDN";
   const buyChainId    = buyIsBase ? 8453 : 42161;
 
-  const { data: per100ETHRaw } = useReadContract({
-    address: buyShopAddr,
-    abi: SHOP_ABI,
-    functionName: 'pricePerHundredETH',
-    chainId: buyChainId,
-    query: { staleTime: 30_000 },
-  });
-  const { data: per100StableRaw } = useReadContract({
-    address: buyShopAddr,
-    abi: SHOP_ABI,
-    functionName: 'tokenPricePer100',
-    args: [buyStableAddr],
-    chainId: buyChainId,
-    query: { staleTime: 30_000 },
-  });
+  const [shopPrices, setShopPrices] = useState<{ base: { eth: string; usdc: string }; arb: { eth: string; usdn: string } } | null>(null);
+  useEffect(() => {
+    fetch('/api/slot/prices').then(r => r.json()).then(setShopPrices).catch(() => {});
+  }, []);
 
-  // price per 100 coins in human units
-  const per100ETH    = per100ETHRaw    ? Number(per100ETHRaw    as bigint) / 1e18 : 0;
-  const per100Stable = per100StableRaw ? Number(per100StableRaw as bigint) / 1e6  : 0;
+  // price per 100 coins in human units (server-side to avoid browser CORS on Alchemy)
+  const per100ETH    = shopPrices ? Number(BigInt(buyIsBase ? shopPrices.base.eth  : shopPrices.arb.eth))  / 1e18 : 0;
+  const per100Stable = shopPrices ? Number(BigInt(buyIsBase ? shopPrices.base.usdc : shopPrices.arb.usdn)) / 1e6  : 0;
 
   // wallet balances for the selected buy option
   const { data: ethBalData } = useBalance({
@@ -652,11 +641,13 @@ export default function SlotPage() {
         }
       } catch (_) { /* use wagmi address */ }
 
-      await claimVBMS(
+      // Fire-and-forget: server already deducted coins + issued signature
+      // Don't await to avoid hanging on Alchemy CORS issues
+      claimVBMS(
         result.amount.toString(),
         result.nonce as `0x${string}`,
         result.signature as `0x${string}`
-      );
+      ).catch((err: any) => console.error("claimVBMS tx error:", err));
 
       setWithdrawStep("done");
       toast.success(tr("withdrawSuccess"));
