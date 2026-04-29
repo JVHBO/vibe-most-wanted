@@ -11,6 +11,7 @@
 import { v } from "convex/values";
 import { mutation, query, action, internalMutation, internalAction, internalQuery } from "./_generated/server";
 import { internal } from "./_generated/api";
+import { isBlacklisted } from "./blacklist";
 import {
   resolveSlotSpin,
   type SlotBonusState,
@@ -471,6 +472,8 @@ const VBMS_TOKEN_BASE = "0xb03439567cd22f278b21e1ffcdfb8e1696763827";
 const VBMS_POOL_TROLL = "0x062b914668f3fd35c3ae02e699cb82e1cf4be18b";
 const ERC20_TRANSFER_TOPIC = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef";
 const TX_HASH_REGEX = /^0x[a-fA-F0-9]{64}$/;
+const RECEIPT_WAIT_ATTEMPTS = 45;
+const RECEIPT_WAIT_MS = 2000;
 
 function amountToWeiString(amount: number): string {
   if (!Number.isFinite(amount) || amount <= 0) throw new Error("Invalid deposit amount.");
@@ -480,12 +483,18 @@ function amountToWeiString(amount: number): string {
 }
 
 async function verifyBaseVBMSTransfer(txHash: string, expectedFrom: string, expectedAmountWei: string): Promise<{ actualFrom: string; actualTo: string; actualAmount: string }> {
-  const receiptResp = await fetch(BASE_RPC, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "eth_getTransactionReceipt", params: [txHash] }),
-  });
-  const { result: receipt } = await receiptResp.json() as any;
+  let receipt: any = null;
+  for (let attempt = 0; attempt < RECEIPT_WAIT_ATTEMPTS; attempt++) {
+    const receiptResp = await fetch(BASE_RPC, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "eth_getTransactionReceipt", params: [txHash] }),
+    });
+    const payload = await receiptResp.json() as any;
+    receipt = payload.result;
+    if (receipt) break;
+    await new Promise((resolve) => setTimeout(resolve, RECEIPT_WAIT_MS));
+  }
   if (!receipt) throw new Error("Transaction receipt not found.");
   if (receipt.status !== "0x1") throw new Error("Transaction failed on-chain.");
 
@@ -533,7 +542,6 @@ async function recordSlotSecurityEvent(
 export const depositVBMS: any = action({
   args: { address: v.string(), amount: v.number(), txHash: v.string() },
   handler: async (ctx: any, { address, amount, txHash }: { address: string; amount: number; txHash: string }): Promise<any> => {
-    const { isBlacklisted } = await import("./blacklist");
     if (isBlacklisted(address)) {
       await recordSlotSecurityEvent(ctx, { address, amount, txHash, status: "rejected", reason: "blacklisted_address" });
       throw new Error("Address is banned.");
@@ -551,15 +559,15 @@ export const depositVBMS: any = action({
       throw error;
     }
 
+    const result = await ctx.runMutation(internal.slot.creditVerifiedVBMSDeposit, { address, amount, txHash });
     await recordSlotSecurityEvent(ctx, { address, amount, txHash, status: "accepted", reason: "onchain_transfer_verified" });
-    return await ctx.runMutation(internal.slot.creditVerifiedVBMSDeposit, { address, amount, txHash });
+    return result;
   },
 });
 
 export const creditVerifiedVBMSDeposit = internalMutation({
   args: { address: v.string(), amount: v.number(), txHash: v.string() },
   handler: async (ctx: any, { address, amount, txHash }: { address: string; amount: number; txHash: string }): Promise<any> => {
-    const { isBlacklisted } = await import("./blacklist");
     if (isBlacklisted(address)) throw new Error("Address is banned.");
 
     const profile = await getProfileByAddress(ctx, address);
@@ -683,7 +691,6 @@ function getWithdrawDailyLimit(aura: number): number {
 export const withdrawVBMSInternal = internalMutation({
   args: { address: v.string(), amount: v.number() },
   handler: async (ctx, { address, amount }) => {
-    const { isBlacklisted } = await import("./blacklist");
     if (isBlacklisted(address)) throw new Error("Address is banned.");
 
     if (amount > MAX_WITHDRAW_PER_TX) throw new Error(`Max ${MAX_WITHDRAW_PER_TX} VBMS per transaction.`);

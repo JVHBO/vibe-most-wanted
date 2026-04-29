@@ -23,6 +23,8 @@ const VBMS_POOL_TROLL = "0x062b914668f3fd35c3ae02e699cb82e1cf4be18b";
 const BASE_RPC = "https://mainnet.base.org";
 const ERC20_TRANSFER_TOPIC = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef";
 const TX_HASH_REGEX = /^0x[a-fA-F0-9]{64}$/;
+const RECEIPT_WAIT_ATTEMPTS = 45;
+const RECEIPT_WAIT_MS = 2000;
 
 function amountToWeiString(amount: number): string {
   if (!Number.isFinite(amount) || amount <= 0) throw new Error("Invalid deposit amount.");
@@ -36,12 +38,18 @@ async function verifyBaseVBMSTransfer(
   expectedFrom: string,
   expectedAmountWei: string,
 ): Promise<void> {
-  const receiptResp = await fetch(BASE_RPC, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "eth_getTransactionReceipt", params: [txHash] }),
-  });
-  const { result: receipt } = await receiptResp.json() as any;
+  let receipt: any = null;
+  for (let attempt = 0; attempt < RECEIPT_WAIT_ATTEMPTS; attempt++) {
+    const receiptResp = await fetch(BASE_RPC, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "eth_getTransactionReceipt", params: [txHash] }),
+    });
+    const payload = await receiptResp.json() as any;
+    receipt = payload.result;
+    if (receipt) break;
+    await new Promise((resolve) => setTimeout(resolve, RECEIPT_WAIT_MS));
+  }
   if (!receipt) throw new Error("Transaction receipt not found.");
   if (receipt.status !== "0x1") throw new Error("Transaction failed on-chain.");
 
@@ -115,8 +123,9 @@ export const addBettingCredits: any = action({
       throw error;
     }
 
+    const result = await ctx.runMutation(internal.bettingCredits.creditVerifiedBettingCredits, args);
     await recordSecurityEvent(ctx, { address, amount, txHash, status: "accepted", reason: "onchain_transfer_verified" });
-    return await ctx.runMutation(internal.bettingCredits.creditVerifiedBettingCredits, args);
+    return result;
   },
 });
 

@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import { internalMutation, query } from "./_generated/server";
 
-const ADMIN_SECRET_NAMES = ["ADMIN_SECRET", "CONVEX_ADMIN_SECRET"];
+const ADMIN_SECRET_NAMES = ["ADMIN_SECRET", "CONVEX_ADMIN_SECRET", "VMW_INTERNAL_SECRET"];
 
 function hasAdminAccess(secret?: string): boolean {
   if (!secret) return false;
@@ -48,5 +48,42 @@ export const listByAddress = query({
       .withIndex("by_address", (q) => q.eq("address", address.toLowerCase()))
       .order("desc")
       .take(Math.min(limit, 500));
+  },
+});
+
+export const listRecent = query({
+  args: {
+    adminSecret: v.string(),
+    limit: v.optional(v.number()),
+    status: v.optional(v.union(v.literal("accepted"), v.literal("rejected"))),
+    feature: v.optional(v.string()),
+  },
+  handler: async (ctx, { adminSecret, limit = 100, status, feature }) => {
+    if (!hasAdminAccess(adminSecret)) {
+      throw new Error("Unauthorized");
+    }
+
+    let events;
+    if (status) {
+      events = await ctx.db
+        .query("securityEvents")
+        .withIndex("by_status", (q) => q.eq("status", status))
+        .order("desc")
+        .take(Math.min(limit, 500));
+    } else if (feature) {
+      events = await ctx.db
+        .query("securityEvents")
+        .withIndex("by_feature", (q) => q.eq("feature", feature))
+        .order("desc")
+        .take(Math.min(limit, 500));
+    } else {
+      events = await ctx.db
+        .query("securityEvents")
+        .withIndex("by_timestamp")
+        .order("desc")
+        .take(Math.min(limit, 500));
+    }
+
+    return feature ? events.filter((event) => event.feature === feature) : events;
   },
 });

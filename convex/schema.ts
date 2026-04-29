@@ -1391,6 +1391,7 @@ export default defineSchema({
     .index("by_address", ["address", "timestamp"])
     .index("by_feature", ["feature", "timestamp"])
     .index("by_status", ["status", "timestamp"])
+    .index("by_timestamp", ["timestamp"])
     .index("by_txHash", ["txHash"]),
   // Shame clicks for the exploiter shame list
   // Players can shame exploiters and earn 10 VBMS per shame (max 10 total)
