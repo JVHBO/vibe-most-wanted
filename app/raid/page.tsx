@@ -14,7 +14,7 @@ import { useState, useEffect, useMemo, useRef } from 'react';
 import { useAccount } from 'wagmi';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { useQuery, useMutation } from 'convex/react';
+import { useQuery, useMutation, useAction } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { AudioManager } from '@/lib/audio-manager';
 import haptics from '@/lib/haptics';
@@ -87,10 +87,10 @@ export default function RaidPage() {
   const { transfer: transferVBMS } = farcasterTransfer;
 
   // Convex
-  const refuelCardsMutation = useMutation(api.raidBoss.refuelCards);
+  const refuelCardsMutation = useAction(api.raidBoss.refuelCards);
   const refuelAllWithCoinsMutation = useMutation(api.raidBoss.refuelAllWithCoins);
   const { validateOnArb } = useArbValidator();
-  const replaceCardMutation = useMutation(api.raidBoss.replaceCard);
+  const replaceCardMutation = useAction(api.raidBoss.replaceCard);
   const initializeBossMutation = useMutation(api.raidBoss.initializeRaidBoss);
   const claimRewardsMutation = useMutation(api.raidBoss.claimRaidRewards);
   const clearRaidDeckMutation = useMutation(api.raidBoss.clearRaidDeck);

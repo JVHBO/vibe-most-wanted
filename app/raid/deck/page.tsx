@@ -10,7 +10,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useAccount } from 'wagmi';
 import { useRouter } from 'next/navigation';
-import { useMutation, useQuery } from 'convex/react';
+import { useMutation, useQuery, useAction } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { AudioManager } from '@/lib/audio-manager';
 import { CardMedia } from '@/components/CardMedia';
@@ -107,7 +107,7 @@ export default function RaidDeckPage() {
 
   // Convex queries and mutations
   const currentBoss = useQuery(api.raidBoss.getCurrentRaidBoss);
-  const setRaidDeck = useMutation(api.raidBoss.setRaidDeck);
+  const setRaidDeck = useAction(api.raidBoss.setRaidDeck);
 
   // Get locked cards - uses collection:tokenId format for proper comparison
   const lockedCardsData = useQuery(

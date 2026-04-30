@@ -10,7 +10,7 @@
 import { shareToFarcaster } from '@/lib/share-utils';
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useAccount } from 'wagmi';
-import { useQuery, useMutation } from 'convex/react';
+import { useQuery, useMutation, useAction } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { AudioManager } from '@/lib/audio-manager';
 import { CardMedia } from '@/components/CardMedia';
@@ -111,8 +111,8 @@ export function RaidBossModal({
   const { transfer: transferVBMS, isPending: isTransferring } = farcasterTransfer;
 
   // Convex mutations
-  const refuelCardsMutation = useMutation(api.raidBoss.refuelCards);
-  const replaceCardMutation = useMutation(api.raidBoss.replaceCard);
+  const refuelCardsMutation = useAction(api.raidBoss.refuelCards);
+  const replaceCardMutation = useAction(api.raidBoss.replaceCard);
   const initializeBossMutation = useMutation(api.raidBoss.initializeRaidBoss);
   const claimRewardsMutation = useMutation(api.raidBoss.claimRaidRewards);
 

@@ -14,6 +14,13 @@ import { isValidTxHash } from "./blockchainVerify";
 // VBMSPoolTroll address for verification
 const VBMS_POOL_TROLL = '0x062b914668f3fd35c3ae02e699cb82e1cf4be18b';
 
+function amountToWeiString(amount: number): string {
+  if (!Number.isFinite(amount) || amount <= 0) throw new Error("Invalid VBMS amount.");
+  const [whole, fraction = ""] = amount.toString().split(".");
+  const normalizedFraction = (fraction + "0".repeat(18)).slice(0, 18);
+  return (BigInt(whole) * 10n ** 18n + BigInt(normalizedFraction)).toString();
+}
+
 /**
  * RECORD ENTRY FEE (ACTION)
  * Called after player deposits VBMS to VBMSPoolTroll contract
@@ -39,7 +46,7 @@ export const recordEntryFee = action({
       txHash,
       expectedFrom: normalizedAddress,
       expectedTo: VBMS_POOL_TROLL,
-      expectedAmountWei: (BigInt(amount) * BigInt(10 ** 18)).toString(),
+      expectedAmountWei: amountToWeiString(amount),
       isERC20: true, // VBMS is an ERC20 token
     });
 

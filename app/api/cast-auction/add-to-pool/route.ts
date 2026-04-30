@@ -40,9 +40,11 @@ export async function POST(request: NextRequest) {
       transport: http(),
     });
 
-    // Get transaction receipt
-    const receipt = await client.getTransactionReceipt({
+    // Wait for transaction receipt; Base RPC can lag a few seconds after wallet returns hash.
+    const receipt = await client.waitForTransactionReceipt({
       hash: txHash as `0x${string}`,
+      timeout: 120_000,
+      pollingInterval: 2_000,
     });
 
     if (!receipt) {
@@ -112,7 +114,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Add to pool via Convex
-    const result = await convex.mutation(api.castAuctions.addToPool, {
+    const result = await convex.action(api.castAuctions.addToPool, {
       address: normalizedAddress,
       auctionId: auctionId as Id<"castAuctions">,
       bidAmount,

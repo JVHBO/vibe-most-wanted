@@ -738,6 +738,7 @@ export const adminResetAllSpins = internalMutation({
 // Cost for paid spin (in VBMS tokens - 500 VBMS)
 const PAID_SPIN_COST = 500;
 const MAX_PAID_SPINS_PER_DAY = 20;
+const VBMS_POOL_TROLL = "0x062b914668f3fd35c3ae02e699cb82e1cf4be18b";
 
 /**
  * Check if user can buy a paid spin
@@ -772,10 +773,35 @@ export const canBuyPaidSpin = query({
 });
 
 /**
- * Record paid spin after TX is confirmed
- * Called after user sends VBMS to pool
+ * Record paid spin after TX is confirmed.
+ * Public entrypoint verifies the VBMS transfer inside Convex before recording.
  */
-export const recordPaidSpin = mutation({
+export const recordPaidSpin: any = action({
+  args: {
+    address: v.string(),
+    txHash: v.string(),
+  },
+  handler: async (ctx: any, { address, txHash }: { address: string; txHash: string }) => {
+    const verification = await ctx.runAction(internal.blockchainVerify.verifyTransaction, {
+      txHash,
+      expectedFrom: address.toLowerCase(),
+      expectedTo: VBMS_POOL_TROLL,
+      expectedAmountWei: (BigInt(PAID_SPIN_COST) * 10n ** 18n).toString(),
+      isERC20: true,
+    });
+
+    if (!verification.isValid) {
+      throw new Error(`Transaction verification failed: ${verification.error || "invalid transfer"}`);
+    }
+
+    return await ctx.runMutation(internal.roulette.recordPaidSpinInternal, { address, txHash });
+  },
+});
+
+/**
+ * Internal recorder after the on-chain transfer is verified.
+ */
+export const recordPaidSpinInternal = internalMutation({
   args: {
     address: v.string(),
     txHash: v.string(),

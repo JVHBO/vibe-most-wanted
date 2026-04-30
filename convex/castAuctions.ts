@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { mutation, query, internalQuery, internalMutation, MutationCtx, QueryCtx } from "./_generated/server";
+import { mutation, query, action, internalQuery, internalMutation, MutationCtx, QueryCtx } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { Id } from "./_generated/dataModel";
 import { isBlacklisted } from "./blacklist";
@@ -60,6 +60,28 @@ function getNextResetTime(now: number = Date.now()): number {
 }
 const MINIMUM_BID = 10000; // Minimum first bid: 10,000 VBMS
 const MAXIMUM_BID = 10000000; // Maximum bid: 10,000,000 VBMS
+const VBMS_POOL_TROLL = "0x062b914668f3fd35c3ae02e699cb82e1cf4be18b";
+
+function amountToWeiString(amount: number): string {
+  if (!Number.isFinite(amount) || amount <= 0) throw new Error("Invalid VBMS amount.");
+  const [whole, fraction = ""] = amount.toString().split(".");
+  const normalizedFraction = (fraction + "0".repeat(18)).slice(0, 18);
+  return (BigInt(whole) * 10n ** 18n + BigInt(normalizedFraction)).toString();
+}
+
+async function verifyVBMSToPool(ctx: any, address: string, amount: number, txHash: string) {
+  const verification = await ctx.runAction(internal.blockchainVerify.verifyTransaction, {
+    txHash,
+    expectedFrom: address.toLowerCase(),
+    expectedTo: VBMS_POOL_TROLL,
+    expectedAmountWei: amountToWeiString(amount),
+    isERC20: true,
+  });
+
+  if (!verification.isValid) {
+    throw new Error(`Transaction verification failed: ${verification.error || "invalid transfer"}`);
+  }
+}
 const BID_INCREMENT_PERCENT = 10; // Must bid at least 10% more than current
 const MINIMUM_INCREMENT = 1000; // Minimum increment: 1,000 VBMS
 const TOTAL_SLOTS = 2; // 2 featured cast positions (always last 2 winners)
@@ -674,11 +696,32 @@ export const placeBid = mutation({
 });
 
 /**
- * Place a bid using real VBMS tokens (verified on-chain transfer)
- * CAST-BASED: Each cast has its own pool, multiple casts compete
- * Called by /api/cast-auction/place-bid after verifying TX
+ * Place a bid using real VBMS tokens (verified on-chain transfer).
+ * Public entrypoint verifies inside Convex before recording.
  */
-export const placeBidWithVBMS = mutation({
+export const placeBidWithVBMS: any = action({
+  args: {
+    address: v.string(),
+    slotNumber: v.optional(v.number()),
+    bidAmount: v.number(),
+    txHash: v.string(),
+    castHash: v.string(),
+    warpcastUrl: v.string(),
+    castAuthorFid: v.optional(v.number()),
+    castAuthorUsername: v.optional(v.string()),
+    castAuthorPfp: v.optional(v.string()),
+    castText: v.optional(v.string()),
+  },
+  handler: async (ctx: any, args: any) => {
+    await verifyVBMSToPool(ctx, args.address, args.bidAmount, args.txHash);
+    return await ctx.runMutation(internal.castAuctions.placeBidWithVBMSInternal, args);
+  },
+});
+
+/**
+ * Internal bid recorder after the on-chain transfer is verified.
+ */
+export const placeBidWithVBMSInternal = internalMutation({
   args: {
     address: v.string(),
     slotNumber: v.optional(v.number()), // Deprecated, kept for compatibility
@@ -879,9 +922,27 @@ export const placeBidWithVBMS = mutation({
 
 
 /**
- * Add VBMS to an existing cast's pool (when same cast URL is submitted)
+ * Add VBMS to an existing cast's pool (when same cast URL is submitted).
+ * Public entrypoint verifies inside Convex before recording.
  */
-export const addToPool = mutation({
+export const addToPool: any = action({
+  args: {
+    address: v.string(),
+    auctionId: v.id("castAuctions"),
+    bidAmount: v.number(),
+    txHash: v.optional(v.string()),
+  },
+  handler: async (ctx: any, args: any) => {
+    if (!args.txHash) throw new Error("Transaction hash is required");
+    await verifyVBMSToPool(ctx, args.address, args.bidAmount, args.txHash);
+    return await ctx.runMutation(internal.castAuctions.addToPoolInternal, args);
+  },
+});
+
+/**
+ * Internal pool recorder after the on-chain transfer is verified.
+ */
+export const addToPoolInternal = internalMutation({
   args: {
     address: v.string(),
     auctionId: v.id("castAuctions"),

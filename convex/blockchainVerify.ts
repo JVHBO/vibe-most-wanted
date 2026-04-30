@@ -1,7 +1,7 @@
 /**
  * BLOCKCHAIN VERIFICATION UTILITY
  *
- * Verifies transactions on Base mainnet using Basescan API
+ * Verifies transactions on Base mainnet using RPC receipts
  * Used to prevent fake txHash exploits
  */
 
@@ -16,6 +16,9 @@ const CONTRACTS = {
 
 // ERC20 Transfer event topic
 const TRANSFER_TOPIC = '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef';
+const BASE_RPC = process.env.NEXT_PUBLIC_BASE_RPC_URL || "https://mainnet.base.org";
+const RECEIPT_WAIT_ATTEMPTS = 45;
+const RECEIPT_WAIT_MS = 2000;
 
 interface VerifyTransactionParams {
   txHash: string;
@@ -48,41 +51,28 @@ export const verifyTransaction = internalAction({
   handler: async (ctx, args): Promise<TransactionVerifyResult> => {
     const { txHash, expectedFrom, expectedTo, expectedAmountWei, isERC20 } = args;
 
-    const apiKey = process.env.BASESCAN_API_KEY;
-    if (!apiKey) {
-      console.error("[BlockchainVerify] BASESCAN_API_KEY not configured");
-      // In development, allow transactions to pass without verification
-      // In production, this should fail
-      if (process.env.NODE_ENV === 'production') {
-        return { isValid: false, error: "Blockchain verification not configured" };
-      }
-      console.warn("[BlockchainVerify] Skipping verification in development");
-      return { isValid: true };
+    if (!isValidTxHash(txHash)) {
+      return { isValid: false, error: "Invalid transaction hash format" };
     }
 
     try {
-      // First, get the transaction to check basic validity
-      const txUrl = `https://api.basescan.org/api?module=proxy&action=eth_getTransactionByHash&txhash=${txHash}&apikey=${apiKey}`;
-      const txRes = await fetch(txUrl);
-      const txData = await txRes.json();
-
-      if (!txData.result || txData.result === null) {
-        return { isValid: false, error: "Transaction not found" };
-      }
-
-      const tx = txData.result;
-
-      // Check if transaction is confirmed (has block number)
-      if (!tx.blockNumber) {
-        return { isValid: false, error: "Transaction not confirmed yet" };
-      }
+      const receipt = await waitForRpcReceipt(txHash);
 
       // For ERC20 transfers, we need to check the logs
       if (isERC20) {
-        return await verifyERC20Transfer(txHash, expectedFrom, expectedTo, expectedAmountWei, apiKey);
+        return verifyERC20TransferFromReceipt(receipt, txHash, expectedFrom, expectedTo, expectedAmountWei);
       }
 
       // For native transfers, check the transaction directly
+      const tx = await rpc("eth_getTransactionByHash", [txHash]);
+      if (!tx) {
+        return { isValid: false, error: "Transaction not found" };
+      }
+
+      if (receipt.status !== "0x1") {
+        return { isValid: false, error: "Transaction failed" };
+      }
+
       const actualFrom = tx.from?.toLowerCase();
       const actualTo = tx.to?.toLowerCase();
       const actualValue = BigInt(tx.value || '0');
@@ -133,28 +123,40 @@ export const verifyTransaction = internalAction({
   },
 });
 
+async function rpc(method: string, params: unknown[]): Promise<any> {
+  const res = await fetch(BASE_RPC, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }),
+  });
+  const payload = await res.json() as any;
+  if (payload.error) {
+    throw new Error(payload.error.message || `RPC error for ${method}`);
+  }
+  return payload.result;
+}
+
+async function waitForRpcReceipt(txHash: string): Promise<any> {
+  for (let attempt = 0; attempt < RECEIPT_WAIT_ATTEMPTS; attempt++) {
+    const receipt = await rpc("eth_getTransactionReceipt", [txHash]);
+    if (receipt) return receipt;
+    await new Promise((resolve) => setTimeout(resolve, RECEIPT_WAIT_MS));
+  }
+
+  throw new Error("Transaction receipt not found.");
+}
+
 /**
  * Verify an ERC20 token transfer by checking transaction logs
  */
-async function verifyERC20Transfer(
+function verifyERC20TransferFromReceipt(
+  receipt: any,
   txHash: string,
   expectedFrom: string,
   expectedTo: string,
-  expectedAmountWei: string,
-  apiKey: string
-): Promise<TransactionVerifyResult> {
+  expectedAmountWei: string
+): TransactionVerifyResult {
   try {
-    // Get transaction receipt to check logs
-    const receiptUrl = `https://api.basescan.org/api?module=proxy&action=eth_getTransactionReceipt&txhash=${txHash}&apikey=${apiKey}`;
-    const receiptRes = await fetch(receiptUrl);
-    const receiptData = await receiptRes.json();
-
-    if (!receiptData.result || receiptData.result === null) {
-      return { isValid: false, error: "Transaction receipt not found" };
-    }
-
-    const receipt = receiptData.result;
-
     // Check if transaction succeeded
     if (receipt.status !== '0x1') {
       return { isValid: false, error: "Transaction failed" };

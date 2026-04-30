@@ -7,7 +7,7 @@
 import { v, ConvexError } from "convex/values";
 import { createAuditLog } from "./coinAudit";
 import { isBlacklisted } from "./blacklist";
-import { mutation, query, internalMutation, internalQuery, QueryCtx, MutationCtx } from "./_generated/server";
+import { mutation, query, action, internalMutation, internalQuery, QueryCtx, MutationCtx } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { getCurrentBoss, getNextBoss, getBossRotationInfo, BOSS_HP_BY_RARITY, BOSS_REWARDS_BY_RARITY } from "../lib/raid-boss";
 import type { CardRarity } from "../lib/types/card";
@@ -69,6 +69,8 @@ const ENTRY_FEE = 5; // 5 VBMS to set raid deck (5 regular + 1 VibeFID special)
 const REFUEL_COST_PER_CARD = 1; // 1 VBMS per card
 const REFUEL_COST_ALL = 4; // 4 VBMS for all 5 cards (discount)
 const ATTACK_INTERVAL = 12 * 60 * 60 * 1000; // Cards attack every 12 hours
+const VBMS_POOL_TROLL = "0x062b914668f3fd35c3ae02e699cb82e1cf4be18b";
+const ZERO_TX_HASH = "0x0000000000000000000000000000000000000000000000000000000000000000";
 
 // Card replacement cost by rarity (cost to swap a new card in)
 const REPLACE_COST_BY_RARITY: Record<string, number> = {
@@ -92,6 +94,47 @@ const ENERGY_DURATION_BY_RARITY: Record<string, number> = {
 
 // VibeFID special slot bonus
 const VIBEFID_DECK_BONUS = 0.10; // +10% power to entire deck
+
+function amountToWeiString(amount: number): string {
+  if (!Number.isFinite(amount) || amount <= 0) throw new Error("Invalid VBMS amount.");
+  const [whole, fraction = ""] = amount.toString().split(".");
+  const normalizedFraction = (fraction + "0".repeat(18)).slice(0, 18);
+  return (BigInt(whole) * 10n ** 18n + BigInt(normalizedFraction)).toString();
+}
+
+async function verifyRaidVBMSTransfer(ctx: any, address: string, amount: number, txHash: string) {
+  const verification = await ctx.runAction(internal.blockchainVerify.verifyTransaction, {
+    txHash,
+    expectedFrom: address.toLowerCase(),
+    expectedTo: VBMS_POOL_TROLL,
+    expectedAmountWei: amountToWeiString(amount),
+    isERC20: true,
+  });
+
+  if (!verification.isValid) {
+    throw new Error(`Transaction verification failed: ${verification.error || "invalid transfer"}`);
+  }
+}
+
+function replacementCost(newCard: { rarity: string }, isVibeFID?: boolean): number {
+  if (isVibeFID) return REPLACE_COST_BY_RARITY.vibefid;
+  const rarity = newCard.rarity.toLowerCase();
+  return REPLACE_COST_BY_RARITY[rarity] || REPLACE_COST_BY_RARITY.common;
+}
+
+function deckCost(deck: Array<{ rarity: string }>, vibefidCard?: { rarity: string }): number {
+  let totalCost = 0;
+  for (const card of deck) {
+    const rarity = card.rarity.toLowerCase();
+    totalCost += REPLACE_COST_BY_RARITY[rarity] || REPLACE_COST_BY_RARITY.common;
+  }
+  if (vibefidCard) totalCost += REPLACE_COST_BY_RARITY.vibefid;
+  return totalCost;
+}
+
+function refuelCost(cardCount: number): number {
+  return cardCount === 5 ? REFUEL_COST_ALL : cardCount * REFUEL_COST_PER_CARD;
+}
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // QUERIES
@@ -342,7 +385,35 @@ export const getRaidBossLeaderboard = query({
  * Common: 1 VBMS, Rare: 3, Epic: 5, Legendary: 10, Mythic: 15, VibeFID: 50
  * 🔗 MULTI-WALLET: Uses primary address for linked wallets
  */
-export const replaceCard = mutation({
+export const replaceCard: any = action({
+  args: {
+    address: v.string(),
+    oldCardTokenId: v.string(),
+    newCard: v.object({
+      tokenId: v.string(),
+      collection: v.optional(v.string()),
+      power: v.number(),
+      imageUrl: v.string(),
+      name: v.string(),
+      rarity: v.string(),
+      foil: v.optional(v.string()),
+      isFreeCard: v.optional(v.boolean()),
+    }),
+    txHash: v.string(),
+    isVibeFID: v.optional(v.boolean()),
+  },
+  handler: async (ctx: any, args: any) => {
+    if (args.isVibeFID && args.txHash === ZERO_TX_HASH) {
+      throw new Error("VibeFID replacement requires a verified VBMS payment.");
+    }
+    if (args.txHash !== ZERO_TX_HASH) {
+      await verifyRaidVBMSTransfer(ctx, args.address, replacementCost(args.newCard, args.isVibeFID), args.txHash);
+    }
+    return await ctx.runMutation(internal.raidBoss.replaceCardInternal, args);
+  },
+});
+
+export const replaceCardInternal = internalMutation({
   args: {
     address: v.string(),
     oldCardTokenId: v.string(), // Card to remove
@@ -446,6 +517,17 @@ export const replaceCard = mutation({
       throw new Error("Card not found in deck");
     }
 
+    if (args.txHash === ZERO_TX_HASH) {
+      const existingEnergy = raidDeck.cardEnergy.find((ce) => ce.tokenId === args.oldCardTokenId);
+      const oldCard = raidDeck.deck[cardIndex];
+      const duration = ENERGY_DURATION_BY_RARITY[oldCard.rarity.toLowerCase()] || ENERGY_DURATION_BY_RARITY.common;
+      const startedAt = existingEnergy && duration > 0 ? existingEnergy.energyExpiresAt - duration : 0;
+      const usedRatio = duration > 0 && startedAt > 0 ? (Date.now() - startedAt) / duration : 1;
+      if (usedRatio > 0.5) {
+        throw new Error("Free replacement is only allowed before half of the card energy is used.");
+      }
+    }
+
     // 🔒 SECURITY: Check if new card is already in the deck (prevent duplicates)
     const isDuplicateInDeck = raidDeck.deck.some(
       (c, idx) => c.tokenId === args.newCard.tokenId && idx !== cardIndex
@@ -512,7 +594,37 @@ export const replaceCard = mutation({
  * Set raid deck for a player
  * 🔗 MULTI-WALLET: Uses primary address for linked wallets
  */
-export const setRaidDeck = mutation({
+export const setRaidDeck: any = action({
+  args: {
+    address: v.string(),
+    deck: v.array(v.object({
+      tokenId: v.string(),
+      collection: v.optional(v.string()),
+      power: v.number(),
+      imageUrl: v.string(),
+      name: v.string(),
+      rarity: v.string(),
+      foil: v.optional(v.string()),
+      isFreeCard: v.optional(v.boolean()),
+    })),
+    vibefidCard: v.optional(v.object({
+      tokenId: v.string(),
+      collection: v.optional(v.string()),
+      power: v.number(),
+      imageUrl: v.string(),
+      name: v.string(),
+      rarity: v.string(),
+      foil: v.optional(v.string()),
+    })),
+    txHash: v.string(),
+  },
+  handler: async (ctx: any, args: any) => {
+    await verifyRaidVBMSTransfer(ctx, args.address, deckCost(args.deck, args.vibefidCard), args.txHash);
+    return await ctx.runMutation(internal.raidBoss.setRaidDeckInternal, args);
+  },
+});
+
+export const setRaidDeckInternal = internalMutation({
   args: {
     address: v.string(),
     deck: v.array(v.object({
@@ -715,7 +827,19 @@ export const clearRaidDeck = mutation({
  * Refuel card energy (costs 1 VBMS per card, or 4 VBMS for all 5)
  * 🔗 MULTI-WALLET: Uses primary address for linked wallets
  */
-export const refuelCards = mutation({
+export const refuelCards: any = action({
+  args: {
+    address: v.string(),
+    cardTokenIds: v.array(v.string()),
+    txHash: v.string(),
+  },
+  handler: async (ctx: any, args: any) => {
+    await verifyRaidVBMSTransfer(ctx, args.address, refuelCost(args.cardTokenIds.length), args.txHash);
+    return await ctx.runMutation(internal.raidBoss.refuelCardsInternal, args);
+  },
+});
+
+export const refuelCardsInternal = internalMutation({
   args: {
     address: v.string(),
     cardTokenIds: v.array(v.string()), // Which cards to refuel

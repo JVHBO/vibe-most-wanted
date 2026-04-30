@@ -314,7 +314,7 @@ export function Roulette({ onClose, pfpUrl, onChainChange, showHeader = true, on
     address ? { address: address.toLowerCase() } : "skip"
   );
   const spinMutation = useMutation(api.roulette.spin);
-  const recordPaidSpinMutation = useMutation(api.roulette.recordPaidSpin);
+  const recordPaidSpinMutation = useAction(api.roulette.recordPaidSpin);
   const canBuyPaidSpinData = useQuery(
     api.roulette.canBuyPaidSpin,
     address ? { address } : "skip"
