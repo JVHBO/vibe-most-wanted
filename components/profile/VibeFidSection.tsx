@@ -99,7 +99,14 @@ export function VibeFidSection({ fid, isOwnProfile, address, hasVibeBadge, onCar
 
   const card = fidCards?.[0];
   const currentTraits = card ? { foil: card.foil, wear: card.wear } : null;
-  const displayedNeynarScore = card ? ((card.latestNeynarScore ?? card.neynarScore) || 0) : 0;
+  const displayedNeynarScore = card ? (() => {
+    const savedScore = Number.isFinite(card.neynarScore) ? card.neynarScore : 0;
+    const latestScore = Number.isFinite(card.latestNeynarScore) ? card.latestNeynarScore : undefined;
+
+    return latestScore !== undefined && !(latestScore <= 0 && savedScore > 0)
+      ? latestScore
+      : savedScore;
+  })() : 0;
 
   const correctPower = card && currentTraits ? (() => {
     const rarityBasePower: Record<string, number> = { Common: 10, Rare: 20, Epic: 50, Legendary: 100, Mythic: 600 };
@@ -241,13 +248,11 @@ export function VibeFidSection({ fid, isOwnProfile, address, hasVibeBadge, onCar
       if (isRarityUpgrade()) {
         result = await upgradeCardRarity({
           fid: card.fid, newNeynarScore: neynarScoreData.score, newRarity: neynarScoreData.rarity,
-          username: neynarScoreData.username, displayName: neynarScoreData.displayName, pfpUrl: neynarScoreData.pfpUrl,
         });
         newBounty = result.newPower * 10;
       } else {
         result = await refreshCardScore({
           fid: card.fid, newNeynarScore: neynarScoreData.score,
-          username: neynarScoreData.username, displayName: neynarScoreData.displayName, pfpUrl: neynarScoreData.pfpUrl,
         });
         newBounty = card.power * 10;
       }
