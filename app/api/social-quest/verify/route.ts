@@ -14,8 +14,14 @@ import { SOCIAL_QUESTS } from '@/lib/socialQuests';
 import { ConvexHttpClient } from 'convex/browser';
 import { api } from '@/convex/_generated/api';
 
-// Convex client for actions
-const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+let convex: ConvexHttpClient | null = null;
+
+function getConvex() {
+  const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
+  if (!convexUrl) return null;
+  if (!convex) convex = new ConvexHttpClient(convexUrl);
+  return convex;
+}
 
 interface VerifyRequest {
   questId: string;
@@ -55,9 +61,17 @@ export async function POST(request: NextRequest) {
     let completed = false;
 
     if (address) {
+      const client = getConvex();
+      if (!client) {
+        return NextResponse.json(
+          { error: 'Convex not configured' },
+          { status: 500 }
+        );
+      }
+
       // Use the Convex action which does verification AND marks complete
       try {
-        const result = await convex.action(api.socialQuests.verifyAndCompleteQuest, {
+        const result = await client.action(api.socialQuests.verifyAndCompleteQuest, {
           address,
           questId,
           userFid,

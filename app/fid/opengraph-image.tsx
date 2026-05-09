@@ -1,310 +1,80 @@
 import { ImageResponse } from 'next/og';
 
-export const runtime = 'edge';
 export const alt = 'VibeFID - Mint Playable Cards from Farcaster Profiles';
 export const size = {
   width: 1200,
   height: 800,
 };
 export const contentType = 'image/png';
-
-// Cache for 1 week - this is a static image
 export const revalidate = 604800;
 
 export default async function Image() {
-  // Fetch VibeFID card images from IPFS (avoid self-referential Vercel requests)
-  const cardImage1 = fetch('https://ipfs.filebase.io/ipfs/QmUPRMEdkaJbLqWgXjL7Vh4FsqJ8kEd3xTvJpYZHQ8UeFn').then(res => res.arrayBuffer());
-  const cardImage2 = fetch('https://ipfs.filebase.io/ipfs/QmUdMMGFr65vKKAo9KYbXxq7DgWqQx5TN3JbPHQbM8N8YF').then(res => res.arrayBuffer());
-  const cardImage3 = fetch('https://ipfs.filebase.io/ipfs/QmZuPVRQ25UDCkLqKfBmQJZWEjL2LKdQjC3kPCNqYNqvq5').then(res => res.arrayBuffer());
-
-  const [card1, card2, card3] = await Promise.all([cardImage1, cardImage2, cardImage3]);
-
-  const imageResponse = new ImageResponse(
+  return new ImageResponse(
     (
       <div
         style={{
-          height: '100%',
           width: '100%',
+          height: '100%',
           display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          background: '#000000',
           position: 'relative',
+          overflow: 'hidden',
+          background: '#050505',
+          color: '#fff',
+          fontFamily: 'Arial, sans-serif',
         }}
       >
-        {/* Background Cards with Dark Overlay */}
-        <div
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            display: 'flex',
-            opacity: 0.4,
-          }}
-        >
-          {/* Card 1 - Left */}
-          <img
-            src={`data:image/png;base64,${Buffer.from(card1).toString('base64')}`}
-            style={{
-              position: 'absolute',
-              left: -80,
-              top: '50%',
-              transform: 'translateY(-50%) rotate(-15deg)',
-              width: 400,
-              height: 560,
-              objectFit: 'cover',
-            }}
-          />
+        <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(circle at 50% 10%, rgba(255,215,0,.18), transparent 35%), linear-gradient(135deg, #070707 0%, #1c1206 55%, #050505 100%)', display: 'flex' }} />
+        <div style={{ position: 'absolute', inset: 0, backgroundImage: 'linear-gradient(rgba(255,215,0,.06) 1px, transparent 1px), linear-gradient(90deg, rgba(255,215,0,.06) 1px, transparent 1px)', backgroundSize: '58px 58px', display: 'flex' }} />
 
-          {/* Card 2 - Center */}
-          <img
-            src={`data:image/png;base64,${Buffer.from(card2).toString('base64')}`}
-            style={{
-              position: 'absolute',
-              left: '50%',
-              top: '50%',
-              transform: 'translate(-50%, -50%) rotate(5deg)',
-              width: 380,
-              height: 540,
-              objectFit: 'cover',
-            }}
-          />
-
-          {/* Card 3 - Right */}
-          <img
-            src={`data:image/png;base64,${Buffer.from(card3).toString('base64')}`}
-            style={{
-              position: 'absolute',
-              right: -80,
-              top: '50%',
-              transform: 'translateY(-50%) rotate(12deg)',
-              width: 400,
-              height: 560,
-              objectFit: 'cover',
-            }}
-          />
-        </div>
-
-        {/* Dark Overlay */}
-        <div
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: 'rgba(0, 0, 0, 0.65)',
-          }}
-        />
-
-        {/* Card Symbols Decoration */}
-        <div
-          style={{
-            position: 'absolute',
-            top: 40,
-            left: 40,
-            fontSize: 120,
-            color: '#FFD700',
-            opacity: 0.2,
-          }}
-        >
-          ♠
-        </div>
-        <div
-          style={{
-            position: 'absolute',
-            top: 40,
-            right: 40,
-            fontSize: 120,
-            color: '#FF4444',
-            opacity: 0.2,
-          }}
-        >
-          ♥
-        </div>
-        <div
-          style={{
-            position: 'absolute',
-            bottom: 40,
-            left: 40,
-            fontSize: 120,
-            color: '#FF4444',
-            opacity: 0.2,
-          }}
-        >
-          ♦
-        </div>
-        <div
-          style={{
-            position: 'absolute',
-            bottom: 40,
-            right: 40,
-            fontSize: 120,
-            color: '#FFD700',
-            opacity: 0.2,
-          }}
-        >
-          ♣
-        </div>
-
-        {/* Main Content */}
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1,
-          }}
-        >
-          {/* VibeFID Title */}
+        {[
+          { rank: 'A', suit: '♠', x: 78, y: 82, r: -12, c: '#FFD700' },
+          { rank: 'K', suit: '♥', x: 900, y: 92, r: 11, c: '#ef4444' },
+          { rank: 'Q', suit: '♦', x: 130, y: 500, r: 9, c: '#ef4444' },
+          { rank: 'J', suit: '♣', x: 930, y: 500, r: -10, c: '#FFD700' },
+        ].map((card) => (
           <div
+            key={`${card.rank}${card.suit}`}
             style={{
-              fontSize: 120,
-              fontWeight: 900,
-              color: '#FFD700',
-              letterSpacing: '-0.02em',
-              marginBottom: 30,
+              position: 'absolute',
+              left: card.x,
+              top: card.y,
+              width: 170,
+              height: 238,
+              borderRadius: 20,
+              border: `5px solid ${card.c}`,
+              background: '#111',
+              transform: `rotate(${card.r}deg)`,
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'space-between',
+              padding: 18,
+              opacity: 0.42,
+              boxSizing: 'border-box',
             }}
           >
+            <div style={{ display: 'flex', fontSize: 42, fontWeight: 900, color: card.c }}>{card.rank}</div>
+            <div style={{ display: 'flex', alignSelf: 'center', fontSize: 82, color: card.c }}>{card.suit}</div>
+            <div style={{ display: 'flex', alignSelf: 'flex-end', fontSize: 42, fontWeight: 900, color: card.c }}>{card.rank}</div>
+          </div>
+        ))}
+
+        <div style={{ position: 'relative', zIndex: 1, width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 72, boxSizing: 'border-box' }}>
+          <div style={{ display: 'flex', fontSize: 124, fontWeight: 900, color: '#FFD700', lineHeight: 1, textShadow: '0 8px 0 #000' }}>
             VibeFID
           </div>
-
-          {/* Subtitle */}
-          <div
-            style={{
-              fontSize: 32,
-              color: '#CCCCCC',
-              textAlign: 'center',
-              marginBottom: 50,
-              maxWidth: 800,
-            }}
-          >
-            Mint Playable Cards from Farcaster Profiles
+          <div style={{ display: 'flex', marginTop: 22, fontSize: 42, fontWeight: 800, color: '#f3e9c8', textAlign: 'center' }}>
+            Playable NFT Cards from Farcaster Profiles
           </div>
-
-          {/* Features */}
-          <div
-            style={{
-              display: 'flex',
-              gap: 30,
-              marginBottom: 40,
-            }}
-          >
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                padding: '20px 30px',
-                background: 'rgba(255, 215, 0, 0.15)',
-                borderRadius: 16,
-                border: '2px solid rgba(255, 215, 0, 0.3)',
-              }}
-            >
-              <div
-                style={{
-                  fontSize: 48,
-                  marginBottom: 10,
-                }}
-              >
-                🎴
+          <div style={{ display: 'flex', gap: 18, marginTop: 54 }}>
+            {['Neynar Score', 'Rarity', 'Power', 'Battles'].map((item) => (
+              <div key={item} style={{ display: 'flex', border: '2px solid rgba(255,215,0,.45)', borderRadius: 12, padding: '14px 22px', color: '#FFD700', fontSize: 24, fontWeight: 800, background: 'rgba(0,0,0,.36)' }}>
+                {item}
               </div>
-              <div
-                style={{
-                  fontSize: 22,
-                  color: '#FFFFFF',
-                  fontWeight: 600,
-                }}
-              >
-                Unique Traits
-              </div>
-            </div>
-
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                padding: '20px 30px',
-                background: 'rgba(255, 215, 0, 0.15)',
-                borderRadius: 16,
-                border: '2px solid rgba(255, 215, 0, 0.3)',
-              }}
-            >
-              <div
-                style={{
-                  fontSize: 48,
-                  marginBottom: 10,
-                }}
-              >
-                ⚡
-              </div>
-              <div
-                style={{
-                  fontSize: 22,
-                  color: '#FFFFFF',
-                  fontWeight: 600,
-                }}
-              >
-                Power Based
-              </div>
-            </div>
-
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                padding: '20px 30px',
-                background: 'rgba(255, 215, 0, 0.15)',
-                borderRadius: 16,
-                border: '2px solid rgba(255, 215, 0, 0.3)',
-              }}
-            >
-              <div
-                style={{
-                  fontSize: 48,
-                  marginBottom: 10,
-                }}
-              >
-                🔗
-              </div>
-              <div
-                style={{
-                  fontSize: 22,
-                  color: '#FFFFFF',
-                  fontWeight: 600,
-                }}
-              >
-                On-Chain NFT
-              </div>
-            </div>
-          </div>
-
-          {/* Mint Price */}
-          <div
-            style={{
-              fontSize: 28,
-              color: '#999999',
-              display: 'flex',
-            }}
-          >
-            Mint Price: <span style={{ color: '#FFD700', marginLeft: 10, fontWeight: 700 }}>0.0003 ETH</span>
+            ))}
           </div>
         </div>
       </div>
     ),
-    {
-      ...size,
-      headers: {
-        'Cache-Control': 'public, max-age=604800, s-maxage=604800, stale-while-revalidate=86400',
-      },
-    }
+    size,
   );
-
-  return imageResponse;
 }

@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import SlotReplay from '@/app/share/slot/SlotReplay';
 
 const BASE_URL = 'https://vibemostwanted.xyz';
+export const revalidate = 3600;
 
 type Props = {
   params: Promise<{ sid: string }>;
@@ -18,7 +19,11 @@ async function fetchFarcasterUser(userParam: string): Promise<{ pfp?: string; us
     const url = isAddress
       ? `https://api.neynar.com/v2/farcaster/user/by_verification?address=${userParam}`
       : `https://api.neynar.com/v2/farcaster/user/by_username?username=${encodeURIComponent(userParam)}`;
-    const res = await fetch(url, { headers: { 'x-api-key': key }, cache: 'no-store' });
+    const res = await fetch(url, {
+      headers: { 'x-api-key': key },
+      next: { revalidate: 3600 },
+      signal: AbortSignal.timeout(3500),
+    });
     if (!res.ok) return {};
     const data = await res.json();
     const u = isAddress ? data.users?.[0] : data.user;
@@ -36,7 +41,8 @@ async function fetchSessionSpins(sessionId: string) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ path: 'slot:getSpinsBySession', args: { sessionId }, format: 'json' }),
-      cache: 'no-store',
+      next: { revalidate: 3600 },
+      signal: AbortSignal.timeout(3500),
     });
     if (!res.ok) return [];
     const data = await res.json();

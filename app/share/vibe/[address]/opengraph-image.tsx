@@ -4,6 +4,7 @@ export const runtime = 'edge';
 export const alt = 'Vibe Most Wanted Player';
 export const size = { width: 1200, height: 800 };
 export const contentType = 'image/png';
+export const revalidate = 3600;
 
 const CONVEX_VMW = 'https://agile-orca-761.convex.cloud';
 const CONVEX_FID = 'https://scintillating-mandrill-101.convex.cloud';
@@ -39,6 +40,7 @@ async function convexQuery(url: string, path: string, args: object) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ path, args, format: 'json' }),
+    signal: AbortSignal.timeout(3500),
   });
   if (!r.ok) return null;
   const d = await r.json();
@@ -234,6 +236,11 @@ export default async function Image({ params }: { params: Promise<{ address: str
         </div>
       </div>
     ),
-    { ...size }
+    {
+      ...size,
+      headers: {
+        'Cache-Control': 'public, max-age=3600, s-maxage=3600, stale-while-revalidate=86400',
+      },
+    }
   );
 }

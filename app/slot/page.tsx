@@ -287,8 +287,10 @@ export default function SlotPage() {
       .then(d => { if (d?.user?.pfp_url) setReplayPfp(d.user.pfp_url); })
       .catch(() => {});
   }, [replayUser]);
-  const replaySpins = replaySpinsRaw?.map((s: { spinId: string; finalGrid: string[]; winAmount: number; foilCount: number; triggeredBonus: boolean }) => ({
+  const replaySpins = replaySpinsRaw?.map((s: { spinId: string; initialGrid?: any[]; comboSteps?: any[]; finalGrid: string[]; winAmount: number; foilCount: number; triggeredBonus: boolean }) => ({
     spinId: String(s.spinId),
+    initialGrid: s.initialGrid,
+    comboSteps: s.comboSteps,
     finalGrid: s.finalGrid,
     winAmount: s.winAmount,
     foilCount: s.foilCount,

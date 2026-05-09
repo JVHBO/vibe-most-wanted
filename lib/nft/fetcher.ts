@@ -112,14 +112,51 @@ let stats = {
   lastReset: Date.now(),
 };
 
-// 🚀 PERSISTENT STATS: Send to Convex via API (fire-and-forget)
-function trackStatPersistent(key: string, amount: number = 1) {
-  if (typeof window === 'undefined') return; // Skip on server
+// 🚀 PERSISTENT STATS: batch client counters before hitting Vercel.
+// This endpoint used to receive one POST per RPC/cache event, which made
+// /api/track-stat one of the hottest Vercel Functions routes.
+const statBatch: Record<string, number> = {};
+let statBatchTimer: ReturnType<typeof setTimeout> | null = null;
+
+function flushStatBatch() {
+  if (typeof window === 'undefined') return;
+  const statsToSend = { ...statBatch };
+  Object.keys(statBatch).forEach((key) => delete statBatch[key]);
+  if (Object.keys(statsToSend).length === 0) return;
+
+  const body = JSON.stringify({ stats: statsToSend });
+  if (navigator.sendBeacon) {
+    const blob = new Blob([body], { type: 'application/json' });
+    if (navigator.sendBeacon('/api/track-stat', blob)) return;
+  }
+
   fetch('/api/track-stat', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ key, amount }),
-  }).catch(() => {}); // Fire-and-forget
+    body,
+    keepalive: true,
+  }).catch(() => {});
+}
+
+function trackStatPersistent(key: string, amount: number = 1) {
+  if (typeof window === 'undefined') return; // Skip on server
+  statBatch[key] = (statBatch[key] || 0) + amount;
+  if (statBatchTimer) return;
+  statBatchTimer = setTimeout(() => {
+    statBatchTimer = null;
+    flushStatBatch();
+  }, 30000);
+}
+
+if (typeof window !== 'undefined') {
+  const w = window as typeof window & { __vbmsStatBatchListeners?: boolean };
+  if (!w.__vbmsStatBatchListeners) {
+    w.__vbmsStatBatchListeners = true;
+    window.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden') flushStatBatch();
+    });
+    window.addEventListener('pagehide', flushStatBatch);
+  }
 }
 
 function logStats() {

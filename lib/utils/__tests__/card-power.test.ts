@@ -478,11 +478,11 @@ describe('getDeckStats', () => {
     ];
     const stats = getDeckStats(cards);
     expect(stats.totalCards).toBe(3);
-    // Display powers: 5, 10, 40 (0.5x multiplier for nothing)
+    // Total/average use display power; min/max use the raw card power.
     expect(stats.totalPower).toBe(55);
     expect(stats.averagePower).toBe(Math.round(55 / 3));
-    expect(stats.minPower).toBe(5);
-    expect(stats.maxPower).toBe(40);
+    expect(stats.minPower).toBe(10);
+    expect(stats.maxPower).toBe(80);
   });
 
   it('counts rarity distribution', () => {

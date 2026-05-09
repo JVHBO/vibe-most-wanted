@@ -355,6 +355,8 @@ export const spinSlot = mutation({
       foilCount: resolution.finalFoilCount,
       triggeredBonus: resolution.triggeredBonus,
       sessionId: sessionId ?? undefined,
+      initialGrid: resolution.initialGrid,
+      comboSteps,
       finalGrid: resolution.finalGrid.map((c) => c.baccarat + (c.hasFoil ? ":f" : "")),
     });
 
@@ -385,6 +387,8 @@ export const getSpinById = query({
     return {
       spinId: spin._id,
       reels: spin.reels,
+      initialGrid: spin.initialGrid ?? [],
+      comboSteps: spin.comboSteps ?? [],
       finalGrid: spin.finalGrid ?? [],
       winAmount: spin.winAmount,
       foilCount: spin.foilCount ?? 0,
@@ -410,6 +414,8 @@ export const getSpinsBySession = query({
     return spins.map((spin) => ({
       spinId: spin._id,
       spinType: spin.spinType,
+      initialGrid: spin.initialGrid ?? [],
+      comboSteps: spin.comboSteps ?? [],
       finalGrid: spin.finalGrid ?? [],
       winAmount: spin.winAmount,
       foilCount: spin.foilCount ?? 0,

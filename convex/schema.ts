@@ -487,6 +487,8 @@ export default defineSchema({
     foilCount: v.optional(v.number()),       // foil cards in this spin
     triggeredBonus: v.optional(v.boolean()), // did this spin trigger bonus free spins
     sessionId: v.optional(v.string()),       // groups trigger + bonus spins for share replay
+    initialGrid: v.optional(v.array(v.any())), // initial grid before combo/cascade resolution
+    comboSteps: v.optional(v.array(v.any())),  // combo/cascade animation steps for replay
     finalGrid: v.optional(v.array(v.string())), // final grid after combos (baccarat[:f] per cell)
   })
     .index("by_player_time", ["playerAddress", "timestamp"])

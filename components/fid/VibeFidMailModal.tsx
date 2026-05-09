@@ -9,7 +9,7 @@ import { CardMedia } from '@/components/fid/CardMedia';
 import FoilCardEffect from '@/components/fid/FoilCardEffect';
 import { VibeMailInbox } from '@/components/fid/VibeMail';
 import { VibeFIDConvexProvider } from '@/contexts/VibeFIDConvexProvider';
-import { getUserByFid, calculateRarityFromScore } from '@/lib/fid/neynar';
+import { getUserByFidWithScore, calculateRarityFromScore } from '@/lib/fid/neynar';
 import { sdk } from '@farcaster/miniapp-sdk';
 import { generateFarcasterCardImage } from '@/lib/fid/generateFarcasterCard';
 import { generateCardVideo } from '@/lib/fid/generateCardVideo';
@@ -225,7 +225,7 @@ function ModalInner({ fid, username, ownerFid, onClose }: VibeFidMailModalProps)
     setLoading(true);
     setError(null);
     try {
-      const user = await getUserByFid(fid);
+      const user = await getUserByFidWithScore(fid);
       if (!user) { setError(`No user found for FID ${fid}`); return; }
       const score = user.experimental.neynar_user_score;
       const rarity = calculateRarityFromScore(score);

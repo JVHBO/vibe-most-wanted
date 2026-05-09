@@ -18,9 +18,7 @@ export async function GET(request: Request) {
     : n >= 1_000   ? `${Math.round(n / 1_000)}k`
     : String(n);
 
-  const bgRes = await fetch(`${origin}/angry-angry-kid.png`);
-  const bgBuf = await bgRes.arrayBuffer();
-  const bgSrc = `data:image/png;base64,${Buffer.from(bgBuf).toString('base64')}`;
+  const bgSrc = `${origin}/angry-angry-kid.png`;
 
   return new ImageResponse(
     (
@@ -62,6 +60,12 @@ export async function GET(request: Request) {
 
       </div>
     ),
-    { width: W, height: H }
+    {
+      width: W,
+      height: H,
+      headers: {
+        'Cache-Control': 'public, max-age=3600, s-maxage=3600, stale-while-revalidate=86400',
+      },
+    }
   );
 }

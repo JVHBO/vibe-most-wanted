@@ -25,10 +25,10 @@ describe('LeaderboardRewardsModal', () => {
 
   it('renders reward amounts', () => {
     render(<LeaderboardRewardsModal isOpen={true} onClose={() => {}} />);
-    expect(screen.getByText('1,000 coins')).toBeInTheDocument();
-    expect(screen.getByText('750 coins')).toBeInTheDocument();
-    expect(screen.getByText('500 coins')).toBeInTheDocument();
-    expect(screen.getByText('300 coins')).toBeInTheDocument();
+    expect(screen.getByText('10,000 coins')).toBeInTheDocument();
+    expect(screen.getByText('7,000 coins')).toBeInTheDocument();
+    expect(screen.getByText('5,000 coins')).toBeInTheDocument();
+    expect(screen.getByText('3,000 coins')).toBeInTheDocument();
   });
 
   it('renders footer text', () => {
