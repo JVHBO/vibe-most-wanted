@@ -153,6 +153,57 @@ export async function getUserByFid(fid: number): Promise<NeynarUser | null> {
 }
 
 /**
+ * Fetch user data when the Neynar score is required.
+ *
+ * The regular profile fetch uses Haatz first to save credits, but Haatz does
+ * not reliably include experimental.neynar_user_score. Score-sensitive flows
+ * must use the server route so a missing score cannot be mistaken for 0.
+ */
+export async function getUserByFidWithScore(fid: number): Promise<NeynarUser | null> {
+  if (typeof window !== 'undefined') {
+    const response = await fetch(`/api/fid/neynar-score?fid=${fid}`, { cache: 'no-store' });
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({}));
+      throw new Error(data.error || 'Failed to fetch Neynar score');
+    }
+
+    const data = await response.json();
+    return {
+      fid: data.fid,
+      username: data.username,
+      display_name: data.displayName || data.username,
+      pfp_url: data.pfpUrl || '',
+      profile: { bio: { text: data.bio || '' } },
+      follower_count: data.followerCount || 0,
+      following_count: data.followingCount || 0,
+      verified_addresses: data.verifiedAddresses || { eth_addresses: [] },
+      custody_address: '',
+      power_badge: data.powerBadge || false,
+      experimental: { neynar_user_score: data.score },
+    };
+  }
+
+  if (!NEYNAR_API_KEY) {
+    throw new Error('NEYNAR_API_KEY is not configured');
+  }
+
+  const response = await fetch(
+    `${NEYNAR_API_BASE}/farcaster/user/bulk?fids=${fid}`,
+    {
+      headers: {
+        'accept': 'application/json',
+        'api_key': NEYNAR_API_KEY,
+      },
+      cache: 'no-store',
+    }
+  );
+
+  if (!response.ok) return null;
+  const data: NeynarUserResponse = await response.json();
+  return data.users?.[0] ?? null;
+}
+
+/**
  * Calculate card rarity based on Neynar User Score
  *
  * Using VibeFID collection trait names (5 rarities):

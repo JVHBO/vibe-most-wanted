@@ -400,6 +400,8 @@ const PAYOUTS: [string, string, string][] = [
 
 export type ReplaySpinData = {
   spinId: string;
+  initialGrid?: SlotCard[];
+  comboSteps?: SlotComboStep[];
   finalGrid: string[]; // "baccarat" or "baccarat:f"
   winAmount: number;
   foilCount: number;
@@ -1321,6 +1323,11 @@ export default function SlotMachine({
     spinSequenceRef.current = sequenceId;
 
     const finalGrid: SlotCard[] = spinData.finalGrid.map(slotCardFromStoredString);
+    const initialGrid: SlotCard[] =
+      Array.isArray(spinData.initialGrid) && spinData.initialGrid.length === TOTAL_CELLS
+        ? spinData.initialGrid
+        : finalGrid;
+    const comboSteps = Array.isArray(spinData.comboSteps) ? spinData.comboSteps : [];
 
     // Reset state — identical to real spin setup
     setIsSpinning(true);
@@ -1348,13 +1355,13 @@ export default function SlotMachine({
     await new Promise<void>((resolve) => {
       const stopSequential = (col: number) => {
         if (col >= COLS) {
-          const gifInGrid = finalGrid.findIndex(c => c.baccarat === "dragukka");
+          const gifInGrid = initialGrid.findIndex(c => c.baccarat === "dragukka");
           if (gifInGrid >= 0) {
             lockedGifRef.current = gifInGrid;
             setLockedGifIdx(gifInGrid);
           }
           (async () => {
-            const details = await playComboResolution([], finalGrid, spinData.winAmount, sequenceId);
+            const details = await playComboResolution(comboSteps, finalGrid, spinData.winAmount, sequenceId);
             if (spinSequenceRef.current !== sequenceId) { resolve(); return; }
             finishSpinVisuals(finalGrid, spinData.winAmount, false, details, false);
             resolve();
@@ -1362,7 +1369,7 @@ export default function SlotMachine({
           return;
         }
         const colCards = Array.from({ length: ROWS }, (_, row) =>
-          finalGrid[row * COLS + col] ?? createSlotCard({ baccarat: 'claude', rarity: 'Common' })
+          initialGrid[row * COLS + col] ?? createSlotCard({ baccarat: 'claude', rarity: 'Common' })
         );
         slowAndStopCol(col, colCards, () => {
           const colFoils = colCards.filter(c => c.hasFoil).length;

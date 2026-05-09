@@ -12,8 +12,14 @@ import { SOCIAL_QUESTS } from '@/lib/socialQuests';
 import { ConvexHttpClient } from 'convex/browser';
 import { api } from '@/convex/_generated/api';
 
-// Convex client for mutations
-const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+let convex: ConvexHttpClient | null = null;
+
+function getConvex() {
+  const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
+  if (!convexUrl) return null;
+  if (!convex) convex = new ConvexHttpClient(convexUrl);
+  return convex;
+}
 
 // Only allow these quest types through this endpoint
 const ALLOWED_SDK_TYPES = ['notification', 'miniapp'];
@@ -55,7 +61,15 @@ export async function POST(request: NextRequest) {
     // Mark quest as completed using the public mutation
     // The mutation itself validates that only SDK quest types are allowed
     try {
-      await convex.mutation(api.socialQuests.markQuestCompleted, {
+      const client = getConvex();
+      if (!client) {
+        return NextResponse.json(
+          { error: 'Convex not configured' },
+          { status: 500 }
+        );
+      }
+
+      await client.mutation(api.socialQuests.markQuestCompleted, {
         address,
         questId,
       });

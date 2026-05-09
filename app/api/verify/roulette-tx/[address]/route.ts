@@ -13,7 +13,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import { ConvexHttpClient } from 'convex/browser';
 import { api } from '@/convex/_generated/api';
 
-const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+let convex: ConvexHttpClient | null = null;
+
+function getConvex() {
+  const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
+  if (!convexUrl) return null;
+  if (!convex) convex = new ConvexHttpClient(convexUrl);
+  return convex;
+}
 
 export async function GET(
   _req: NextRequest,
@@ -29,9 +36,16 @@ export async function GET(
     }
 
     const address = raw.toLowerCase();
+    const client = getConvex();
+    if (!client) {
+      return NextResponse.json(
+        { verified: false, reason: 'Convex not configured' },
+        { status: 200 }
+      );
+    }
 
     // Query rouletteSpins for this address — look for any spin with a txHash (on-chain claim)
-    const result = await convex.query(api.roulette.getSpinHistory, { address });
+    const result = await client.query(api.roulette.getSpinHistory, { address });
 
     if (!result || result.length === 0) {
       return NextResponse.json(

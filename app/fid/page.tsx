@@ -7,7 +7,7 @@ import { encodeFunctionData, createPublicClient, http } from "viem";
 import { base, arbitrum } from "viem/chains";
 import { useMutation, useQuery, useAction } from "convex/react";
 import { api } from "@/lib/fid/convex-generated/api";
-import { getUserByFid, calculateRarityFromScore, getBasePowerFromRarity, generateRandomSuit, getSuitFromFid, generateRankFromRarity, getSuitSymbol, getSuitColor } from "@/lib/fid/neynar";
+import { getUserByFidWithScore, calculateRarityFromScore, getBasePowerFromRarity, generateRandomSuit, getSuitFromFid, generateRankFromRarity, getSuitSymbol, getSuitColor } from "@/lib/fid/neynar";
 import { getFidTraits } from "@/lib/fid/fidTraits";
 import { getFarcasterAccountCreationDate } from "@/lib/fid/farcasterRegistry";
 import type { NeynarUser, CardSuit, CardRank } from "@/lib/fid/neynar";
@@ -347,7 +347,7 @@ const searchParams = useSearchParams();  const testFid = searchParams.get("testF
 
     try {
       // Fetch user data
-      const user = await getUserByFid(fid);
+      const user = await getUserByFidWithScore(fid);
       if (!user) {
         setError(`No user found for FID ${fid}`);
         setLoading(false);
@@ -479,7 +479,7 @@ const searchParams = useSearchParams();  const testFid = searchParams.get("testF
 
     try {
       // Fetch user data from Neynar
-      const user = await getUserByFid(fid);
+      const user = await getUserByFidWithScore(fid);
       if (!user) {
         setError(`No user found for FID ${fid}`);
         setLoading(false);
@@ -1206,7 +1206,7 @@ ${shareT.shareTextMintYours || 'Mint yours at'} @jvhbo`;
     setError("Recovering your card...");
     try {
       const fid = effectiveFarcasterUser.fid;
-      const user = await getUserByFid(fid);
+      const user = await getUserByFidWithScore(fid);
       if (!user) throw new Error('Could not fetch Farcaster data');
 
       const score = user.experimental?.neynar_user_score || 0;

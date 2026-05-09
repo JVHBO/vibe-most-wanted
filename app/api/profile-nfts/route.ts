@@ -12,11 +12,18 @@ import { NextResponse } from "next/server";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "@/convex/_generated/api";
 
-const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL || "");
+let convex: ConvexHttpClient | null = null;
+
+function getConvex() {
+  const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
+  if (!convexUrl) return null;
+  if (!convex) convex = new ConvexHttpClient(convexUrl);
+  return convex;
+}
 
 // Fire-and-forget stat tracking
 function trackStat(key: string) {
-  convex.mutation(api.apiStats.increment, { key }).catch(() => {});
+  getConvex()?.mutation(api.apiStats.increment, { key }).catch(() => {});
 }
 
 // Server-side cache - stores data + balance + firstTokenIds for validation
@@ -461,7 +468,7 @@ export async function GET(request: Request) {
     // Step 3: Get free cards from Convex
     let freeCards: any[] = [];
     try {
-      freeCards = await convex.query(api.cardPacks.getPlayerCards, { address });
+      freeCards = await getConvex()?.query(api.cardPacks.getPlayerCards, { address }) ?? [];
       if (freeCards && freeCards.length > 0) {
         for (const card of freeCards) {
           allNfts.push({

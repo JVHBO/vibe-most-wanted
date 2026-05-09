@@ -14,7 +14,7 @@ import { useVibeVote } from '@/hooks/fid/useVibeVote';
 import { useVBMSBalance } from '@/hooks/fid/useVBMSContracts';
 import { generateCriminalBackstory } from '@/lib/fid/generateCriminalBackstory';
 import { getFarcasterAccountCreationDate } from '@/lib/fid/farcasterRegistry';
-import { getUserByFid, calculateRarityFromScore } from '@/lib/fid/neynar';
+import { getUserByFidWithScore, calculateRarityFromScore } from '@/lib/fid/neynar';
 import { AudioManager } from '@/lib/audio-manager';
 import { fidTranslations } from '@/lib/fid/fidTranslations';
 import { generateFarcasterCardImage } from '@/lib/fid/generateFarcasterCard';
@@ -99,6 +99,7 @@ export function VibeFidSection({ fid, isOwnProfile, address, hasVibeBadge, onCar
 
   const card = fidCards?.[0];
   const currentTraits = card ? { foil: card.foil, wear: card.wear } : null;
+  const displayedNeynarScore = card ? ((card.latestNeynarScore ?? card.neynarScore) || 0) : 0;
 
   const correctPower = card && currentTraits ? (() => {
     const rarityBasePower: Record<string, number> = { Common: 10, Rare: 20, Epic: 50, Legendary: 100, Mythic: 600 };
@@ -185,7 +186,7 @@ export function VibeFidSection({ fid, isOwnProfile, address, hasVibeBadge, onCar
     const rarityOrder = ['Common', 'Rare', 'Epic', 'Legendary', 'Mythic'];
     const rarityImproved = rarityOrder.indexOf(neynarScoreData.rarity) > rarityOrder.indexOf(card.rarity);
     const neverUpgraded = !card.upgradedAt;
-    const scoreChanged = Math.abs(neynarScoreData.score - card.neynarScore) > 0.02;
+    const scoreChanged = Math.abs(neynarScoreData.score - displayedNeynarScore) > 0.02;
     return neverUpgraded || rarityImproved || scoreChanged;
   };
 
@@ -200,7 +201,7 @@ export function VibeFidSection({ fid, isOwnProfile, address, hasVibeBadge, onCar
     setLoading(true);
     setError(null);
     try {
-      const user = await getUserByFid(fid);
+      const user = await getUserByFidWithScore(fid);
       if (!user) {
         setError(`No user found for FID ${fid}`);
         setLoading(false);
@@ -291,7 +292,7 @@ export function VibeFidSection({ fid, isOwnProfile, address, hasVibeBadge, onCar
       setEvolutionData({
         oldRarity: result.oldRarity ?? card.rarity, newRarity: result.newRarity ?? card.rarity,
         oldPower: result.oldPower ?? card.power, newPower: result.newPower ?? card.power,
-        oldScore: card.neynarScore, newScore: neynarScoreData.score, newBounty,
+        oldScore: displayedNeynarScore, newScore: neynarScoreData.score, newBounty,
       });
       setEvolutionPhase('complete');
       setRegenerationStatus('');
@@ -448,7 +449,7 @@ export function VibeFidSection({ fid, isOwnProfile, address, hasVibeBadge, onCar
                   </div>
                   <div className="flex justify-between mb-1.5">
                     <span className="text-gray-400">Neynar</span>
-                    <span className="text-white font-bold">{card.neynarScore.toFixed(3)}</span>
+                    <span className="text-white font-bold">{displayedNeynarScore.toFixed(3)}</span>
                   </div>
                   {currentTraits?.wear && (
                     <div className="flex justify-between">
@@ -508,7 +509,7 @@ export function VibeFidSection({ fid, isOwnProfile, address, hasVibeBadge, onCar
             {/* Score */}
             <div className="bg-vintage-black/40 rounded border border-vintage-gold/20 px-2 py-1.5">
               <p className="text-vintage-burnt-gold text-[10px] uppercase tracking-wide">Neynar Score</p>
-              <p className="text-vintage-gold font-bold text-base leading-tight">{card.neynarScore.toFixed(3)}</p>
+              <p className="text-vintage-gold font-bold text-base leading-tight">{displayedNeynarScore.toFixed(3)}</p>
               <p className="text-vintage-ice/50 text-[10px]">{card.rarity}</p>
             </div>
 
@@ -557,9 +558,9 @@ export function VibeFidSection({ fid, isOwnProfile, address, hasVibeBadge, onCar
                 <div className="text-4xl font-bold text-vintage-gold mb-1">{neynarScoreData.score.toFixed(3)}</div>
                 <p className="text-vintage-ice text-xs">Current Score</p>
                 {card && (
-                  <p className={`text-xs mt-1 font-bold ${neynarScoreData.score > card.neynarScore ? 'text-green-400' : neynarScoreData.score < card.neynarScore ? 'text-red-400' : 'text-vintage-ice/50'}`}>
-                    {neynarScoreData.score > card.neynarScore ? '+' : ''}
-                    {(neynarScoreData.score - card.neynarScore).toFixed(4)} from mint
+                  <p className={`text-xs mt-1 font-bold ${neynarScoreData.score > displayedNeynarScore ? 'text-green-400' : neynarScoreData.score < displayedNeynarScore ? 'text-red-400' : 'text-vintage-ice/50'}`}>
+                    {neynarScoreData.score > displayedNeynarScore ? '+' : ''}
+                    {(neynarScoreData.score - displayedNeynarScore).toFixed(4)} from saved score
                   </p>
                 )}
               </div>

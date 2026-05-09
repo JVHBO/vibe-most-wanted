@@ -42,7 +42,7 @@ const baseProps = {
 describe('MissionsView', () => {
   it('renders missions list', () => {
     render(<MissionsView {...baseProps} />);
-    expect(screen.getByText(/daily|mission/i)).toBeInTheDocument();
+    expect(screen.getByText('daily_login')).toBeInTheDocument();
   });
 
   it('shows loading spinner when loading', () => {

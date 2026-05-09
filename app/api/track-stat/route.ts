@@ -9,7 +9,14 @@ import { NextResponse } from "next/server";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "@/convex/_generated/api";
 
-const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL || "");
+let convex: ConvexHttpClient | null = null;
+
+function getConvex() {
+  const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
+  if (!convexUrl) return null;
+  if (!convex) convex = new ConvexHttpClient(convexUrl);
+  return convex;
+}
 
 // Valid stat keys (prevent spam)
 const VALID_KEYS = [
@@ -21,25 +28,42 @@ const VALID_KEYS = [
   "fetch_nfts_total",
   "balance_check_total",
   "balance_check_cached",
+  "wield_enrich_attempt",
+  "wield_enrich_success",
 ];
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { key, amount = 1 } = body;
+    const entries =
+      body?.stats && typeof body.stats === "object"
+        ? Object.entries(body.stats).map(([key, amount]) => ({ key, amount }))
+        : [{ key: body?.key, amount: body?.amount ?? 1 }];
 
-    if (!key || typeof key !== "string") {
-      return NextResponse.json({ error: "Missing key" }, { status: 400 });
+    const validEntries = entries
+      .filter(({ key, amount }) =>
+        typeof key === "string" &&
+        VALID_KEYS.includes(key) &&
+        typeof amount === "number" &&
+        Number.isFinite(amount) &&
+        amount > 0
+      )
+      .map(({ key, amount }) => ({ key: key as string, amount: Math.min(Math.floor(amount as number), 1000) }));
+
+    if (validEntries.length === 0) {
+      return NextResponse.json({ ok: true, skipped: true });
     }
 
-    if (!VALID_KEYS.includes(key)) {
-      return NextResponse.json({ error: "Invalid key" }, { status: 400 });
+    const client = getConvex();
+    if (!client) {
+      return NextResponse.json({ error: "Convex not configured" }, { status: 500 });
     }
 
-    // Fire-and-forget - don't await
-    convex.mutation(api.apiStats.increment, { key, amount }).catch(() => {});
+    for (const { key, amount } of validEntries) {
+      client.mutation(api.apiStats.increment, { key, amount }).catch(() => {});
+    }
 
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({ ok: true, count: validEntries.length });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }

@@ -20,7 +20,14 @@ import { NextResponse } from "next/server";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "@/convex/_generated/api";
 
-const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL || "");
+let convex: ConvexHttpClient | null = null;
+
+function getConvex() {
+  const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
+  if (!convexUrl) return null;
+  if (!convex) convex = new ConvexHttpClient(convexUrl);
+  return convex;
+}
 
 // Alchemy config
 const ALCHEMY_API_KEY = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY;
@@ -39,7 +46,7 @@ const COLLECTIONS: Record<string, { contract: string; name: string; arbContract?
 
 // Fire-and-forget stat tracking
 function trackStat(key: string) {
-  convex.mutation(api.apiStats.increment, { key }).catch(() => {});
+  getConvex()?.mutation(api.apiStats.increment, { key }).catch(() => {});
 }
 
 // Find attribute in NFT
@@ -105,6 +112,10 @@ export async function GET(
     }
 
     const owner = address.toLowerCase();
+    const client = getConvex();
+    if (!client) {
+      return NextResponse.json({ error: "Convex not configured" }, { status: 500 });
+    }
     const forceRefresh = searchParams.get("refresh") === "true";
     const requestedCollections = searchParams.get("collections")?.split(",") || Object.keys(COLLECTIONS);
 
@@ -127,7 +138,7 @@ export async function GET(
       const isVibeFIDCollection = collectionId === "vibefid";
       if (!forceRefresh) {
         try {
-          const cached = await convex.query(api.nftCache.getNftsByCollection, {
+          const cached = await client.query(api.nftCache.getNftsByCollection, {
             ownerAddress: owner,
             collectionId,
             maxAgeMs: CACHE_TTL_MS,
@@ -192,7 +203,7 @@ export async function GET(
         // 3. Save to Convex cache
         if (processedNfts.length > 0) {
           try {
-            await convex.mutation(api.nftCache.saveNftsForOwner, {
+            await client.mutation(api.nftCache.saveNftsForOwner, {
               ownerAddress: owner,
               collectionId,
               contractAddress: collection.contract,
@@ -206,7 +217,7 @@ export async function GET(
         } else {
           // Mark empty collection
           try {
-            await convex.mutation(api.nftCache.markEmptyCollection, {
+            await client.mutation(api.nftCache.markEmptyCollection, {
               ownerAddress: owner,
               collectionId,
             });
@@ -225,7 +236,7 @@ export async function GET(
 
     // Get free cards from Convex
     try {
-      const freeCards = await convex.query(api.cardPacks.getPlayerCards, { address: owner });
+      const freeCards = await client.query(api.cardPacks.getPlayerCards, { address: owner });
       if (freeCards && freeCards.length > 0) {
         for (const card of freeCards) {
           allNfts.push({

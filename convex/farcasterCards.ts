@@ -593,6 +593,9 @@ export const upgradeCardRarity = mutation({
     fid: v.number(),
     newNeynarScore: v.number(),
     newRarity: v.string(),
+    username: v.optional(v.string()),
+    displayName: v.optional(v.string()),
+    pfpUrl: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     // Find the card
@@ -637,6 +640,8 @@ export const upgradeCardRarity = mutation({
     await ctx.db.patch(card._id, {
       rarity: args.newRarity,
       neynarScore: args.newNeynarScore, // Update card score to current score at upgrade time
+      latestNeynarScore: args.newNeynarScore,
+      latestScoreCheckedAt: Date.now(),
       power: newPower,
       // Mark when upgraded - save history for tracking
       upgradedAt: Date.now(),
@@ -666,6 +671,9 @@ export const refreshCardScore = mutation({
   args: {
     fid: v.number(),
     newNeynarScore: v.number(),
+    username: v.optional(v.string()),
+    displayName: v.optional(v.string()),
+    pfpUrl: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const card = await ctx.db
@@ -677,8 +685,9 @@ export const refreshCardScore = mutation({
       throw new Error(`No card found for FID ${args.fid}`);
     }
 
-    // Only update neynarScore - keep rarity and power unchanged
+    // Refresh score only; keep rarity and power unchanged.
     await ctx.db.patch(card._id, {
+      neynarScore: args.newNeynarScore,
       latestNeynarScore: args.newNeynarScore,
       latestScoreCheckedAt: Date.now(),
     });

@@ -9,7 +9,8 @@ export async function GET(request: NextRequest) {
   if (!fid) return NextResponse.json({ error: "Missing fid" }, { status: 400 });
 
   const cached = cache.get(fid);
-  if (cached && cached.expiresAt > Date.now()) return NextResponse.json(cached.data);
+  const cacheHeaders = { "Cache-Control": "public, max-age=3600, s-maxage=3600, stale-while-revalidate=7200" };
+  if (cached && cached.expiresAt > Date.now()) return NextResponse.json(cached.data, { headers: cacheHeaders });
 
   // Haatz primary (free)
   let u: any = null;
@@ -30,7 +31,7 @@ export async function GET(request: NextRequest) {
     u = ((await r.json()).users || [])[0];
   }
 
-  if (!u) return NextResponse.json({});
+  if (!u) return NextResponse.json({}, { headers: cacheHeaders });
 
   const result = {
     fid: u.fid,
@@ -41,6 +42,6 @@ export async function GET(request: NextRequest) {
 
   cache.set(fid, { data: result, expiresAt: Date.now() + 60 * 60 * 1000 });
   return NextResponse.json(result, {
-    headers: { "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=7200" },
+    headers: cacheHeaders,
   });
 }

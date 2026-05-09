@@ -152,6 +152,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const fadeIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const currentTrackRef = useRef<string | null>(null);
+  const volumeRef = useRef(volume);
   const youtubePlayerRef = useRef<any>(null);
   const youtubeContainerRef = useRef<HTMLDivElement | null>(null);
   const isPlaylistModeRef = useRef(false); // Track if we're in playlist mode
@@ -295,7 +296,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
     }
 
     const oldAudio = audioRef.current;
-    const targetVolume = volume;
+    const targetVolume = volumeRef.current;
 
     // Clear any existing fade
     if (fadeIntervalRef.current) {
@@ -328,7 +329,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
       // No audio playing, directly load and fade in
       loadAndFadeIn(newTrackUrl, targetVolume);
     }
-  }, [volume, stopYouTubePlayer]);
+  }, [stopYouTubePlayer]);
 
   /**
    * Load new audio and fade in
@@ -671,6 +672,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
    */
   const playPlaylistTrack = useCallback((index: number) => {
     if (playlist.length === 0) return;
+    const currentVolume = volumeRef.current;
 
     const safeIndex = index % playlist.length;
     const trackUrl = playlist[safeIndex];
@@ -730,7 +732,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
           }
           // Load new video in existing player
           youtubePlayerRef.current.loadVideoById(videoId);
-          youtubePlayerRef.current.setVolume(volume * 100);
+          youtubePlayerRef.current.setVolume(currentVolume * 100);
           currentTrackRef.current = `youtube:${videoId}`;
 
           // Schedule next track
@@ -757,7 +759,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
         }
 
         console.log('Creating new YT player for video:', videoId);
-        playYouTubeAudio(videoId, volume, shouldLoop, onEnd);
+        playYouTubeAudio(videoId, currentVolume, shouldLoop, onEnd);
         setIsCustomMusicLoading(false);
         return;
       } else {
@@ -813,15 +815,15 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
     newAudio.play().then(() => {
       const fadeInSteps = 30;
       const fadeInInterval = FADE_DURATION / fadeInSteps;
-      const volumeIncrement = volume / fadeInSteps;
+      const volumeIncrement = currentVolume / fadeInSteps;
       let step = 0;
       const fadeInTimer = setInterval(() => {
         step++;
         if (step >= fadeInSteps || !newAudio) {
           clearInterval(fadeInTimer);
-          if (newAudio) newAudio.volume = volume;
+          if (newAudio) newAudio.volume = currentVolume;
         } else {
-          newAudio.volume = Math.min(volume, newAudio.volume + volumeIncrement);
+          newAudio.volume = Math.min(currentVolume, newAudio.volume + volumeIncrement);
         }
       }, fadeInInterval);
       setIsCustomMusicLoading(false);
@@ -834,7 +836,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
 
     audioRef.current = newAudio;
     currentTrackRef.current = trackUrl;
-  }, [playlist, volume, playYouTubeAudio, stopYouTubePlayer, handleInvalidTrack, getTrackNameFromUrl]);
+  }, [playlist, playYouTubeAudio, stopYouTubePlayer, handleInvalidTrack, getTrackNameFromUrl]);
 
   /**
    * Handle music mode or language changes
@@ -878,7 +880,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
             audioRef.current.pause();
             audioRef.current = null;
           }
-          playYouTubeAudio(videoId, volume);
+          playYouTubeAudio(videoId, volumeRef.current);
         } else {
           setCustomMusicError('Invalid YouTube URL');
           setIsCustomMusicLoading(false);
@@ -899,7 +901,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
       : LANGUAGE_MUSIC[lang];
 
     crossfade(trackUrl);
-  }, [musicMode, lang, isMusicEnabled, customMusicUrl, playlist, currentPlaylistIndex, crossfade, playYouTubeAudio, stopYouTubePlayer, volume, playPlaylistTrack]);
+  }, [musicMode, lang, isMusicEnabled, customMusicUrl, playlist, currentPlaylistIndex, crossfade, playYouTubeAudio, stopYouTubePlayer, playPlaylistTrack]);
 
   /**
    * Load music mode, custom URL, and playlist from localStorage on mount
@@ -943,7 +945,6 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
   // Refs so click handler always has latest values without stale closure
   const loadAndFadeInRef = useRef(loadAndFadeIn);
   useEffect(() => { loadAndFadeInRef.current = loadAndFadeIn; }, [loadAndFadeIn]);
-  const volumeRef = useRef(volume);
   useEffect(() => { volumeRef.current = volume; }, [volume]);
 
   /**

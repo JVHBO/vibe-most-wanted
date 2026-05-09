@@ -27,7 +27,14 @@ const TICKET_PURCHASED_TOPIC = "0x3c21b9b2d77366bb49d2e24d368d043e15a59329cb5f15
 const VBMS_ADDR = "0xf14c1dc8ce5fe65413379f76c43fa1460c31e728";
 const USDC_ADDR = "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913";
 
-const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+let convex: ConvexHttpClient | null = null;
+
+function getConvex() {
+  const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
+  if (!convexUrl) return null;
+  if (!convex) convex = new ConvexHttpClient(convexUrl);
+  return convex;
+}
 
 // ─── Validação de assinatura Alchemy ──────────────────────────────────────────
 function validateAlchemySignature(body: string, signature: string | null, signingKey: string): boolean {
@@ -110,6 +117,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "RAFFLE_BASE_ADDRESS not configured" }, { status: 500 });
   }
 
+  const client = getConvex();
+  if (!client) {
+    return NextResponse.json({ error: "Convex not configured" }, { status: 500 });
+  }
+
   // Alchemy Address Activity webhook — payload.event.activity[]
   const activities: any[] = payload?.event?.activity ?? [];
   const processed: string[] = [];
@@ -139,7 +151,7 @@ export async function POST(req: NextRequest) {
         const internalSecret = process.env.VMW_INTERNAL_SECRET;
         if (!internalSecret) throw new Error("VMW_INTERNAL_SECRET not set");
 
-        await convex.mutation(api.raffle.recordBaseEntryPublic, {
+        await client.mutation(api.raffle.recordBaseEntryPublic, {
           adminKey:    internalSecret,
           buyer:       decoded.buyer,
           count:       decoded.count,
