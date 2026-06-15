@@ -415,6 +415,10 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
         }
       }, fadeInInterval);
     }).catch(err => {
+      if (err?.name === 'NotAllowedError') {
+        setIsCustomMusicLoading(false);
+        return;
+      }
       console.warn('⚠️ Failed to play music:', err);
       setCustomMusicError('Failed to play audio. Try a different URL.');
       setIsCustomMusicLoading(false);

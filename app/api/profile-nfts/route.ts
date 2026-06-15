@@ -12,7 +12,8 @@ import { NextResponse } from "next/server";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "@/convex/_generated/api";
 
-const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL || "");
+const CONVEX_URL = process.env.NEXT_PUBLIC_CONVEX_URL || "https://agile-orca-761.convex.cloud";
+const convex = new ConvexHttpClient(CONVEX_URL);
 
 // Fire-and-forget stat tracking
 function trackStat(key: string) {
@@ -260,6 +261,10 @@ async function getFirstTokenId(owner: string, contract: string): Promise<string 
 
 // Fetch NFTs from Alchemy
 async function fetchNFTsFromAlchemy(owner: string, contract: string, chain: string = CHAIN): Promise<any[]> {
+  if (!ALCHEMY_API_KEY) {
+    return [];
+  }
+
   const url = `https://${chain}.g.alchemy.com/nft/v3/${ALCHEMY_API_KEY}/getNFTsForOwner?owner=${owner}&contractAddresses[]=${contract}&withMetadata=true&pageSize=100`;
 
   const res = await fetch(url);
