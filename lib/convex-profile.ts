@@ -9,14 +9,13 @@ import { api } from "@/convex/_generated/api";
 import { ConvexHttpClient } from "convex/browser";
 import { devLog, devError } from '@/lib/utils/logger';
 
+const CONVEX_URL = process.env.NEXT_PUBLIC_CONVEX_URL || "https://agile-orca-761.convex.cloud";
+
 // Lazy initialization to avoid build-time errors
 let convex: ConvexHttpClient | null = null;
 const getConvex = () => {
   if (!convex) {
-    if (!process.env.NEXT_PUBLIC_CONVEX_URL) {
-      throw new Error('NEXT_PUBLIC_CONVEX_URL is not defined');
-    }
-    convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL);
+    convex = new ConvexHttpClient(CONVEX_URL);
   }
   return convex;
 };
@@ -139,27 +138,18 @@ export class ConvexProfileService {
   static async getProfile(address: string): Promise<UserProfile | null> {
     try {
       const normalizedAddress = address.toLowerCase();
-      // 🚀 BANDWIDTH FIX: Use getProfileDashboard (lightweight) instead of getProfile (heavy)
-      // getProfile returns full arrays (defenseDeck, ownedTokenIds) which are rarely needed
       const profile = await getConvex().query(api.profiles.getProfileDashboard, {
         address: normalizedAddress,
       });
-      // Cast to UserProfile - getProfileDashboard returns a subset of fields
-      // The missing fields (attacksToday, etc.) are optional for most use cases
       return profile as UserProfile | null;
     } catch (error: any) {
-      devError("❌ getProfile error:", error);
+      devError("getProfile error:", error);
       return null;
     }
   }
 
   /**
-   * 🚀 BANDWIDTH FIX: Get a LITE profile (excludes heavy arrays)
-   * Use this instead of getProfile when you don't need:
-   * - defenseDeck (5 full card objects)
-   * - revealedCardsCache (100+ cards)
-   * - ownedTokenIds (thousands of IDs)
-   * Saves ~95% bandwidth per profile fetch
+   * Get a lite profile without heavy card arrays.
    */
   static async getProfileLite(address: string): Promise<Partial<UserProfile> | null> {
     try {
@@ -169,31 +159,28 @@ export class ConvexProfileService {
       });
       return profile;
     } catch (error: any) {
-      devError("❌ getProfileLite error:", error);
+      devError("getProfileLite error:", error);
       return null;
     }
   }
 
   /**
-   * Get leaderboard (top players by power)
-   * Shows all players (increased limit to 1000)
+   * Get leaderboard.
    */
   static async getLeaderboard(limit: number = 1000): Promise<UserProfile[]> {
     try {
-      // 🚀 OPTIMIZED: Use lite query (97% bandwidth reduction)
       const profiles = await getConvex().query(api.profiles.getLeaderboardLite, {
         limit,
       });
-      // Cast through unknown since lite version returns partial UserProfile
       return profiles as unknown as UserProfile[];
     } catch (error: any) {
-      devError("❌ getLeaderboard error:", error);
+      devError("getLeaderboard error:", error);
       return [];
     }
   }
 
   /**
-   * Check if username is available
+   * Check if username is already taken.
    */
   static async usernameExists(username: string): Promise<boolean> {
     try {
@@ -201,15 +188,15 @@ export class ConvexProfileService {
       const available = await getConvex().query(api.profiles.isUsernameAvailable, {
         username: normalizedUsername,
       });
-      return !available; // If available=false, then it exists
+      return !available;
     } catch (error: any) {
-      devError("❌ usernameExists error:", error);
+      devError("usernameExists error:", error);
       return false;
     }
   }
 
   /**
-   * Get address by username
+   * Get address by username.
    */
   static async getAddressByUsername(username: string): Promise<string | null> {
     try {
@@ -219,14 +206,14 @@ export class ConvexProfileService {
       });
       return profile ? profile.address : null;
     } catch (error: any) {
-      devError("❌ getAddressByUsername error:", error);
+      devError("getAddressByUsername error:", error);
       return null;
     }
   }
 
   /**
-   * 🔒 SECURE: Create a new profile from Farcaster data
-   * This is the ONLY way to create accounts - requires valid FID
+   * Create or update a profile with optional Farcaster metadata.
+   * Wallet-only profile creation is the default path.
    */
   static async createProfileFromFarcaster(
     address: string,
@@ -238,9 +225,8 @@ export class ConvexProfileService {
     try {
       const normalizedAddress = address.toLowerCase();
 
-      // 🔒 SECURITY: FID is required
       if (!fid || fid <= 0) {
-        throw new Error("🔒 Farcaster authentication required to create account");
+        throw new Error("Invalid profile identity");
       }
 
       const response = await fetch("/api/farcaster/profile-upsert", {

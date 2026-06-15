@@ -5139,12 +5139,12 @@ export function VibeMailInboxWithClaim({
                       <div className="flex flex-col gap-1.5">
                         {/* Quick select: VBMS */}
                         <button
-                          onClick={() => { setSettingsMiniapp('https://vibemostwanted.xyz'); setSettingsMiniappName('VBMS - Game and Wanted Cast'); setSettingsMiniappIcon('https://vibemostwanted.xyz/icon.gif'); setMaSearchQ(''); setMaSearchResults([]); }}
+                          onClick={() => { setSettingsMiniapp('https://vibemostwanted.xyz'); setSettingsMiniappName('VBMS - Game and VibeMail'); setSettingsMiniappIcon('https://vibemostwanted.xyz/icon.gif'); setMaSearchQ(''); setMaSearchResults([]); }}
                           className="flex items-center gap-2 px-2 py-1.5 bg-[#FFD700]/10 border border-[#FFD700]/40 hover:bg-[#FFD700]/20 text-left transition-colors"
                         >
                           <img src="https://vibemostwanted.xyz/icon.gif" className="w-7 h-7 rounded border border-[#FFD700]/50 flex-shrink-0" alt="" />
                           <div className="flex-1 min-w-0">
-                            <p className="text-[#FFD700] font-black text-[10px] uppercase tracking-wide">VBMS — Game &amp; Wanted Cast</p>
+                            <p className="text-[#FFD700] font-black text-[10px] uppercase tracking-wide">VBMS - Game &amp; VibeMail</p>
                             <p className="text-white/30 text-[9px]">vibemostwanted.xyz</p>
                           </div>
                           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#FFD700" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>

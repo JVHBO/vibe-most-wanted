@@ -110,6 +110,8 @@ export const wipeDisabledFeatureDataBatch = mutation({
       playerQuestCompletions: await wipeBatch(ctx, "playerQuestCompletions"),
       vibeMailQuestClaims: await wipeBatch(ctx, "vibeMailQuestClaims"),
       questMailItemClaims: await wipeBatch(ctx, "questMailItemClaims"),
+      featuredCasts: await wipeBatch(ctx, "featuredCasts"),
+      castInteractions: await wipeBatch(ctx, "castInteractions"),
       raffleEntries: await wipeBatch(ctx, "raffleEntries"),
       raffleResults: await wipeBatch(ctx, "raffleResults"),
       raffleConfig: await wipeBatch(ctx, "raffleConfig"),
@@ -117,6 +119,18 @@ export const wipeDisabledFeatureDataBatch = mutation({
       accessVisits: await wipeBatch(ctx, "accessVisits"),
       accessDebugLogs: await wipeBatch(ctx, "accessDebugLogs"),
       rouletteSpins: await wipeBatch(ctx, "rouletteSpins"),
+    };
+  },
+});
+
+export const wipeAccountsBatch = mutation({
+  args: { adminKey: v.string() },
+  handler: async (ctx, { adminKey }) => {
+    requireInternalAdminKey(adminKey);
+    return {
+      addressLinks: await wipeBatch(ctx, "addressLinks"),
+      activeSessions: await wipeBatch(ctx, "activeSessions"),
+      profiles: await wipeBatch(ctx, "profiles"),
     };
   },
 });

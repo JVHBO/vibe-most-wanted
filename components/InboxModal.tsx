@@ -276,7 +276,7 @@ export function InboxModal({ economy, onClose }: InboxModalProps) {
 
     try {
       if (!userFid) {
-        toast.error("🔒 Farcaster authentication required");
+        toast.error("Wallet-only conversion is not available yet");
         setIsProcessing(false);
         return;
       }

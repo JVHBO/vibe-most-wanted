@@ -417,7 +417,7 @@ export const fidTranslations = {
     mintYourCard: 'Mint Your VibeFID Card',
     transformProfile: 'Transform your Farcaster profile into a playable card • Mint Price: 0.0003 ETH',
     allMinted: 'All Minted',
-    connectFarcasterToMint: '🔗 Connect Farcaster to Mint',
+    connectFarcasterToMint: 'Connect wallet to continue',
     connectedAs: 'Connected as',
     enterFid: 'Enter Farcaster FID',
     fetch: 'Fetch',

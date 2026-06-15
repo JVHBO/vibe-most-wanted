@@ -60,7 +60,7 @@ export function MiniappFrame({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     localStorage.removeItem("vbms_force_miniapp");
     const isMobileUA = /Android|iPhone|iPad|iPod|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    const isDesktop = window.innerWidth >= 1440 && !isMobileUA;
+    const isDesktop = window.innerWidth >= 768 && !isMobileUA;
     const shouldFrame = isDesktop && !isMiniappMode();
     setShowFrame(shouldFrame);
     if (shouldFrame) {
@@ -188,7 +188,7 @@ export function MiniappFrame({ children }: { children: React.ReactNode }) {
           {/* App name */}
           <div style={{ flex: 1, minWidth: 0 }}>
             <p style={{ color: "rgba(255,255,255,0.9)", fontSize: "12px", fontWeight: 600, lineHeight: 1.2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontFamily: "system-ui, sans-serif" }}>
-              $VBMS – Game and Wanted Cast
+              $VBMS - Game and VibeMail
             </p>
             <p style={{ color: "rgba(255,255,255,0.35)", fontSize: "10px", fontFamily: "system-ui, sans-serif" }}>by jvhbo</p>
           </div>

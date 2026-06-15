@@ -156,30 +156,12 @@ export function CreateProfileModal({
     if (soundEnabled) AudioManager.buttonClick();
 
     try {
-      // Check if we have Farcaster data for enhanced profile creation
-      const hasFarcasterData = !!farcasterUser?.fid && farcasterUser.fid > 0;
+      await ConvexProfileService.createProfile(
+        address,
+        profileUsername.trim()
+      );
 
-      if (hasFarcasterData) {
-        const selectedUsername = profileUsername.trim() || farcasterUser.username || `fid${farcasterUser.fid}`;
-        // 🔒 SECURITY: Create profile using Farcaster data (enhanced version)
-        await ConvexProfileService.createProfileFromFarcaster(
-          address,
-          farcasterUser.fid,
-          selectedUsername,
-          farcasterUser.displayName,
-          farcasterUser.pfpUrl
-        );
-
-        devLog('✓ Profile created from Farcaster! FID:', farcasterUser.fid);
-      } else {
-        // Create standard profile using wallet address and manual username
-        await ConvexProfileService.createProfile(
-          address,
-          profileUsername.trim()
-        );
-
-        devLog('✓ Standard profile created for address:', address);
-      }
+      devLog('Wallet profile created for address:', address);
 
       const profile = await ConvexProfileService.getProfile(address);
       devLog('📊 Profile retrieved:', profile);

@@ -3,6 +3,8 @@ import { ethers } from "ethers";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "@/convex/_generated/api";
 
+const CONVEX_URL = process.env.NEXT_PUBLIC_CONVEX_URL || "https://agile-orca-761.convex.cloud";
+
 const rateLimitMap = new Map<string, number>();
 const RATE_LIMIT_MS = 10000;
 
@@ -22,11 +24,6 @@ function checkRateLimit(key: string): boolean {
 
 export async function POST(request: NextRequest) {
   try {
-    const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
-    if (!convexUrl) {
-      return NextResponse.json({ error: "NEXT_PUBLIC_CONVEX_URL not configured" }, { status: 500 });
-    }
-
     const body = await request.json();
     const { address, username } = body as { address?: string; username?: string };
 
@@ -44,7 +41,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Too many requests. Please wait 10 seconds." }, { status: 429 });
     }
 
-    const convex = new ConvexHttpClient(convexUrl);
+    const convex = new ConvexHttpClient(CONVEX_URL);
     const profileId = await convex.mutation(api.profiles.upsertProfile, {
       address: normalizedAddress,
       username: (username || "").trim() || `user_${normalizedAddress.slice(2, 6)}${normalizedAddress.slice(-4)}`,
