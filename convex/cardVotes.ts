@@ -58,6 +58,8 @@ export const recordQuestMailClaim = internalMutation({
     questIndex: v.number(),
   },
   handler: async (ctx, args) => {
+    throw new Error("Quest VibeMail rewards disabled");
+
     const existing = await ctx.db
       .query("questMailItemClaims")
       .withIndex("by_message_claimer", (q) =>
@@ -82,6 +84,8 @@ export const recordQuestMailClaim = internalMutation({
 export const recordReceiptClaim = internalMutation({
   args: { messageId: v.string(), claimerAddress: v.string() },
   handler: async (ctx, { messageId, claimerAddress }) => {
+    throw new Error("Quest VibeMail rewards disabled");
+
     const existing = await ctx.db
       .query("vibeMailQuestClaims")
       .withIndex("by_address_mailid", (q) =>

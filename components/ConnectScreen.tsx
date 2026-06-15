@@ -111,14 +111,6 @@ export function ConnectScreen({
                   Continue with MetaMask
                 </button>
               )}
-              {farcasterConnector && (
-                <button
-                  onClick={() => handleConnectorConnect(farcasterConnector)}
-                  className="w-full px-6 py-4 bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black rounded-xl shadow-gold hover:shadow-gold-lg transition-all font-display font-semibold"
-                >
-                  Continue with Farcaster
-                </button>
-              )}
             </div>
           </div>
         </div>

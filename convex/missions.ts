@@ -77,6 +77,17 @@ const MISSION_REWARDS = {
   daily_roulette_spin: { type: "coins", amount: 75 },  // Daily: spin the roulette
 };
 
+const DISABLED_NON_GAME_MISSIONS = new Set([
+  "daily_login",
+  "vibefid_minted",
+  "welcome_gift",
+  "claim_vibe_badge",
+  "send_vibemail_daily",
+  "neynar_score_cast",
+  "daily_share",
+  "daily_roulette_spin",
+]);
+
 /**
  * Get all player missions (claimable and claimed)
  * 🚀 BANDWIDTH FIX: Returns only essential fields, not full documents
@@ -108,7 +119,8 @@ export const getPlayerMissions = query({
         .withIndex("by_player_date", (q) => q.eq("playerAddress", normalizedAddress).eq("date", "once"))
         .collect(),
     ]);
-    const missions = [...todayMissions, ...weeklyMissions, ...onceMissions];
+    const missions = [...todayMissions, ...weeklyMissions, ...onceMissions]
+      .filter((m) => !DISABLED_NON_GAME_MISSIONS.has(m.missionType));
 
     // Return only essential fields to reduce bandwidth
     return missions.map(m => ({
@@ -129,6 +141,8 @@ export const getPlayerMissions = query({
 export const markDailyLogin = mutation({
   args: { playerAddress: v.string() },
   handler: async (ctx, { playerAddress }) => {
+    return { success: false, disabled: true };
+
     const today = new Date().toISOString().split('T')[0];
     const normalizedAddress = await resolveAddress(ctx, playerAddress);
 
@@ -280,6 +294,8 @@ export const markWinStreak = mutation({
 export const markVibeFIDMinted = mutation({
   args: { playerAddress: v.string() },
   handler: async (ctx, { playerAddress }) => {
+    return { success: false, disabled: true };
+
     const normalizedAddress = await resolveAddress(ctx, playerAddress);
 
     // 🚀 BANDWIDTH FIX: Use compound index instead of filter post-query
@@ -343,6 +359,21 @@ export const claimMission = mutation({
     // Verify ownership
     if (mission.playerAddress !== normalizedAddress) {
       throw new Error("Mission does not belong to this player");
+    }
+
+    if (DISABLED_NON_GAME_MISSIONS.has(mission.missionType)) {
+      await ctx.db.patch(missionId, {
+        claimed: true,
+        claimedAt: Date.now(),
+        reward: 0,
+      });
+      return {
+        success: true,
+        reward: 0,
+        newBalance: 0,
+        missionType: mission.missionType,
+        disabled: true,
+      };
     }
 
     // Check if already claimed
@@ -476,9 +507,19 @@ export const claimAllMissions = mutation({
         .withIndex("by_player_date", (q) => q.eq("playerAddress", normalizedAddress).eq("date", "once"))
         .collect(),
     ]);
-    const missions = [...todayRaw, ...onceRaw].filter(
+    const allUnclaimed = [...todayRaw, ...onceRaw].filter(
       (m) => m.completed === true && m.claimed === false
     );
+    const disabledMissions = allUnclaimed.filter((m) => DISABLED_NON_GAME_MISSIONS.has(m.missionType));
+    const missions = allUnclaimed.filter((m) => !DISABLED_NON_GAME_MISSIONS.has(m.missionType));
+
+    for (const mission of disabledMissions) {
+      await ctx.db.patch(mission._id, {
+        claimed: true,
+        claimedAt: Date.now(),
+        reward: 0,
+      });
+    }
 
     if (missions.length === 0) {
       return {
@@ -579,6 +620,8 @@ export const claimAllMissions = mutation({
 export const ensureWelcomeGift = mutation({
   args: { playerAddress: v.string() },
   handler: async (ctx, { playerAddress }) => {
+    return { created: false, disabled: true };
+
     const normalizedAddress = await resolveAddress(ctx, playerAddress);
 
     // 🔒 STEP 1: Check profile flag FIRST (atomic check)
@@ -866,6 +909,8 @@ export const markChainModalSeen = mutation({
 export const markVibemailSent = mutation({
   args: { playerAddress: v.string() },
   handler: async (ctx, { playerAddress }) => {
+    return { success: false, disabled: true };
+
     const today = new Date().toISOString().split('T')[0];
     const normalizedAddress = await resolveAddress(ctx, playerAddress);
 
@@ -931,6 +976,8 @@ export const markAndClaimNeynarScoreCast = mutation({
     chain: v.optional(v.string()),
   },
   handler: async (ctx, { playerAddress, chain }) => {
+    return { reward: 0, disabled: true };
+
     const normalizedAddress = await resolveAddress(ctx, playerAddress);
     if (isBlacklisted(normalizedAddress)) throw new Error("[BLACKLISTED]");
 
@@ -980,7 +1027,7 @@ export const markAndClaimNeynarScoreCast = mutation({
 
     // Create or update the mission record
     if (existing) {
-      await ctx.db.patch(existing._id, { completed: true, claimed: true, claimedAt: Date.now() });
+      await ctx.db.patch(existing!._id, { completed: true, claimed: true, claimedAt: Date.now() });
     } else {
       await ctx.db.insert("personalMissions", {
         playerAddress: normalizedAddress,
@@ -1019,6 +1066,8 @@ export const markAndClaimDailyShare = mutation({
     chain: v.optional(v.string()),
   },
   handler: async (ctx, { playerAddress, chain }) => {
+    return { reward: 0, disabled: true };
+
     const normalizedAddress = await resolveAddress(ctx, playerAddress);
     if (isBlacklisted(normalizedAddress)) throw new Error("[BLACKLISTED]");
 
@@ -1059,7 +1108,7 @@ export const markAndClaimDailyShare = mutation({
     });
 
     if (existing) {
-      await ctx.db.patch(existing._id, { completed: true, claimed: true, claimedAt: Date.now() });
+      await ctx.db.patch(existing!._id, { completed: true, claimed: true, claimedAt: Date.now() });
     } else {
       await ctx.db.insert("personalMissions", {
         playerAddress: normalizedAddress,
@@ -1126,6 +1175,8 @@ export const markBaccaratWin = mutation({
 export const markRouletteSpin = mutation({
   args: { playerAddress: v.string() },
   handler: async (ctx, { playerAddress }) => {
+    return { success: false, disabled: true };
+
     const today = new Date().toISOString().split('T')[0];
     const normalizedAddress = await resolveAddress(ctx, playerAddress);
 

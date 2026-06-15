@@ -1255,36 +1255,14 @@ export const backfillBurnEarnings = internalMutation({
  */
 export const countNotificationTokens = internalQuery({
   args: {},
-  handler: async (ctx) => {
-    const allTokens = await ctx.db.query("notificationTokens").collect();
-    
-    const stats = {
-      total: allTokens.length,
-      byPlatform: {} as Record<string, number>,
-      byApp: {} as Record<string, number>,
-      withUrl: 0,
-      withoutUrl: 0,
-    };
-    
-    for (const token of allTokens) {
-      // Count by platform
-      const platform = token.platform || "unknown";
-      stats.byPlatform[platform] = (stats.byPlatform[platform] || 0) + 1;
-      
-      // Count by app
-      const app = token.app || "vbms";
-      stats.byApp[app] = (stats.byApp[app] || 0) + 1;
-      
-      // Count with/without URL
-      if (token.url) {
-        stats.withUrl++;
-      } else {
-        stats.withoutUrl++;
-      }
-    }
-    
-    return stats;
-  },
+  handler: async () => ({
+    total: 0,
+    byPlatform: {} as Record<string, number>,
+    byApp: {} as Record<string, number>,
+    withUrl: 0,
+    withoutUrl: 0,
+    notificationsDisabled: true,
+  }),
 });
 
 /**
@@ -1293,45 +1271,15 @@ export const countNotificationTokens = internalQuery({
  */
 export const getAppStats = internalQuery({
   args: {},
-  handler: async (ctx) => {
-    const allTokens = await ctx.db.query("notificationTokens").collect();
-    const now = Date.now();
-    const sevenDays = 7 * 24 * 60 * 60 * 1000;
-    const thirtyDays = 30 * 24 * 60 * 60 * 1000;
-
-    const stats = {
-      total: allTokens.length,
-      last7Days: 0,
-      last30Days: 0,
-      byDay: {} as Record<string, number>,
-      byPlatform: {} as Record<string, number>,
-      byApp: {} as Record<string, number>,
-    };
-
-    for (const token of allTokens) {
-      const age = now - token._creationTime;
-
-      // Recent counts
-      if (age < sevenDays) {
-        stats.last7Days++;
-        const date = new Date(token._creationTime).toISOString().split("T")[0];
-        stats.byDay[date] = (stats.byDay[date] || 0) + 1;
-      }
-      if (age < thirtyDays) {
-        stats.last30Days++;
-      }
-
-      // By platform
-      const platform = token.platform || "unknown";
-      stats.byPlatform[platform] = (stats.byPlatform[platform] || 0) + 1;
-
-      // By app
-      const app = token.app || "vbms";
-      stats.byApp[app] = (stats.byApp[app] || 0) + 1;
-    }
-
-    return stats;
-  },
+  handler: async () => ({
+    total: 0,
+    last7Days: 0,
+    last30Days: 0,
+    byDay: {} as Record<string, number>,
+    byPlatform: {} as Record<string, number>,
+    byApp: {} as Record<string, number>,
+    notificationsDisabled: true,
+  }),
 });
 
 /**
@@ -1340,16 +1288,7 @@ export const getAppStats = internalQuery({
  */
 export const getRecentTokens = internalQuery({
   args: {},
-  handler: async (ctx) => {
-    const tokens = await ctx.db.query("notificationTokens").order("desc").take(50);
-    return tokens.map(t => ({
-      fid: t.fid,
-      platform: t.platform || "unknown",
-      app: t.app || "vbms",
-      url: t.url ? (t.url.includes("neynar") ? "neynar" : "warpcast") : "no-url",
-      created: new Date(t._creationTime).toISOString().split("T")[0],
-    }));
-  },
+  handler: async () => [],
 });
 
 /**

@@ -1218,12 +1218,7 @@ export const defeatBossAndSpawnNext = internalMutation({
 
     // Schedule notifications to all contributors
     try {
-      await ctx.scheduler.runAfter(0, internal.notifications.sendBossDefeatedNotifications, {
-        bossName: defeatedBoss.name,
-        bossRarity: defeatedBoss.rarity,
-        totalContributors: contributions.length,
-        contributorAddresses: contributions.map(c => c.address),
-      });
+      // Notifications disabled.
       console.log(`📢 Scheduled boss defeated notifications for ${contributions.length} contributors`);
     } catch (error) {
       console.error("Failed to schedule boss notifications:", error);

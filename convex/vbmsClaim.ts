@@ -1355,12 +1355,14 @@ export const claimQuestMailVBMS = action({
     amount: v.optional(v.number()),
   },
   handler: async (ctx, args): Promise<{ amount: number; nonce: string; signature: string }> => {
+    throw new Error("Quest VibeMail rewards disabled");
+
     const { messageId, claimerFid, claimerAddress, questIndex } = args;
 
     if (!claimerAddress || claimerFid <= 0) throw new Error("Invalid claimer");
 
     // 🔒 SECURITY: Sender cannot claim their own quest mail
-    const message = await ctx.runQuery(internal.cardVotes.getMessageForClaim, { messageId });
+    const message: any = await ctx.runQuery(internal.cardVotes.getMessageForClaim, { messageId });
     if (!message) throw new Error("Message not found");
     if (message.senderFid === claimerFid) throw new Error("Cannot claim your own sent mail");
 
@@ -1397,6 +1399,8 @@ export const claimQuestReceiptVBMS = action({
     amount: v.optional(v.number()),
   },
   handler: async (ctx, args): Promise<{ amount: number; nonce: string; signature: string }> => {
+    throw new Error("Quest VibeMail rewards disabled");
+
     const { messageId, claimerAddress } = args;
 
     if (!claimerAddress) throw new Error("Invalid claimer");

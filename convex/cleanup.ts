@@ -1,4 +1,6 @@
-import { internalMutation } from "./_generated/server";
+import { v } from "convex/values";
+import { internalMutation, mutation } from "./_generated/server";
+import { requireInternalAdminKey } from "./adminAuth";
 
 const BATCH = 500;
 
@@ -93,6 +95,29 @@ export const wipeAccessTablesBatch = internalMutation({
     const b = await wipeBatch(ctx, "accessVisits");
     const c = await wipeBatch(ctx, "accessDebugLogs");
     return { accessAnalytics: a, accessVisits: b, accessDebugLogs: c };
+  },
+});
+
+export const wipeDisabledFeatureDataBatch = mutation({
+  args: { adminKey: v.string() },
+  handler: async (ctx, { adminKey }) => {
+    requireInternalAdminKey(adminKey);
+    return {
+      notificationTokens: await wipeBatch(ctx, "notificationTokens"),
+      socialQuestProgress: await wipeBatch(ctx, "socialQuestProgress"),
+      customFollowQuests: await wipeBatch(ctx, "customFollowQuests"),
+      playerQuests: await wipeBatch(ctx, "playerQuests"),
+      playerQuestCompletions: await wipeBatch(ctx, "playerQuestCompletions"),
+      vibeMailQuestClaims: await wipeBatch(ctx, "vibeMailQuestClaims"),
+      questMailItemClaims: await wipeBatch(ctx, "questMailItemClaims"),
+      raffleEntries: await wipeBatch(ctx, "raffleEntries"),
+      raffleResults: await wipeBatch(ctx, "raffleResults"),
+      raffleConfig: await wipeBatch(ctx, "raffleConfig"),
+      accessAnalytics: await wipeBatch(ctx, "accessAnalytics"),
+      accessVisits: await wipeBatch(ctx, "accessVisits"),
+      accessDebugLogs: await wipeBatch(ctx, "accessDebugLogs"),
+      rouletteSpins: await wipeBatch(ctx, "rouletteSpins"),
+    };
   },
 });
 
