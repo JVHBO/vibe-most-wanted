@@ -17,7 +17,8 @@ import { ConvexHttpClient } from "convex/browser";
 import { api } from "@/convex/_generated/api";
 
 // Convex client for stats tracking
-const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL || "");
+const CONVEX_URL = process.env.NEXT_PUBLIC_CONVEX_URL || "https://agile-orca-761.convex.cloud";
+const convex = new ConvexHttpClient(CONVEX_URL);
 
 // Fire-and-forget stat tracking (don't await, don't block response)
 function trackStat(key: string) {

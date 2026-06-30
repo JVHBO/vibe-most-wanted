@@ -35,11 +35,6 @@ const MISSION_DATA: Record<string, MissionInfo> = {
     title: '10-Win Streak',
     description: 'Win 10 matches in a row',
   },
-  welcome_gift: {
-    icon: '/images/icons/coins.svg',
-    title: 'Welcome Gift',
-    description: 'Receive your welcome bonus!',
-  },
   vibefid_minted: {
     icon: '/images/icons/achievement.svg',
     title: 'VibeFID Collection',

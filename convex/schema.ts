@@ -1,4 +1,4 @@
-import { defineSchema, defineTable } from "convex/server";
+﻿import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 
 /**
@@ -70,7 +70,7 @@ export default defineSchema({
       )
     )),
 
-    // 🚀 BANDWIDTH FIX: Boolean for efficient leaderboard queries
+    // ðŸš€ BANDWIDTH FIX: Boolean for efficient leaderboard queries
     hasFullDefenseDeck: v.optional(v.boolean()), // true when defenseDeck.length === 5
 
     // Owned Token IDs (for defense deck validation)
@@ -110,9 +110,9 @@ export default defineSchema({
     lastDebtSettlement: v.optional(v.number()), // Last time debt was settled
     pendingConversion: v.optional(v.number()), // TESTVBMS being converted to VBMS (for recovery)
     pendingConversionTimestamp: v.optional(v.number()), // When conversion was initiated
-    pendingNonce: v.optional(v.string()), // 🔒 Nonce used for pending conversion (for on-chain verification)
+    pendingNonce: v.optional(v.string()), // ðŸ”’ Nonce used for pending conversion (for on-chain verification)
 
-    // 🔒 Anti-exploit: Conversion attempt tracking
+    // ðŸ”’ Anti-exploit: Conversion attempt tracking
     lastConversionAttempt: v.optional(v.number()), // Last conversion attempt (success or fail)
     dailyRecoveryCount: v.optional(v.number()), // How many recovers today
     lastRecoveryDay: v.optional(v.string()), // "2026-01-01" format for daily reset
@@ -175,7 +175,7 @@ export default defineSchema({
     hasClaimedSharePack: v.optional(v.boolean()), // One-time FREE pack for sharing profile
     totalShareBonus: v.optional(v.number()), // Lifetime share bonus earned
     hasReceivedWelcomePack: v.optional(v.boolean()), // One-time welcome pack (1 Basic Pack)
-    hasReceivedWelcomeGift: v.optional(v.boolean()), // 🔒 SECURITY: Prevents duplicate welcome_gift mission
+    hasReceivedWelcomeGift: v.optional(v.boolean()), // ðŸ”’ SECURITY: Prevents duplicate welcome_gift mission
 
     // Daily Reminders
     lastActiveDate: v.optional(v.number()), // Last time player was active (for reminder eligibility)
@@ -203,13 +203,13 @@ export default defineSchema({
   })
     .index("by_address", ["address"])
     .index("by_username", ["username"])
-    .index("by_fid", ["farcasterFid"]) // 🔒 SECURITY: For FID-based lookups
+    .index("by_fid", ["farcasterFid"]) // ðŸ”’ SECURITY: For FID-based lookups
     .index("by_total_power", ["stats.totalPower"]) // For leaderboard (legacy)
     .index("by_aura", ["stats.aura"]) // For aura-based leaderboard
     .index("by_weekly_aura", ["stats.weeklyAura"]) // For weekly aura leaderboard
     .index("by_defense_aura", ["hasFullDefenseDeck", "stats.aura"]) // Legacy: permanent aura
-    .index("by_defense_weekly_aura", ["hasFullDefenseDeck", "stats.weeklyAura"]) // 🚀 Weekly leaderboard index
-    .index("by_pending_conversion", ["pendingConversion"]), // 🚀 BANDWIDTH FIX: efficient stuck-conversion scan
+    .index("by_defense_weekly_aura", ["hasFullDefenseDeck", "stats.weeklyAura"]) // ðŸš€ Weekly leaderboard index
+    .index("by_pending_conversion", ["pendingConversion"]), // ðŸš€ BANDWIDTH FIX: efficient stuck-conversion scan
 
   // Player Matches (Match History)
   matches: defineTable({
@@ -311,7 +311,7 @@ export default defineSchema({
     .index("by_status", ["status", "createdAt"])
     .index("by_host", ["hostAddress"])
     .index("by_guest", ["guestAddress"])
-    .index("by_room_id", ["roomId"]), // 🚀 BANDWIDTH FIX: Index for room lookups
+    .index("by_room_id", ["roomId"]), // ðŸš€ BANDWIDTH FIX: Index for room lookups
 
   // Matchmaking Queue
   matchmaking: defineTable({
@@ -325,7 +325,7 @@ export default defineSchema({
     .index("by_player", ["playerAddress"]),
 
   // Notification Tokens (for push notifications)
-  // 🔧 FIX: Support multiple tokens per FID (one per platform: warpcast, neynar)
+  // ðŸ”§ FIX: Support multiple tokens per FID (one per platform: warpcast, neynar)
   notificationTokens: defineTable({
     fid: v.string(), // Farcaster ID or user identifier
     token: v.string(), // Push notification token
@@ -344,10 +344,10 @@ export default defineSchema({
     lastSentAt: v.number(), // Timestamp of last tip sent
   }),
 
-  // 🔥 NEW: Low Energy Notification Cooldown
+  // ðŸ”¥ NEW: Low Energy Notification Cooldown
   lowEnergyNotifications: defineTable({
-    address: v.string(),           // Endereço do jogador
-    lastNotifiedAt: v.number(),    // Timestamp da última notificação
+    address: v.string(),           // EndereÃ§o do jogador
+    lastNotifiedAt: v.number(),    // Timestamp da Ãºltima notificaÃ§Ã£o
     lowEnergyCount: v.number(),    // Quantas cartas estavam com energia baixa
     expiredCount: v.number(),      // Quantas cartas estavam expiradas
   }).index("by_address", ["address"]),
@@ -456,7 +456,7 @@ export default defineSchema({
     .index("by_player", ["playerAddress"])
     .index("by_player_quest", ["playerAddress", "questId"]),
 
-  // Custom Follow Quests — paid by players (1000 VBMS on-chain)
+  // Custom Follow Quests â€” paid by players (1000 VBMS on-chain)
   customFollowQuests: defineTable({
     addedBy: v.string(),              // address of player who paid
     targetUsername: v.string(),       // Farcaster username to follow
@@ -487,6 +487,8 @@ export default defineSchema({
     foilCount: v.optional(v.number()),       // foil cards in this spin
     triggeredBonus: v.optional(v.boolean()), // did this spin trigger bonus free spins
     sessionId: v.optional(v.string()),       // groups trigger + bonus spins for share replay
+    initialGrid: v.optional(v.array(v.any())), // replay/debug grid snapshots from newer slot spins
+    comboSteps: v.optional(v.array(v.any())),
     finalGrid: v.optional(v.array(v.string())), // final grid after combos (baccarat[:f] per cell)
   })
     .index("by_player_time", ["playerAddress", "timestamp"])
@@ -538,7 +540,8 @@ export default defineSchema({
   })
     .index("by_player_date", ["playerAddress", "date"])
     .index("by_player_type", ["playerAddress", "missionType"])
-    .index("by_player_date_type", ["playerAddress", "date", "missionType"]), // 🚀 PERF: Compound for mission lookups
+    .index("by_type", ["missionType"])
+    .index("by_player_date_type", ["playerAddress", "date", "missionType"]), // ðŸš€ PERF: Compound for mission lookups
 
   // Security: Nonces for replay attack prevention
   nonces: defineTable({
@@ -580,7 +583,7 @@ export default defineSchema({
   })
     .index("by_player", ["playerAddress", "timestamp"])
     .index("by_timestamp", ["timestamp"])
-    .index("by_txHash", ["txHash"]), // 🚀 BANDWIDTH FIX: For duplicate txHash check
+    .index("by_txHash", ["txHash"]), // ðŸš€ BANDWIDTH FIX: For duplicate txHash check
 
   // Claim Analytics (track player behavior)
   claimAnalytics: defineTable({
@@ -624,7 +627,7 @@ export default defineSchema({
     // Blockchain Integration
     blockchainBattleId: v.optional(v.number()), // ID from smart contract
 
-    // CPU vs CPU Mode - 🚀 PERF: indexed below for efficient CPU arena queries
+    // CPU vs CPU Mode - ðŸš€ PERF: indexed below for efficient CPU arena queries
     isCpuVsCpu: v.optional(v.boolean()), // If true, both players are CPUs
     cpuCollection: v.optional(v.string()), // Collection for CPU decks (e.g., "gmvbrs")
 
@@ -699,8 +702,8 @@ export default defineSchema({
     .index("by_host", ["hostAddress"])
     .index("by_guest", ["guestAddress"])
     .index("by_token_ante", ["token", "ante", "status"]) // For auto-match filtering
-    .index("by_room_id", ["roomId"]) // 🚀 BANDWIDTH FIX: Index for room lookups
-    .index("by_cpu_collection", ["isCpuVsCpu", "cpuCollection", "status"]), // 🚀 PERF: CPU arena filtering
+    .index("by_room_id", ["roomId"]) // ðŸš€ BANDWIDTH FIX: Index for room lookups
+    .index("by_cpu_collection", ["isCpuVsCpu", "cpuCollection", "status"]), // ðŸš€ PERF: CPU arena filtering
 
   // Poker Chat Messages (for in-match communication)
   pokerChatMessages: defineTable({
@@ -790,7 +793,7 @@ export default defineSchema({
       v.literal("lost"), // Lost - credits gone
       v.literal("refunded") // Game cancelled
     ),
-    payout: v.optional(v.number()), // Credits won (amount × odds)
+    payout: v.optional(v.number()), // Credits won (amount Ã— odds)
     timestamp: v.number(), // When bet was placed
     resolvedAt: v.optional(v.number()), // When bet was resolved
   })
@@ -812,9 +815,9 @@ export default defineSchema({
     .index("by_txHash", ["txHash"])
     .index("by_address_used", ["address", "used"]),
 
-  // ═══════════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   // CARD PACKS SYSTEM (Non-NFT Free Cards)
-  // ═══════════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
   // Card Packs (Free gacha system)
   cardPacks: defineTable({
@@ -827,7 +830,7 @@ export default defineSchema({
   })
     .index("by_address", ["address"])
     .index("by_address_unopened", ["address", "unopened"])
-    .index("by_address_packType", ["address", "packType"]), // 🚀 PERF: Compound index for packType filtering
+    .index("by_address_packType", ["address", "packType"]), // ðŸš€ PERF: Compound index for packType filtering
 
   // Card Inventory (Free cards from packs)
   cardInventory: defineTable({
@@ -902,9 +905,9 @@ export default defineSchema({
     .index("by_active", ["active"])
     .index("by_contract", ["contractAddress"]),
 
-  // ═══════════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   // FARCASTER CARDS (Mint cards from Farcaster profiles)
-  // ═══════════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
   // Farcaster Cards (mintable cards based on Farcaster profiles)
   farcasterCards: defineTable({
@@ -933,7 +936,7 @@ export default defineSchema({
     // Playing Card Properties
     suit: v.string(), // "hearts", "diamonds", "spades", "clubs" (random)
     rank: v.string(), // "2"-"10", "J", "Q", "K", "A" (based on rarity)
-    suitSymbol: v.string(), // "♥", "♦", "♠", "♣"
+    suitSymbol: v.string(), // "â™¥", "â™¦", "â™ ", "â™£"
     color: v.string(), // "red" or "black"
 
     // Farcaster Stats (frozen at mint time)
@@ -970,7 +973,7 @@ export default defineSchema({
     .searchIndex("search_username", {
       searchField: "username",
       filterFields: ["rarity"],
-    }), // 🚀 BANDWIDTH FIX: Full-text search for username
+    }), // ðŸš€ BANDWIDTH FIX: Full-text search for username
 
   // Neynar Score History (track score changes over time)
   neynarScoreHistory: defineTable({
@@ -983,9 +986,9 @@ export default defineSchema({
     .index("by_fid", ["fid"])
     .index("by_fid_time", ["fid", "checkedAt"]),
 
-  // ═══════════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   // WEBRTC VOICE CHAT SIGNALING
-  // ═══════════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
   // WebRTC Signaling (for voice chat in poker battles)
   voiceSignaling: defineTable({
@@ -1012,11 +1015,11 @@ export default defineSchema({
     joinedAt: v.number(), // Timestamp when joined voice
   })
     .index("by_room", ["roomId"])
-    .index("by_address", ["address"]), // 🚀 BANDWIDTH FIX: For player lookup
+    .index("by_address", ["address"]), // ðŸš€ BANDWIDTH FIX: For player lookup
 
-  // ═══════════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   // RAID BOSS MODE (Global Cooperative Boss Battles)
-  // ═══════════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
   // Global Raid Boss State (only 1 active boss at a time)
   raidBoss: defineTable({
@@ -1054,7 +1057,7 @@ export default defineSchema({
   raidAttacks: defineTable({
     // Player Info
     address: v.string(), // Player wallet address
-    username: v.optional(v.string()), // 🚀 Cached username to avoid N+1 profile lookups
+    username: v.optional(v.string()), // ðŸš€ Cached username to avoid N+1 profile lookups
 
     // Raid Deck (5 regular cards)
     deck: v.array(v.object({
@@ -1105,7 +1108,7 @@ export default defineSchema({
   })
     .index("by_address", ["address"])
     .index("by_total_damage", ["totalDamageDealt"])
-    .index("by_last_updated", ["lastUpdated"]), // 🚀 For filtering active decks
+    .index("by_last_updated", ["lastUpdated"]), // ðŸš€ For filtering active decks
 
   // Raid Contributions (per boss, per player)
   raidContributions: defineTable({
@@ -1295,6 +1298,7 @@ export default defineSchema({
   })
     .index("by_address", ["address"])
     .index("by_address_timestamp", ["address", "timestamp"])
+    .index("by_source", ["source"])
     .index("by_txHash", ["txHash"]),
 
   // Price Ticker Snapshots (Daily price history for showing up/down trends)
@@ -1334,7 +1338,7 @@ export default defineSchema({
     .index("by_player", ["playerAddress"])
     .index("by_player_cast", ["playerAddress", "castHash"]),
 
-  // 🔒 COIN AUDIT LOG - Track ALL TESTVBMS transactions for security auditing
+  // ðŸ”’ COIN AUDIT LOG - Track ALL TESTVBMS transactions for security auditing
   // Added after exploit investigation on 2025-12-12
   coinAuditLog: defineTable({
     playerAddress: v.string(),
@@ -1343,7 +1347,7 @@ export default defineSchema({
     type: v.union(
       v.literal("earn"),      // Coins added (rewards, missions, bonuses)
       v.literal("spend"),     // Coins spent (entry fees, purchases)
-      v.literal("convert"),   // TESTVBMS → VBMS conversion initiated
+      v.literal("convert"),   // TESTVBMS â†’ VBMS conversion initiated
       v.literal("claim"),     // VBMS claimed on blockchain
       v.literal("recover")    // Failed conversion recovered
     ),
@@ -1404,7 +1408,7 @@ export default defineSchema({
     .index("by_exploiter", ["exploiterAddress"])
     .index("by_timestamp", ["timestamp"]),
 
-  // 🚀 Leaderboard Cache (reduces bandwidth by ~95% for checkWeeklyRewardEligibility)
+  // ðŸš€ Leaderboard Cache (reduces bandwidth by ~95% for checkWeeklyRewardEligibility)
   // Updated every 5 minutes by cron job instead of querying 10 full profiles
   leaderboardCache: defineTable({
     type: v.literal("top10_power"), // Cache type identifier
@@ -1413,9 +1417,9 @@ export default defineSchema({
   })
     .index("by_type", ["type"]),
 
-  // 🚀 FULL Leaderboard Cache (reduces bandwidth by ~99% for getLeaderboardLite)
+  // ðŸš€ FULL Leaderboard Cache (reduces bandwidth by ~99% for getLeaderboardLite)
   // Stores pre-computed leaderboard data, updated 1x per day
-  // 🚀 BANDWIDTH FIX v4: Only stores fields used by UI
+  // ðŸš€ BANDWIDTH FIX v4: Only stores fields used by UI
   // Note: Legacy fields kept as optional for backward compatibility with existing cache
   leaderboardFullCache: defineTable({
     type: v.literal("full_leaderboard"), // Cache type identifier
@@ -1429,7 +1433,7 @@ export default defineSchema({
       hasDefenseDeck: v.boolean(),
       userIndex: v.number(),
       isBlacklisted: v.boolean(),
-      hasVibeBadge: v.optional(v.boolean()), // 🐛 FIX: Added for UI badge display
+      hasVibeBadge: v.optional(v.boolean()), // ðŸ› FIX: Added for UI badge display
       // Legacy fields - kept for backward compat with existing cache data
       vibePower: v.optional(v.number()),
       vbrsPower: v.optional(v.number()),
@@ -1445,9 +1449,9 @@ export default defineSchema({
   })
     .index("by_type", ["type"]),
 
-  // ═══════════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   // FEATURED CAST AUCTIONS (Bid to feature casts)
-  // ═══════════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
   // Cast Auctions - 24-hour auctions for featured cast slots
   castAuctions: defineTable({
@@ -1550,15 +1554,15 @@ export default defineSchema({
     .index("by_auction_status", ["auctionId", "status"])
     .index("by_txHash", ["txHash"]),
 
-  // ═══════════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   // REFERRAL SYSTEM (Invite friends, earn rewards)
-  // ═══════════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
-  // ═══════════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   // NOTE: Referral system (referrals, referralStats, referralClaims tables) was
   // REMOVED Feb 2026 due to Exploit #2 - referral farming with fake accounts.
   // MULTI-WALLET ADDRESS LINKS (Reverse lookup for linked addresses)
-  // ═══════════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
   // Address Links - Maps secondary addresses to their primary profile
   // Used for efficient lookup when user connects with a linked wallet
@@ -1570,7 +1574,7 @@ export default defineSchema({
     .index("by_address", ["address"])
     .index("by_primary", ["primaryAddress"]),
 
-  // 🔒 Active Sessions - Prevents using same account on multiple devices
+  // ðŸ”’ Active Sessions - Prevents using same account on multiple devices
   // Only one active session per profile allowed at a time
   activeSessions: defineTable({
     profileAddress: v.string(), // Primary profile address (lowercase)
@@ -1582,7 +1586,7 @@ export default defineSchema({
     .index("by_profile", ["profileAddress"])
     .index("by_session", ["sessionId"]),
 
-  // 🔗 Wallet Link Codes - Temporary codes to link wallets across devices
+  // ðŸ”— Wallet Link Codes - Temporary codes to link wallets across devices
   walletLinkCodes: defineTable({
     code: v.string(), // 6-digit code
     profileAddress: v.string(), // Primary profile address (lowercase)
@@ -1594,7 +1598,7 @@ export default defineSchema({
     .index("by_code", ["code"])
     .index("by_profile", ["profileAddress"]),
 
-  // 🗳️ VibeFID Card Votes - Daily voting system
+  // ðŸ—³ï¸ VibeFID Card Votes - Daily voting system
   cardVotes: defineTable({
     cardFid: v.number(),
     voterFid: v.number(),
@@ -1624,7 +1628,7 @@ export default defineSchema({
     .index("by_date", ["date"])
     .index("by_card_unread", ["cardFid", "isRead"]),
 
-  // 📊 Daily Vote Leaderboard
+  // ðŸ“Š Daily Vote Leaderboard
   dailyVoteLeaderboard: defineTable({
     cardFid: v.number(),
     username: v.string(),
@@ -1638,7 +1642,7 @@ export default defineSchema({
     .index("by_date", ["date"])
     .index("by_card_date", ["cardFid", "date"]),
 
-  // 🏆 Daily Prize Winners
+  // ðŸ† Daily Prize Winners
   dailyPrizeWinners: defineTable({
     date: v.string(),
     cardFid: v.number(),
@@ -1651,9 +1655,9 @@ export default defineSchema({
   })
     .index("by_date", ["date"]),
 
-  // ═══════════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   // NFT GIFTS - Gift NFTs via VibeMail
-  // ═══════════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
   nftGifts: defineTable({
     // Sender info
@@ -1705,13 +1709,13 @@ export default defineSchema({
     paidTxHash: v.optional(v.string()), // Whether prize was claimed
     claimedAt: v.optional(v.number()), // When claimed
     txHash: v.optional(v.string()), // Claim transaction hash
-    // 🔒 SECURITY: Prevents infinite claim exploit
+    // ðŸ”’ SECURITY: Prevents infinite claim exploit
     claimPending: v.optional(v.boolean()), // Signature generated, awaiting TX
     claimPendingAt: v.optional(v.number()), // When signature was generated
   })
     .index("by_address_date", ["address", "date"])
     .index("by_date", ["date"])
-    .index("by_paid_tx_hash", ["paidTxHash"]), // 🚀 BANDWIDTH FIX: Fast txHash lookup
+    .index("by_paid_tx_hash", ["paidTxHash"]), // ðŸš€ BANDWIDTH FIX: Fast txHash lookup
 
   // Access analytics - track miniapp vs web visits
   accessAnalytics: defineTable({
@@ -1729,7 +1733,7 @@ export default defineSchema({
     .index("by_date", ["date"])
     .index("by_date_source", ["date", "source"]),
 
-  // 🚀 BANDWIDTH FIX: Separate table for deduplication (replaces addresses array)
+  // ðŸš€ BANDWIDTH FIX: Separate table for deduplication (replaces addresses array)
   // Index lookup is O(1) vs O(n) array scan
   accessVisits: defineTable({
     date: v.string(), // YYYY-MM-DD
@@ -1757,9 +1761,9 @@ export default defineSchema({
     .index("by_address", ["address"])
     .index("by_timestamp", ["timestamp"]),
 
-  // ═══════════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   // NFT OWNERSHIP TRACKING (Source of Truth - updated via Alchemy Webhooks)
-  // ═══════════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
   // Tracks current ownership of all NFTs across all collections
   // Updated in real-time by Alchemy webhooks on transfer events
@@ -1812,7 +1816,7 @@ export default defineSchema({
   })
     .index("by_key", ["key"]),
 
-  // Snapshot of all VibeFID holders (mint encerrado — 572 holders)
+  // Snapshot of all VibeFID holders (mint encerrado â€” 572 holders)
   vibeFidHolders: defineTable({
     address: v.string(),      // Holder address (lowercase)
     chain: v.string(),        // 'base' or 'arbitrum'
@@ -1822,9 +1826,9 @@ export default defineSchema({
     .index("by_address", ["address"])
     .index("by_chain", ["chain"]),
 
-  // ═══════════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   // BACCARAT CASINO (Simple card game - bet VBMS, win cards)
-  // ═══════════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
   // Baccarat Tables - Active game sessions
   baccaratTables: defineTable({
@@ -1963,9 +1967,9 @@ export default defineSchema({
   })
     .index("by_finished", ["finishedAt"]),
 
-  // ═══════════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   // TCG - VIBE CLASH (Marvel Snap style card game)
-  // ═══════════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
   // TCG Matches
   tcgMatches: defineTable({
@@ -2004,11 +2008,11 @@ export default defineSchema({
       ),
       turnEndsAt: v.number(), // Timestamp (20 seg timer)
 
-      // Mãos dos jogadores (cartas na mão - ocultas do oponente)
+      // MÃ£os dos jogadores (cartas na mÃ£o - ocultas do oponente)
       player1Hand: v.array(v.any()),
       player2Hand: v.array(v.any()),
 
-      // Decks restantes (cartas ainda não compradas)
+      // Decks restantes (cartas ainda nÃ£o compradas)
       player1DeckRemaining: v.array(v.any()),
       player2DeckRemaining: v.array(v.any()),
 
@@ -2021,14 +2025,14 @@ export default defineSchema({
         player2Power: v.number(), // Power total do player2 neste lane
       })),
 
-      // Ações pendentes do turno (antes do reveal simultâneo)
+      // AÃ§Ãµes pendentes do turno (antes do reveal simultÃ¢neo)
       player1Actions: v.optional(v.array(v.object({
         type: v.union(
           v.literal("play"),           // Jogar carta no lane
-          v.literal("sacrifice-hand"), // Sacrificar da mão → compra carta
-          v.literal("sacrifice-lane")  // Sacrificar do lane → buff
+          v.literal("sacrifice-hand"), // Sacrificar da mÃ£o â†’ compra carta
+          v.literal("sacrifice-lane")  // Sacrificar do lane â†’ buff
         ),
-        cardIndex: v.number(),           // Index da carta na mão ou lane
+        cardIndex: v.number(),           // Index da carta na mÃ£o ou lane
         targetLane: v.optional(v.number()), // Lane alvo (para play ou sacrifice-lane)
         targetCardIndex: v.optional(v.number()), // Carta alvo do buff
       }))),
@@ -2043,7 +2047,7 @@ export default defineSchema({
         targetCardIndex: v.optional(v.number()),
       }))),
 
-      // Quem já confirmou ações do turno
+      // Quem jÃ¡ confirmou aÃ§Ãµes do turno
       player1Confirmed: v.boolean(),
       player2Confirmed: v.boolean(),
     })),
@@ -2062,8 +2066,8 @@ export default defineSchema({
     isStakedMatch: v.optional(v.boolean()), // Match com aposta
     stakeAmount: v.optional(v.number()), // Attack fee (10% da pool)
     poolTier: v.optional(v.number()), // Pool total do defensor (ex: 1000, 5000, 10000)
-    isCpuOpponent: v.optional(v.boolean()), // Oponente é CPU jogando pelo defense deck
-    stakePaid: v.optional(v.boolean()), // Rewards já processados (anti-duplicate)
+    isCpuOpponent: v.optional(v.boolean()), // Oponente Ã© CPU jogando pelo defense deck
+    stakePaid: v.optional(v.boolean()), // Rewards jÃ¡ processados (anti-duplicate)
 
     // Heartbeat - disconnect detection
     player1LastSeen: v.optional(v.number()),
@@ -2073,7 +2077,7 @@ export default defineSchema({
     createdAt: v.number(),
     startedAt: v.optional(v.number()),
     finishedAt: v.optional(v.number()),
-    expiresAt: v.number(), // Auto-cancel se não começar
+    expiresAt: v.number(), // Auto-cancel se nÃ£o comeÃ§ar
   })
     .index("by_status", ["status", "createdAt"])
     .index("by_player1", ["player1Address"])
@@ -2087,7 +2091,7 @@ export default defineSchema({
     cards: v.array(v.object({
       type: v.union(v.literal("vbms"), v.literal("nothing"), v.literal("vibefid"), v.literal("other")), // Tipo da carta
       cardId: v.string(), // VBMS: tokenId, Nothing: cardId do inventory
-      // Cached info (pra não precisar buscar toda hora)
+      // Cached info (pra nÃ£o precisar buscar toda hora)
       name: v.optional(v.string()),
       rarity: v.string(),
       power: v.number(),
@@ -2096,13 +2100,13 @@ export default defineSchema({
       wear: v.optional(v.string()),
       collection: v.optional(v.string()),
     })),
-    vbmsCount: v.number(), // Pra validar mínimo 8
-    nothingCount: v.number(), // Máximo 7
+    vbmsCount: v.number(), // Pra validar mÃ­nimo 8
+    nothingCount: v.number(), // MÃ¡ximo 7
     totalPower: v.number(), // Power total do deck
     isActive: v.boolean(), // Deck ativo pra matchmaking
     isDefenseDeck: v.optional(v.boolean()), // Deck de defesa pra auto-match PvP
     defensePool: v.optional(v.number()), // VBMS staked neste deck de defesa
-    defensePoolActive: v.optional(v.boolean()), // Pool está ativa para receber ataques
+    defensePoolActive: v.optional(v.boolean()), // Pool estÃ¡ ativa para receber ataques
     createdAt: v.number(),
     lastUsed: v.optional(v.number()),
   })
@@ -2110,9 +2114,9 @@ export default defineSchema({
     .index("by_address_active", ["address", "isActive"])
     .index("by_defense", ["isDefenseDeck"]),
 
-  // TCG Match History (histórico resumido pra stats)
+  // TCG Match History (histÃ³rico resumido pra stats)
   tcgHistory: defineTable({
-    matchId: v.id("tcgMatches"), // Referência ao match
+    matchId: v.id("tcgMatches"), // ReferÃªncia ao match
     roomId: v.string(),
 
     // Players
@@ -2153,9 +2157,9 @@ export default defineSchema({
     deckId: v.id("tcgDecks"),
     deckName: v.string(),
     poolAmount: v.number(), // Quanto tem stakado
-    totalWins: v.number(), // Vitórias defendendo
+    totalWins: v.number(), // VitÃ³rias defendendo
     totalLosses: v.number(), // Derrotas
-    totalEarned: v.number(), // Total ganho (90% de cada vitória)
+    totalEarned: v.number(), // Total ganho (90% de cada vitÃ³ria)
     totalLost: v.number(), // Total perdido
     lastUpdated: v.number(),
   })
@@ -2168,9 +2172,9 @@ export default defineSchema({
     address: v.string(),
     username: v.string(),
     deckId: v.id("tcgDecks"),
-    poolTier: v.optional(v.number()), // Tier de pool que está buscando (1000, 5000, etc)
-    searchingAt: v.number(), // Timestamp quando começou a buscar
-    expiresAt: v.number(), // Expira após 30s
+    poolTier: v.optional(v.number()), // Tier de pool que estÃ¡ buscando (1000, 5000, etc)
+    searchingAt: v.number(), // Timestamp quando comeÃ§ou a buscar
+    expiresAt: v.number(), // Expira apÃ³s 30s
   })
     .index("by_address", ["address"])
     .index("by_searching", ["expiresAt"])
@@ -2185,9 +2189,9 @@ export default defineSchema({
   })
     .index("by_address", ["address"]),
 
-  // ═══════════════════════════════════════════════════════════════════════════════
-  // PLAYER QUESTS — Social quests created by players via VibeMail
-  // ═══════════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // PLAYER QUESTS â€” Social quests created by players via VibeMail
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
   playerQuests: defineTable({
     creatorAddress: v.string(),
@@ -2238,7 +2242,7 @@ export default defineSchema({
     .index("by_address", ["address"])
     .index("by_address_mailid", ["address", "vibemailId"]),
 
-  // Quest VibeMail individual item claims (follow/miniapp/channel quests → 200 VBMS each)
+  // Quest VibeMail individual item claims (follow/miniapp/channel quests â†’ 200 VBMS each)
   questMailItemClaims: defineTable({
     messageId: v.id("cardVotes"),
     claimerFid: v.number(),
@@ -2270,7 +2274,7 @@ export default defineSchema({
     .index("by_created", ["createdAt"])
     .index("by_address", ["address"]),
 
-  // ─── Raffle ──────────────────────────────────────────────────────────────
+  // â”€â”€â”€ Raffle â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   raffleConfig: defineTable({
     prizeDescription: v.string(),
     prizeImageUrl:    v.string(),
@@ -2283,12 +2287,12 @@ export default defineSchema({
     epoch:            v.number(),
     visible:          v.boolean(),
     updatedAt:        v.number(),
-    // Poller checkpoints — persists last processed block to avoid gaps
+    // Poller checkpoints â€” persists last processed block to avoid gaps
     lastPolledBaseBlock: v.optional(v.number()),
     lastPolledARBBlock:  v.optional(v.number()),
-    // Draw state — prevents duplicate requestDraw() gas spend
+    // Draw state â€” prevents duplicate requestDraw() gas spend
     drawRequested:       v.optional(v.boolean()),
-    // Tier notification tracking — last tier threshold notified (tickets count)
+    // Tier notification tracking â€” last tier threshold notified (tickets count)
     lastNotifiedTier:    v.optional(v.number()),
   })
     .index("by_epoch", ["epoch"]),
@@ -2339,7 +2343,7 @@ export default defineSchema({
   })
     .index("by_epoch", ["epoch"]),
 
-  // SlotCoinShop poller state — checkpoint blocks for Base + ARB
+  // SlotCoinShop poller state â€” checkpoint blocks for Base + ARB
   slotShopPollerState: defineTable({
     lastBaseBlock: v.optional(v.number()),
     lastArbBlock:  v.optional(v.number()),
@@ -2354,3 +2358,4 @@ export default defineSchema({
     .index("by_fid", ["fid"])
     .index("by_attempts_and_timestamp", ["attempts", "timestamp"]),
 });
+

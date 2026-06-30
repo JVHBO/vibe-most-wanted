@@ -29,6 +29,23 @@ async function deleteBatchByCreation(ctx: any, tableName: string, cutoffMs: numb
   return docs.length;
 }
 
+function isWelcomeBonusDoc(doc: any): boolean {
+  const type = String(doc.type ?? "").toLowerCase();
+  const source = String(doc.source ?? "").toLowerCase();
+  const description = String(doc.description ?? "").toLowerCase();
+  const sourceId = String(doc.sourceId ?? "").toLowerCase();
+
+  return (
+    source.includes("welcome") ||
+    sourceId.includes("welcome_pack") ||
+    description.includes("welcome bonus") ||
+    description.includes("welcome gift") ||
+    description.includes("boas-vindas") ||
+    description.includes("boas vindas") ||
+    (type === "bonus" && source === "admin_add" && description.includes("welcome"))
+  );
+}
+
 /** ONE BATCH: wipe accessDebugLogs (call multiple times until 0) */
 export const wipeAccessDebugLogsBatch = internalMutation({
   args: {},
@@ -131,6 +148,82 @@ export const wipeAccountsBatch = mutation({
       addressLinks: await wipeBatch(ctx, "addressLinks"),
       activeSessions: await wipeBatch(ctx, "activeSessions"),
       profiles: await wipeBatch(ctx, "profiles"),
+    };
+  },
+});
+
+export const removeWelcomeBonusDataBatch = mutation({
+  args: { adminKey: v.string() },
+  handler: async (ctx, { adminKey }) => {
+    requireInternalAdminKey(adminKey);
+
+    const welcomeTransactions = (await ctx.db
+      .query("coinTransactions")
+      .filter((q) =>
+        q.or(
+          q.eq(q.field("description"), "Welcome bonus"),
+          q.eq(q.field("description"), "Welcome gift"),
+          q.eq(q.field("source"), "welcome_bonus"),
+        ),
+      )
+      .take(BATCH)).filter(isWelcomeBonusDoc);
+
+    const subtractByAddress = new Map<string, number>();
+    for (const tx of welcomeTransactions) {
+      const amount = Math.max(0, Number(tx.amount ?? 0));
+      if (amount > 0) {
+        const address = String(tx.address ?? "").toLowerCase();
+        subtractByAddress.set(address, (subtractByAddress.get(address) ?? 0) + amount);
+      }
+      await ctx.db.delete(tx._id);
+    }
+
+    let profilesAdjusted = 0;
+    for (const [address, amount] of subtractByAddress) {
+      if (!address) continue;
+      const profile = await ctx.db
+        .query("profiles")
+        .withIndex("by_address", (q) => q.eq("address", address))
+        .first();
+      if (!profile) continue;
+
+      await ctx.db.patch(profile._id, {
+        coins: Math.max(0, (profile.coins ?? 0) - amount),
+        lifetimeEarned: Math.max(0, (profile.lifetimeEarned ?? 0) - amount),
+        hasReceivedWelcomeGift: true,
+        hasReceivedWelcomePack: true,
+        lastUpdated: Date.now(),
+      });
+      profilesAdjusted++;
+    }
+
+    const welcomeMissions = await ctx.db
+      .query("personalMissions")
+      .filter((q) => q.eq(q.field("missionType"), "welcome_gift"))
+      .take(BATCH);
+    for (const mission of welcomeMissions) {
+      await ctx.db.delete(mission._id);
+    }
+
+    const welcomePacks = (await ctx.db
+      .query("cardPacks")
+      .filter((q) =>
+        q.or(
+          q.eq(q.field("sourceId"), "welcome_pack"),
+          q.eq(q.field("sourceId"), "welcome_pack_auto"),
+          q.eq(q.field("sourceId"), "welcome_pack_retroactive"),
+        ),
+      )
+      .take(BATCH)).filter(isWelcomeBonusDoc);
+    for (const pack of welcomePacks) {
+      await ctx.db.delete(pack._id);
+    }
+
+    return {
+      welcomeTransactions: welcomeTransactions.length,
+      profilesAdjusted,
+      welcomeMissions: welcomeMissions.length,
+      welcomePacks: welcomePacks.length,
     };
   },
 });

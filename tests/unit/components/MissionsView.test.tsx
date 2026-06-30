@@ -42,7 +42,7 @@ const baseProps = {
 describe('MissionsView', () => {
   it('renders missions list', () => {
     render(<MissionsView {...baseProps} />);
-    expect(screen.getByText(/daily|mission/i)).toBeInTheDocument();
+    expect(screen.getByText('daily_login')).toBeInTheDocument();
   });
 
   it('shows loading spinner when loading', () => {
@@ -70,8 +70,9 @@ describe('MissionsView', () => {
     expect(screen.getAllByText(/claim/i).length).toBeGreaterThan(0);
   });
 
-  it('switches to social view', () => {
+  it('does not render social quests', () => {
     render(<MissionsView {...baseProps} missionsSubView="social" />);
-    expect(screen.getByTestId('social-panel')).toBeInTheDocument();
+    expect(screen.queryByTestId('social-panel')).not.toBeInTheDocument();
+    expect(screen.queryByText('Social')).not.toBeInTheDocument();
   });
 });

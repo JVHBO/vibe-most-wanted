@@ -385,7 +385,7 @@ export const getRaidBossLeaderboard = query({
  * Common: 1 VBMS, Rare: 3, Epic: 5, Legendary: 10, Mythic: 15, VibeFID: 50
  * 🔗 MULTI-WALLET: Uses primary address for linked wallets
  */
-export const replaceCard: any = action({
+export const replaceCard = action({
   args: {
     address: v.string(),
     oldCardTokenId: v.string(),
@@ -402,7 +402,7 @@ export const replaceCard: any = action({
     txHash: v.string(),
     isVibeFID: v.optional(v.boolean()),
   },
-  handler: async (ctx: any, args: any) => {
+  handler: async (ctx: any, args: any): Promise<any> => {
     if (args.isVibeFID && args.txHash === ZERO_TX_HASH) {
       throw new Error("VibeFID replacement requires a verified VBMS payment.");
     }
@@ -594,7 +594,7 @@ export const replaceCardInternal = internalMutation({
  * Set raid deck for a player
  * 🔗 MULTI-WALLET: Uses primary address for linked wallets
  */
-export const setRaidDeck: any = action({
+export const setRaidDeck = action({
   args: {
     address: v.string(),
     deck: v.array(v.object({
@@ -618,7 +618,7 @@ export const setRaidDeck: any = action({
     })),
     txHash: v.string(),
   },
-  handler: async (ctx: any, args: any) => {
+  handler: async (ctx: any, args: any): Promise<any> => {
     await verifyRaidVBMSTransfer(ctx, args.address, deckCost(args.deck, args.vibefidCard), args.txHash);
     return await ctx.runMutation(internal.raidBoss.setRaidDeckInternal, args);
   },
@@ -827,13 +827,13 @@ export const clearRaidDeck = mutation({
  * Refuel card energy (costs 1 VBMS per card, or 4 VBMS for all 5)
  * 🔗 MULTI-WALLET: Uses primary address for linked wallets
  */
-export const refuelCards: any = action({
+export const refuelCards = action({
   args: {
     address: v.string(),
     cardTokenIds: v.array(v.string()),
     txHash: v.string(),
   },
-  handler: async (ctx: any, args: any) => {
+  handler: async (ctx: any, args: any): Promise<any> => {
     await verifyRaidVBMSTransfer(ctx, args.address, refuelCost(args.cardTokenIds.length), args.txHash);
     return await ctx.runMutation(internal.raidBoss.refuelCardsInternal, args);
   },

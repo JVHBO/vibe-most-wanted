@@ -1,13 +1,10 @@
-/**
+﻿/**
  * PERSONAL MISSIONS SYSTEM
  *
- * Manages claimable daily bonuses and one-time rewards:
- * - Daily login (50 coins)
+ * Manages game-only claimable rewards:
  * - First PvE win (25 coins)
  * - First PvP match (50 coins)
- * - Welcome gift (250 coins, one-time)
  * - Win streaks (75/150/375 coins)
- * - VibeFID minted (5000 coins - not nerfed)
  */
 
 import { v } from "convex/values";
@@ -64,7 +61,7 @@ const MISSION_REWARDS = {
   streak_5: { type: "coins", amount: 150 },        // was 300
   streak_10: { type: "coins", amount: 375 },       // was 750
   vibefid_minted: { type: "coins", amount: 5000 }, // KEPT - incentivo pra mintar
-  welcome_gift: { type: "coins", amount: 250 },    // was 500
+  welcome_gift: { type: "coins", amount: 0 },      // disabled
   claim_vibe_badge: { type: "badge", amount: 0 },  // VIBE badge - +20% bonus coins in Wanted Cast
   tcg_pve_win: { type: "coins", amount: 25 },      // First VibeClash PvE win
   tcg_pvp_match: { type: "coins", amount: 50 },    // First VibeClash PvP match
@@ -90,7 +87,7 @@ const DISABLED_NON_GAME_MISSIONS = new Set([
 
 /**
  * Get all player missions (claimable and claimed)
- * 🚀 BANDWIDTH FIX: Returns only essential fields, not full documents
+ * ðŸš€ BANDWIDTH FIX: Returns only essential fields, not full documents
  */
 export const getPlayerMissions = query({
   args: { playerAddress: v.string() },
@@ -152,7 +149,7 @@ export const markDailyLogin = mutation({
       return { success: false, noProfile: true };
     }
 
-    // 🚀 BANDWIDTH FIX: Use compound index instead of filter post-query
+    // ðŸš€ BANDWIDTH FIX: Use compound index instead of filter post-query
     const existing = await ctx.db
       .query("personalMissions")
       .withIndex("by_player_date_type", (q) =>
@@ -190,7 +187,7 @@ export const markFirstPveWin = mutation({
     const today = new Date().toISOString().split('T')[0];
     const normalizedAddress = await resolveAddress(ctx, playerAddress);
 
-    // 🚀 BANDWIDTH FIX: Use compound index
+    // ðŸš€ BANDWIDTH FIX: Use compound index
     const existing = await ctx.db
       .query("personalMissions")
       .withIndex("by_player_date_type", (q) =>
@@ -211,7 +208,7 @@ export const markFirstPveWin = mutation({
         completedAt: Date.now(),
       });
 
-      // devLog (server-side)("✅ First PvE win mission created for", normalizedAddress);
+      // devLog (server-side)("âœ… First PvE win mission created for", normalizedAddress);
     }
   },
 });
@@ -225,7 +222,7 @@ export const markFirstPvpMatch = mutation({
     const today = new Date().toISOString().split('T')[0];
     const normalizedAddress = await resolveAddress(ctx, playerAddress);
 
-    // 🚀 BANDWIDTH FIX: Use compound index
+    // ðŸš€ BANDWIDTH FIX: Use compound index
     const existing = await ctx.db
       .query("personalMissions")
       .withIndex("by_player_date_type", (q) =>
@@ -246,7 +243,7 @@ export const markFirstPvpMatch = mutation({
         completedAt: Date.now(),
       });
 
-      // devLog (server-side)("✅ First PvP match mission created for", normalizedAddress);
+      // devLog (server-side)("âœ… First PvP match mission created for", normalizedAddress);
     }
   },
 });
@@ -264,7 +261,7 @@ export const markWinStreak = mutation({
     const normalizedAddress = await resolveAddress(ctx, playerAddress);
     const missionType = `streak_${streak}` as "streak_3" | "streak_5" | "streak_10";
 
-    // 🚀 BANDWIDTH FIX: Use compound index
+    // ðŸš€ BANDWIDTH FIX: Use compound index
     const existing = await ctx.db
       .query("personalMissions")
       .withIndex("by_player_date_type", (q) =>
@@ -298,7 +295,7 @@ export const markVibeFIDMinted = mutation({
 
     const normalizedAddress = await resolveAddress(ctx, playerAddress);
 
-    // 🚀 BANDWIDTH FIX: Use compound index instead of filter post-query
+    // ðŸš€ BANDWIDTH FIX: Use compound index instead of filter post-query
     const existing = await ctx.db
       .query("personalMissions")
       .withIndex("by_player_date_type", (q) =>
@@ -319,7 +316,7 @@ export const markVibeFIDMinted = mutation({
         completedAt: Date.now(),
       });
 
-      console.log("🎴 VibeFID mint mission created for", normalizedAddress);
+      console.log("ðŸŽ´ VibeFID mint mission created for", normalizedAddress);
     }
   },
 });
@@ -400,9 +397,9 @@ export const claimMission = mutation({
       throw new Error(`Unknown mission type: ${mission.missionType}`);
     }
 
-    // 🇨🇳 Apply language boost to mission reward
+    // ðŸ‡¨ðŸ‡³ Apply language boost to mission reward
     let boostedReward = language ? applyLanguageBoost(rewardInfo.amount, language) : rewardInfo.amount;
-    // 🔗 Arbitrum 2x bonus
+    // ðŸ”— Arbitrum 2x bonus
     if (chain === "arbitrum") boostedReward = boostedReward * 2;
 
     let newBalance = profile.coins || 0;
@@ -429,7 +426,7 @@ export const claimMission = mutation({
         },
       });
 
-      // 🔒 AUDIT LOG - Track mission claim
+      // ðŸ”’ AUDIT LOG - Track mission claim
       await createAuditLog(
         ctx,
         normalizedAddress,
@@ -442,7 +439,7 @@ export const claimMission = mutation({
         { missionType: mission.missionType }
       );
 
-      // 📊 LOG TRANSACTION
+      // ðŸ“Š LOG TRANSACTION
       await logTransaction(ctx, {
         address: normalizedAddress,
         type: 'earn',
@@ -453,7 +450,7 @@ export const claimMission = mutation({
         balanceAfter: newBalance,
       });
 
-      console.log(`💰 Mission reward: ${boostedReward} TESTVBMS + ${auraReward} aura for ${normalizedAddress}. Balance: ${currentBalance} → ${newBalance}, Aura: ${currentAura} → ${currentAura + auraReward}`);
+      console.log(`ðŸ’° Mission reward: ${boostedReward} TESTVBMS + ${auraReward} aura for ${normalizedAddress}. Balance: ${currentBalance} â†’ ${newBalance}, Aura: ${currentAura} â†’ ${currentAura + auraReward}`);
     }
 
     // Mark mission as claimed
@@ -536,7 +533,7 @@ export const claimAllMissions = mutation({
       throw new Error("Profile not found");
     }
 
-    // 🇨🇳 Calculate total reward with language boost applied to each mission
+    // ðŸ‡¨ðŸ‡³ Calculate total reward with language boost applied to each mission
     const arbMultiplier = chain === "arbitrum" ? 2 : 1;
     const totalReward = missions.reduce((sum, m) => {
       const boostedReward = language ? applyLanguageBoost(m.reward, language) : m.reward;
@@ -563,7 +560,7 @@ export const claimAllMissions = mutation({
       },
     });
 
-    // 📊 Log transaction
+    // ðŸ“Š Log transaction
     await ctx.db.insert("coinTransactions", {
       address: normalizedAddress,
       amount: totalReward,
@@ -575,7 +572,7 @@ export const claimAllMissions = mutation({
       balanceAfter: newBalance,
     });
 
-    // 🔒 AUDIT LOG - Track batch mission claim
+    // ðŸ”’ AUDIT LOG - Track batch mission claim
     const missionTypes = missions.map(m => m.missionType).join(", ");
     await createAuditLog(
       ctx,
@@ -589,7 +586,7 @@ export const claimAllMissions = mutation({
       { reason: `Claimed ${missions.length} missions: ${missionTypes}` }
     );
 
-    console.log(`💰 Mission rewards added to balance: ${totalReward} TESTVBMS for ${normalizedAddress}. Balance: ${currentBalance} → ${newBalance}`);
+    console.log(`ðŸ’° Mission rewards added to balance: ${totalReward} TESTVBMS for ${normalizedAddress}. Balance: ${currentBalance} â†’ ${newBalance}`);
 
     // Mark all as claimed
     const now = Date.now();
@@ -611,66 +608,13 @@ export const claimAllMissions = mutation({
 });
 
 /**
- * Ensure welcome gift exists for player (migration for old users)
- * Creates welcome_gift mission if it doesn't exist
- *
- * 🔒 SECURITY FIX (2026-01-16): Uses profile flag to prevent race condition
- * EXPLOIT PATCHED: Multiple parallel calls could create duplicate welcome_gift
+ * Welcome gifts are disabled. Kept as a no-op for old clients.
  */
 export const ensureWelcomeGift = mutation({
   args: { playerAddress: v.string() },
-  handler: async (ctx, { playerAddress }) => {
+  handler: async (_ctx, { playerAddress }) => {
+    void playerAddress;
     return { created: false, disabled: true };
-
-    const normalizedAddress = await resolveAddress(ctx, playerAddress);
-
-    // 🔒 STEP 1: Check profile flag FIRST (atomic check)
-    const profile = await getProfileByAddress(ctx, normalizedAddress);
-
-    if (!profile) {
-      // No profile = no welcome gift possible
-      return { created: false };
-    }
-
-    // 🔒 If flag is already set, skip everything (prevents race condition)
-    if (profile.hasReceivedWelcomeGift) {
-      return { created: false };
-    }
-
-    // 🔒 STEP 2: Set flag BEFORE checking missions (atomic write)
-    // This prevents race condition: if another call comes in, it will see the flag
-    await ctx.db.patch(profile._id, {
-      hasReceivedWelcomeGift: true,
-    });
-
-    // STEP 3: Check if welcome_gift mission already exists (for old users)
-    // 🚀 BANDWIDTH FIX: Use compound index
-    const existing = await ctx.db
-      .query("personalMissions")
-      .withIndex("by_player_date_type", (q) =>
-        q.eq("playerAddress", normalizedAddress)
-          .eq("date", "once")
-          .eq("missionType", "welcome_gift")
-      )
-      .first();
-
-    if (!existing) {
-      // Create welcome_gift for old users who don't have it
-      await ctx.db.insert("personalMissions", {
-        playerAddress: normalizedAddress,
-        date: "once",
-        missionType: "welcome_gift",
-        completed: true, // Auto-completed
-        claimed: false, // Not claimed yet
-        reward: 500,
-        completedAt: Date.now(),
-      });
-
-      console.log(`🎁 Created welcome_gift mission for ${normalizedAddress}`);
-      return { created: true };
-    }
-
-    return { created: false };
   },
 });
 
@@ -703,7 +647,7 @@ export const resolveAddressQuery = internalQuery({
 
 /**
  * Check if player is eligible for VIBE badge (has VibeFID cards)
- * 🚀 ON-CHAIN VERIFICATION: Uses Alchemy to check NFT ownership (source of truth)
+ * ðŸš€ ON-CHAIN VERIFICATION: Uses Alchemy to check NFT ownership (source of truth)
  */
 export const checkVibeBadgeEligibility = action({
   args: { playerAddress: v.string() },
@@ -722,7 +666,7 @@ export const checkVibeBadgeEligibility = action({
     });
     const hasBadge = badgeStatus?.hasBadge === true;
 
-    // 🚀 ON-CHAIN CHECK: Verify VibeFID ownership via Alchemy (Base + Arbitrum)
+    // ðŸš€ ON-CHAIN CHECK: Verify VibeFID ownership via Alchemy (Base + Arbitrum)
     const ALCHEMY_API_KEY = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY || process.env.ALCHEMY_API_KEY;
 
     // Check both primary address AND the originally passed address (NFT may be on linked wallet)
@@ -746,7 +690,7 @@ export const checkVibeBadgeEligibility = action({
         }
       }
     } catch (error) {
-      console.error("❌ Alchemy check failed:", error);
+      console.error("âŒ Alchemy check failed:", error);
       hasVibeFIDCards = false;
     }
 
@@ -782,7 +726,7 @@ export const grantVibeBadgeInternal = internalMutation({
       hasVibeBadge: true,
     });
 
-    // 🚀 BANDWIDTH FIX: Use compound index
+    // ðŸš€ BANDWIDTH FIX: Use compound index
     const existing = await ctx.db
       .query("personalMissions")
       .withIndex("by_player_date_type", (q) =>
@@ -805,14 +749,14 @@ export const grantVibeBadgeInternal = internalMutation({
       });
     }
 
-    console.log(`✨ VIBE badge claimed by ${normalizedAddress} (+20% Wanted Cast bonus)`);
+    console.log(`âœ¨ VIBE badge claimed by ${normalizedAddress} (+20% Wanted Cast bonus)`);
     return { success: true };
   },
 });
 
 /**
  * Claim VIBE badge (one-time reward for VibeFID holders)
- * 🚀 ON-CHAIN VERIFICATION: Uses Alchemy to verify NFT ownership
+ * ðŸš€ ON-CHAIN VERIFICATION: Uses Alchemy to verify NFT ownership
  * Gives +20% bonus coins in Wanted Cast
  */
 export const claimVibeBadge = action({
@@ -824,7 +768,7 @@ export const claimVibeBadge = action({
     // Actions can't use ctx.db directly - use internal query
     const normalizedAddress = await ctx.runQuery(internal.missions.resolveAddressQuery, { address: playerAddress });
 
-    // 🚀 ON-CHAIN CHECK: Verify VibeFID ownership via Alchemy (Base + Arbitrum)
+    // ðŸš€ ON-CHAIN CHECK: Verify VibeFID ownership via Alchemy (Base + Arbitrum)
     const ALCHEMY_API_KEY = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY || process.env.ALCHEMY_API_KEY;
 
     // Check both primary address AND the originally passed address (NFT may be on linked wallet)
@@ -848,7 +792,7 @@ export const claimVibeBadge = action({
         }
       }
     } catch (error) {
-      console.error("❌ Alchemy check failed:", error);
+      console.error("âŒ Alchemy check failed:", error);
       throw new Error("Failed to verify VibeFID ownership. Please try again.");
     }
 
@@ -939,7 +883,7 @@ export const markVibemailSent = mutation({
 
 /**
  * Log VibeMail send activity to coinTransactions (for transaction history display)
- * Does NOT change in-game coin balance — purely a record for the UI
+ * Does NOT change in-game coin balance â€” purely a record for the UI
  */
 export const logVibemailActivity = mutation({
   args: {

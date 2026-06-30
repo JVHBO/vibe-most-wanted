@@ -38,6 +38,7 @@ export function useAchievements(options: UseAchievementsOptions = {}) {
     api.achievements.getUnclaimedAchievements,
     playerAddress ? { playerAddress } : "skip"
   );
+  const unclaimedAchievements = (unclaimed ?? []) as Array<{ achievementId: string }>;
 
   // Mutations
   const checkAndUpdate = useMutation(api.achievements.checkAndUpdateAchievements);
@@ -123,12 +124,12 @@ export function useAchievements(options: UseAchievementsOptions = {}) {
    * 💰 Claim all unclaimed rewards
    */
   const claimAllUnclaimed = async () => {
-    if (!playerAddress || !unclaimed || unclaimed.length === 0) return;
+    if (!playerAddress || unclaimedAchievements.length === 0) return;
 
     let totalClaimed = 0;
     let successCount = 0;
 
-    for (const achievement of unclaimed) {
+    for (const achievement of unclaimedAchievements) {
       try {
         const result = await claimReward({
           playerAddress,
@@ -158,7 +159,7 @@ export function useAchievements(options: UseAchievementsOptions = {}) {
     return {
       totalClaimed,
       successCount,
-      failedCount: unclaimed.length - successCount,
+      failedCount: unclaimedAchievements.length - successCount,
     };
   };
 
@@ -184,8 +185,8 @@ export function useAchievements(options: UseAchievementsOptions = {}) {
 
     // State
     isChecking,
-    hasUnclaimed: (unclaimed?.length || 0) > 0,
-    unclaimedCount: unclaimed?.length || 0,
+    hasUnclaimed: unclaimedAchievements.length > 0,
+    unclaimedCount: unclaimedAchievements.length,
 
     // Actions
     checkAchievements,

@@ -256,7 +256,7 @@ export function getDeckStats(cards: Card[]): DeckStats {
   }
 
   const totalPower = calculateDeckPower(cards);
-  const powers = cards.map(c => c.power);
+  const powers = cards.map(c => getCardDisplayPower(c));
 
   const rarityDistribution: Record<CardRarity, number> = {} as Record<CardRarity, number>;
   const collectionDistribution: Record<string, number> = {};

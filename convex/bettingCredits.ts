@@ -91,7 +91,7 @@ async function recordSecurityEvent(
   });
 }
 
-export const addBettingCredits: any = action({
+export const addBettingCredits = action({
   args: {
     address: v.string(),
     amount: v.number(),

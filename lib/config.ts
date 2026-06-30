@@ -88,7 +88,7 @@ export const MISSION_REWARDS = {
   daily_login: 25,
   first_pve_win: 50,
   first_pvp_match: 100,
-  welcome_gift: 500,
+  welcome_gift: 0,
   streak_3: 150,
   streak_5: 300,
   streak_10: 750,

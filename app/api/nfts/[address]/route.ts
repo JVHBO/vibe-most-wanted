@@ -20,7 +20,8 @@ import { NextResponse } from "next/server";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "@/convex/_generated/api";
 
-const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL || "");
+const CONVEX_URL = process.env.NEXT_PUBLIC_CONVEX_URL || "https://agile-orca-761.convex.cloud";
+const convex = new ConvexHttpClient(CONVEX_URL);
 
 // Alchemy config
 const ALCHEMY_API_KEY = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY;
