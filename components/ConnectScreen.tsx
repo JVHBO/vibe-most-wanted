@@ -2,6 +2,7 @@
 
 import type { Connector } from "wagmi";
 import { useConnect } from "wagmi";
+import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { toast } from "sonner";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { AudioManager } from "@/lib/audio-manager";
@@ -24,6 +25,7 @@ export function ConnectScreen({
 }: ConnectScreenProps) {
   const { t } = useLanguage();
   const { connect, connectors } = useConnect();
+  const { openConnectModal } = useConnectModal();
   const farcasterConnector = connectors.find((c) =>
     c.id === 'farcasterMiniApp' ||
     c.id === 'farcaster' ||
@@ -61,6 +63,22 @@ export function ConnectScreen({
     }
   };
 
+  const handleMetaMaskConnect = async () => {
+    if (soundEnabled) AudioManager.buttonClick();
+
+    if (openConnectModal) {
+      openConnectModal();
+      return;
+    }
+
+    if (metamaskConnector) {
+      await handleConnectorConnect(metamaskConnector, 'MetaMask');
+      return;
+    }
+
+    toast.error('Wallet modal is not available. Please try again.');
+  };
+
   return (
     <div className="w-full max-w-[420px] mx-auto">
       {isCheckingFarcaster ? (
@@ -85,20 +103,12 @@ export function ConnectScreen({
                   Continue with Base
                 </button>
               )}
-              {metamaskConnector && (
+              {(metamaskConnector || openConnectModal) && (
                 <button
-                  onClick={() => handleConnectorConnect(metamaskConnector)}
+                  onClick={handleMetaMaskConnect}
                   className="w-full px-6 py-4 bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black rounded-xl shadow-gold hover:shadow-gold-lg transition-all font-display font-semibold"
                 >
                   Continue with MetaMask
-                </button>
-              )}
-              {farcasterConnector && (
-                <button
-                  onClick={() => handleConnectorConnect(farcasterConnector)}
-                  className="w-full px-6 py-4 bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black rounded-xl shadow-gold hover:shadow-gold-lg transition-all font-display font-semibold"
-                >
-                  Continue with Farcaster
                 </button>
               )}
             </div>

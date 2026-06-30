@@ -9,6 +9,25 @@
 import { v } from "convex/values";
 import { mutation, query, internalMutation, MutationCtx } from "./_generated/server";
 
+function isWelcomeBonusTransaction(tx: {
+  type?: string;
+  source?: string;
+  description?: string;
+}) {
+  const type = String(tx.type ?? "").toLowerCase();
+  const source = String(tx.source ?? "").toLowerCase();
+  const description = String(tx.description ?? "").toLowerCase();
+
+  return (
+    source.includes("welcome") ||
+    description.includes("welcome bonus") ||
+    description.includes("welcome gift") ||
+    description.includes("boas-vindas") ||
+    description.includes("boas vindas") ||
+    (type === "bonus" && source === "admin_add" && description.includes("welcome"))
+  );
+}
+
 /**
  * Internal helper to log coin transactions - can be called from any mutation
  * Use this to track ALL coin movements in the system
@@ -216,11 +235,14 @@ export const getTransactionHistory = query({
     const normalizedAddress = address.toLowerCase();
 
     // Get coin transactions (use by_address_timestamp for proper timestamp ordering)
-    const coinTxs = await ctx.db
+    const coinTxsRaw = await ctx.db
       .query("coinTransactions")
       .withIndex("by_address_timestamp", (q) => q.eq("address", normalizedAddress))
       .order("desc")
-      .take(limit);
+      .take(Math.max(limit * 3, limit));
+    const coinTxs = coinTxsRaw
+      .filter((tx) => !isWelcomeBonusTransaction(tx))
+      .slice(0, limit);
 
     // Get betting transactions (wins, losses, deposits, withdrawals)
     const bettingTxs = await ctx.db

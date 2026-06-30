@@ -3,38 +3,11 @@
 import { useEffect, useState, useRef, createContext, useContext } from "react";
 import { usePathname } from "next/navigation";
 import { isMiniappMode } from "@/lib/utils/miniapp";
-import { useLanguage } from "@/contexts/LanguageContext";
 import { LanguageSelect } from "@/components/SettingsModal";
 import { useMusic } from "@/contexts/MusicContext";
 import { AudioManager } from "@/lib/audio-manager";
 import { HomeFloatingBackground } from "@/components/HomeFloatingBackground";
 import { useDisconnect, useAccount } from "wagmi";
-
-// Farcaster notice text in all 10 supported languages
-const FARCASTER_NOTICE: Record<string, string> = {
-  "en":    "Best experience inside Farcaster",
-  "pt-BR": "Melhor experiência dentro do Farcaster",
-  "es":    "Mejor experiencia dentro de Farcaster",
-  "hi":    "Farcaster में सर्वोत्तम अनुभव",
-  "ru":    "Лучший опыт внутри Farcaster",
-  "zh-CN": "在Farcaster内体验最佳",
-  "id":    "Pengalaman terbaik di dalam Farcaster",
-  "fr":    "Meilleure expérience dans Farcaster",
-  "ja":    "Farcaster内で最高の体験を",
-  "it":    "Migliore esperienza all'interno di Farcaster",
-};
-const OPEN_MINIAPP: Record<string, string> = {
-  "en":    "Open miniapp →",
-  "pt-BR": "Abrir miniapp →",
-  "es":    "Abrir miniapp →",
-  "hi":    "मिनीऐप खोलें →",
-  "ru":    "Открыть →",
-  "zh-CN": "打开小程序 →",
-  "id":    "Buka miniapp →",
-  "fr":    "Ouvrir miniapp →",
-  "ja":    "開く →",
-  "it":    "Apri miniapp →",
-};
 
 /**
  * Context that signals children they are being rendered inside MiniappFrame.
@@ -61,7 +34,6 @@ export function useMiniappFrameContext() {
  */
 export function MiniappFrame({ children }: { children: React.ReactNode }) {
   const [showFrame, setShowFrame] = useState(false);
-  const { lang } = useLanguage();
   const { isMusicEnabled, setIsMusicEnabled } = useMusic();
   const { disconnect } = useDisconnect();
   const { isConnected } = useAccount();
@@ -69,13 +41,11 @@ export function MiniappFrame({ children }: { children: React.ReactNode }) {
   const showFloating = true;
   const [collapsed, setCollapsed] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [notifStatus, setNotifStatus] = useState<"default" | "granted" | "denied">("default");
   const [seenMenu, setSeenMenu] = useState(true); // true = no dot; set false if first visit
   const menuRef = useRef<HTMLDivElement>(null);
   const [frameX, setFrameX] = useState<number | null>(null);
   const [frameY, setFrameY] = useState<number | null>(null);
   const [isDragging, setIsDragging] = useState(false);
-  const [forcedMiniapp, setForcedMiniapp] = useState(false);
   const dragging = useRef(false);
   const dragOffset = useRef({ x: 0, y: 0 });
 
@@ -88,16 +58,10 @@ export function MiniappFrame({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
-    // Auto-activate forced miniapp mode from URL param (device test popup)
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('force_miniapp') === '1') {
-      localStorage.setItem('vbms_force_miniapp', '1');
-    }
-    const forced = localStorage.getItem("vbms_force_miniapp") === "1";
-    if (forced) setForcedMiniapp(true);
+    localStorage.removeItem("vbms_force_miniapp");
     const isMobileUA = /Android|iPhone|iPad|iPod|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    const isDesktop = window.innerWidth >= 1440 && !isMobileUA;
-    const shouldFrame = isDesktop && !isMiniappMode() && !forced;
+    const isDesktop = window.innerWidth >= 768 && !isMobileUA;
+    const shouldFrame = isDesktop && !isMiniappMode();
     setShowFrame(shouldFrame);
     if (shouldFrame) {
       const savedPos = localStorage.getItem("vbms_frame_pos");
@@ -113,9 +77,6 @@ export function MiniappFrame({ children }: { children: React.ReactNode }) {
         setFrameX(Math.round((window.innerWidth - 410) / 2));
         setFrameY(80);
       }
-    }
-    if ("Notification" in window) {
-      setNotifStatus(Notification.permission as "default" | "granted" | "denied");
     }
     if (!localStorage.getItem("vbms_seen_menu")) {
       setSeenMenu(false);
@@ -156,22 +117,6 @@ export function MiniappFrame({ children }: { children: React.ReactNode }) {
     return () => document.removeEventListener("mousedown", handler);
   }, [menuOpen]);
 
-  const requestNotifications = async () => {
-    setMenuOpen(false);
-    if (!("Notification" in window)) {
-      alert("This browser does not support notifications.");
-      return;
-    }
-    const permission = await Notification.requestPermission();
-    setNotifStatus(permission);
-    if (permission === "granted") {
-      new Notification("$VBMS Notifications Enabled", {
-        body: "You'll receive game alerts from Vibe Most Wanted!",
-        icon: "/favicon-32x32.png",
-      });
-    }
-  };
-
   // Pages that should never be wrapped in the phone frame
   if (
     pathname === '/device-test' ||
@@ -183,42 +128,8 @@ export function MiniappFrame({ children }: { children: React.ReactNode }) {
 
   if (!showFrame) {
     return (
-      <MiniappFrameContext.Provider value={forcedMiniapp}>
+      <MiniappFrameContext.Provider value={false}>
         {children}
-        {forcedMiniapp && (
-          <button
-            onClick={() => {
-              localStorage.removeItem("vbms_force_miniapp");
-              setForcedMiniapp(false);
-              const isDesktop = window.innerWidth >= 480;
-              if (isDesktop && !isMiniappMode()) {
-                setFrameX(Math.round((window.innerWidth - 410) / 2));
-                setFrameY(80);
-                setShowFrame(true);
-              }
-            }}
-            title="Exit miniapp mode"
-            style={{
-              position: "fixed",
-              bottom: "12px",
-              right: "12px",
-              zIndex: 9999,
-              background: "#1a1a1a",
-              border: "1px solid rgba(255,255,255,0.15)",
-              borderRadius: "8px",
-              color: "rgba(255,255,255,0.5)",
-              fontSize: "11px",
-              padding: "5px 10px",
-              cursor: "pointer",
-              fontFamily: "system-ui, sans-serif",
-              display: "flex",
-              alignItems: "center",
-              gap: "5px",
-            }}
-          >
-            <span style={{ fontSize: "13px" }}>⊞</span> Exit miniapp
-          </button>
-        )}
       </MiniappFrameContext.Provider>
     );
   }
@@ -277,7 +188,7 @@ export function MiniappFrame({ children }: { children: React.ReactNode }) {
           {/* App name */}
           <div style={{ flex: 1, minWidth: 0 }}>
             <p style={{ color: "rgba(255,255,255,0.9)", fontSize: "12px", fontWeight: 600, lineHeight: 1.2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontFamily: "system-ui, sans-serif" }}>
-              $VBMS – Game and Wanted Cast
+              $VBMS - Game and VibeMail
             </p>
             <p style={{ color: "rgba(255,255,255,0.35)", fontSize: "10px", fontFamily: "system-ui, sans-serif" }}>by jvhbo</p>
           </div>
@@ -306,14 +217,6 @@ export function MiniappFrame({ children }: { children: React.ReactNode }) {
                   <span>↺</span><span>Reload page</span>
                 </button>
                 <button
-                  onClick={requestNotifications}
-                  disabled={notifStatus === "denied"}
-                  style={{ ...itemStyle, opacity: notifStatus === "denied" ? 0.4 : 1, cursor: notifStatus === "denied" ? "not-allowed" : "pointer" }}
-                >
-                  <span>{notifStatus === "granted" ? "◆" : notifStatus === "denied" ? "◇" : "◇"}</span>
-                  <span>{notifStatus === "granted" ? "Notifications on" : notifStatus === "denied" ? "Notifications blocked" : "Enable notifications"}</span>
-                </button>
-                <button
                   onClick={() => { setIsMusicEnabled(!isMusicEnabled); }}
                   style={itemStyle}
                 >
@@ -328,18 +231,6 @@ export function MiniappFrame({ children }: { children: React.ReactNode }) {
                 <div style={{ height: "1px", background: "rgba(255,255,255,0.06)", margin: "0 12px" }} />
                 <button onClick={() => { setMenuOpen(false); navigator.clipboard?.writeText("https://vibemostwanted.xyz"); }} style={itemStyle}>
                   <span>⎘</span><span>Copy link</span>
-                </button>
-                <div style={{ height: "1px", background: "rgba(255,255,255,0.06)", margin: "0 12px" }} />
-                <button
-                  onClick={() => {
-                    setMenuOpen(false);
-                    localStorage.setItem("vbms_force_miniapp", "1");
-                    setForcedMiniapp(true);
-                    setShowFrame(false);
-                  }}
-                  style={itemStyle}
-                >
-                  <span>⊡</span><span>Force miniapp version</span>
                 </button>
                 {isConnected && (
                   <>
@@ -454,36 +345,6 @@ export function MiniappFrame({ children }: { children: React.ReactNode }) {
 
         {/* Language toggle */}
         <LanguageSelect />
-      </div>
-
-      {/* ── FARCASTER NOTICE ── */}
-      <div style={{
-        position: "fixed",
-        bottom: "12px",
-        left: "50%",
-        transform: "translateX(-50%)",
-        width: `${FRAME_W}px`,
-        textAlign: "center",
-        padding: "0 4px",
-        zIndex: 2,
-      }}>
-        <a
-          href="https://farcaster.xyz/miniapps/0sNKxskaSKsH/vbms---game-and-wanted-cast"
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{
-            color: "rgba(160,130,255,0.6)",
-            fontSize: "11px",
-            fontFamily: "system-ui, sans-serif",
-            textDecoration: "none",
-            letterSpacing: "0.02em",
-            transition: "color 0.2s",
-          }}
-          onMouseEnter={e => (e.currentTarget.style.color = "rgba(160,130,255,0.9)")}
-          onMouseLeave={e => (e.currentTarget.style.color = "rgba(160,130,255,0.6)")}
-        >
-          ⬡ {FARCASTER_NOTICE[lang] || FARCASTER_NOTICE["en"]} — {OPEN_MINIAPP[lang] || OPEN_MINIAPP["en"]}
-        </a>
       </div>
 
     </MiniappFrameContext.Provider>

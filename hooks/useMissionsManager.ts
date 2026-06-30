@@ -13,7 +13,6 @@ interface UseMissionsManagerParams {
   soundEnabled: boolean;
   lang: SupportedLanguage;
   effectiveChain: string;
-  userProfile: any;
   setMissions: (m: any[]) => void;
   setIsLoadingMissions: (v: boolean) => void;
   setIsClaimingMission: (v: string | null) => void;
@@ -27,7 +26,6 @@ export function useMissionsManager({
   soundEnabled,
   lang,
   effectiveChain,
-  userProfile,
   setMissions,
   setIsLoadingMissions,
   setIsClaimingMission,
@@ -46,10 +44,6 @@ export function useMissionsManager({
       const cached = sessionStorage.getItem(sessionKey);
 
       if (cached !== today) {
-        if (!userProfile?.hasReceivedWelcomeGift) {
-          await convex.mutation(api.missions.ensureWelcomeGift, { playerAddress: address });
-        }
-        await convex.mutation(api.missions.markDailyLogin, { playerAddress: address });
         sessionStorage.setItem(sessionKey, today);
       }
 

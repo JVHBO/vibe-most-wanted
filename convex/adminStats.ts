@@ -85,12 +85,6 @@ export const getOverview = query({
     const vibefidBase = vibefidCards.filter(c => !c.chain || c.chain === "base").length;
     const vibefidArb  = vibefidCards.filter(c => c.chain === "arbitrum").length;
 
-    // Raffle
-    const raffleEntries = await ctx.db.query("raffleEntries").take(2000);
-
-    // Roulette
-    const rouletteSpins = await ctx.db.query("rouletteSpins").take(2000);
-
     // Bug reports
     const bugReports = await ctx.db.query("bugReports").take(500);
 
@@ -121,8 +115,8 @@ export const getOverview = query({
         totalDamage: totalRaidDamage,
       },
       vibefid:  { base: vibefidBase, arb: vibefidArb, total: vibefidBase + vibefidArb },
-      raffle:   { entries: raffleEntries.length },
-      roulette: { total: rouletteSpins.length },
+      raffle:   { entries: 0 },
+      roulette: { total: 0 },
       bugs:     { total: bugReports.length },
       fetchedAt: now,
     };

@@ -65,7 +65,7 @@ interface NFTGiftModalProps {
   replyToMessageId?: Id<'cardVotes'>; // If provided, this is a reply
 }
 
-const VIBEMAIL_COST_VBMS = "1000";
+const VIBEMAIL_COST_VBMS = "0";
 
 export function NFTGiftModal({
   onClose,
@@ -219,10 +219,12 @@ export function NFTGiftModal({
 
       // Step 2: Pay VibeMail cost (100 VBMS for paid, 0 for free)
       setStatusText('Sending VibeMail...');
-      const cost = isPaidVibeMail ? parseEther(VIBEMAIL_COST_VBMS) : BigInt(0);
+      const cost = BigInt(0);
 
       try {
-        await transferVBMS(CONTRACTS.VBMSPoolTroll as `0x${string}`, cost);
+        if (cost > BigInt(0)) {
+          await transferVBMS(CONTRACTS.VBMSPoolTroll as `0x${string}`, cost);
+        }
       } catch (err: any) {
         console.error('VibeMail TX failed:', err);
         setError('VibeMail payment failed');

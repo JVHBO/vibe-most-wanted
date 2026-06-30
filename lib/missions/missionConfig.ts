@@ -35,12 +35,6 @@ const MISSION_DATA: Record<string, { icon: string; titleKey: string; descKey: st
     descKey: 'mDesc_streak_10',
     howToKey: 'mHow_streak',
   },
-  welcome_gift: {
-    icon: '/images/icons/coins.svg',
-    titleKey: 'mTitle_welcome_gift',
-    descKey: 'mDesc_welcome_gift',
-    howToKey: 'mHow_welcome_gift',
-  },
   vibefid_minted: {
     icon: '/images/icons/achievement.svg',
     titleKey: 'mTitle_vibefid_minted',
@@ -96,7 +90,6 @@ export const ALL_MISSION_TYPES = [
   { type: 'streak_3', reward: 75, date: 'today' },
   { type: 'streak_5', reward: 150, date: 'today' },
   { type: 'streak_10', reward: 375, date: 'today' },
-  { type: 'welcome_gift', reward: 250, date: 'once' },
   { type: 'vibefid_minted', reward: 5000, date: 'once' },
   { type: 'claim_vibe_badge', reward: 0, date: 'once' },
 ];

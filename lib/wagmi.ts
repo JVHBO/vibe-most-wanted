@@ -39,10 +39,6 @@ const connectors = connectorsForWallets(
   }
 );
 
-if (!hasValidWalletConnectProjectId && typeof window !== 'undefined') {
-  console.warn('[wagmi] Invalid NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID; WalletConnect/Rainbow connectors disabled.');
-}
-
 // MetaMask injected connector (always available when extension is installed)
 const metamaskConnector = injected({ target: 'metaMask' });
 

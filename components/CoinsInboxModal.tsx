@@ -38,6 +38,21 @@ interface CoinsInboxModalProps {
   userAddress?: string; // Pass address from parent (for Farcaster mobile)
 }
 
+function isWelcomeBonusHistoryItem(item: any): boolean {
+  const type = String(item?.type ?? "").toLowerCase();
+  const source = String(item?.source ?? "").toLowerCase();
+  const description = String(item?.description ?? "").toLowerCase();
+
+  return (
+    source.includes("welcome") ||
+    description.includes("welcome bonus") ||
+    description.includes("welcome gift") ||
+    description.includes("boas-vindas") ||
+    description.includes("boas vindas") ||
+    (type === "bonus" && source === "admin_add" && description.includes("welcome"))
+  );
+}
+
 export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInboxModalProps) {
   const { address: wagmiAddress } = useAccount();
   // Use userAddress prop if provided (Farcaster mobile), otherwise wagmi
@@ -238,6 +253,9 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
   const limitUnavailable = !isLoadingLimits && (hasLimitError || dailyRemainingNum === 0);
   // Block conversion if: limit exceeded, balance exceeded, on cooldown, limit data unavailable, or daily count maxed
   const canConvertTESTVBMS = selectedAmount >= 100 && !isProcessing && !exceedsDailyLimit && !exceedsBalance && !isOnCooldown && !limitUnavailable && conversionsLeft > 0;
+  const visibleTransactionHistory = transactionHistory?.filter(
+    (item: any) => !isWelcomeBonusHistoryItem(item),
+  );
 
   // Claim inbox → adiciona ao saldo TESTVBMS (instant, no gas)
   const handleClaimInbox = async () => {
@@ -590,8 +608,8 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
                   <div className="text-center py-6">
                     <div className="w-6 h-6 border-2 border-vintage-gold border-t-transparent rounded-full animate-spin mx-auto" />
                   </div>
-                ) : transactionHistory && transactionHistory.length > 0 ? (
-                  transactionHistory.map((item: any, i: number) => {
+                ) : visibleTransactionHistory && visibleTransactionHistory.length > 0 ? (
+                  visibleTransactionHistory.map((item: any, i: number) => {
                     const { icon, color } = getHistoryIcon(item.type, item.source);
                     return (
                       <div

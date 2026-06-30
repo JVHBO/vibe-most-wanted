@@ -41,10 +41,11 @@ function stripMediaCommands(text: string): string {
     .trim();
 }
 
-const VIBEMAIL_COST_VBMS = "1000"; // Cost for paid "Just a Message" (no quests)
-const VIBEMAIL_RECIPIENT_VBMS = 500; // VBMS recipient earns per message
-const QUEST_BASE_VBMS = 500; // Base for quest mails (goes to recipient claim button)
-const QUEST_PER_VBMS = 200; // Per quest reward (recipient claims each quest)
+const VIBEMAIL_COST_VBMS = "0"; // VibeMail no longer spends coins
+const VIBEMAIL_RECIPIENT_VBMS = 0; // Non-game rewards disabled
+const QUEST_BASE_VBMS = 0; // Social quest rewards disabled
+const QUEST_PER_VBMS = 0; // Social quest rewards disabled
+const VIBEMAIL_SOCIAL_QUESTS_ENABLED = false;
 
 const QUEST_PURPOSES = [
   { id: 'follow', icon: '👤', label: 'Follow Quest', shortDesc: 'Ask to follow your profile', questType: 'follow_me', needsCast: false,
@@ -86,7 +87,12 @@ function parseQuestBanner(message: string): { questData: any; cleanMessage: stri
   const jsonStr = message.slice(jsonStart, pos + 1);
   const fullMatch = message.slice(markerStart, pos + 2); // [VQUEST:{...}]
   try {
-    return { questData: JSON.parse(jsonStr), cleanMessage: message.replace(fullMatch, '').trim() };
+    const questData = JSON.parse(jsonStr);
+    const cleanMessage = message.replace(fullMatch, '').trim();
+    if (!VIBEMAIL_SOCIAL_QUESTS_ENABLED) {
+      return { questData: { ...questData, quests: [], baseReward: 0, rewardPerQuest: 0, disabled: true }, cleanMessage };
+    }
+    return { questData, cleanMessage };
   } catch { return null; }
 }
 
@@ -925,6 +931,7 @@ export function VibeMailInbox({ cardFid, username, onClose, asPage, hideClose = 
               const parsed = parseQuestBanner(selectedMessage.message || '');
               if (!parsed) return null;
               const { questData } = parsed;
+              if (questData.disabled) return null;
               return (
                 <div className="mt-3 border-2 border-black shadow-[4px_4px_0px_#000] overflow-hidden">
                   <div className="bg-[#FFD700] px-3 py-2 flex items-center gap-2 border-b-2 border-black">
@@ -1672,7 +1679,7 @@ export function VibeMailInboxWithClaim({
     api.cardVotes.getUserFreeVotesRemaining,
     myFid ? { voterFid: myFid } : 'skip'
   );
-  const hasFreemail = (freeVotesRemaining?.remaining ?? 0) > 0 && !composerQuestData;
+  const hasFreemail = true;
 
   const questCount = composerQuestData?.quests?.length ?? 0;
   const questMailCost = QUEST_BASE_VBMS + questCount * QUEST_PER_VBMS;
@@ -1824,11 +1831,11 @@ export function VibeMailInboxWithClaim({
     try {
       // On-chain ARB validation only for free mails on ARB network
       // Paid mails use VBMS transfer as proof — no ARB validation needed
-      if (hasFreemail && sendNetworkRef.current === 'arb') {
+      if (false && hasFreemail && sendNetworkRef.current === 'arb') {
         await validateOnArb(100, ARB_CLAIM_TYPE.VIBEMAIL);
       }
 
-      if (!hasFreemail) {
+      if (false && !hasFreemail) {
         const cost = composerQuestData ? String(questMailCost) : VIBEMAIL_COST_VBMS;
         // Switch to Base before VBMS transfer (wallet may be on ARB after free mail)
         await switchChainAsync({ chainId: CONTRACTS.CHAIN_ID });
@@ -2255,6 +2262,8 @@ export function VibeMailInboxWithClaim({
                 </div>{/* end z-10 wrapper */}
               </button>
 
+              {VIBEMAIL_SOCIAL_QUESTS_ENABLED && (
+              <>
               {/* Option 2: With Social Quest */}
               <button
                 onClick={() => {
@@ -2317,6 +2326,8 @@ export function VibeMailInboxWithClaim({
                 })()}
                 </div>{/* end z-10 wrapper */}
               </button>
+              </>
+              )}
             </div>
           </div>
         )}
@@ -4302,8 +4313,8 @@ export function VibeMailInboxWithClaim({
                 if (!composerMessage.trim() && !composerImageId && !composerDrawingId) return;
                 if (!myAddress || !myFid) return;
 
-                // Free mail: show network modal first (skip if coming from modal)
-                if (hasFreemail && !skipNetworkModalRef.current) {
+                // VibeMail is free and no longer requires a network confirmation.
+                if (false && hasFreemail && !skipNetworkModalRef.current) {
                   setShowNetworkModal(true);
                   return;
                 }
@@ -4315,23 +4326,11 @@ export function VibeMailInboxWithClaim({
                   return;
                 }
 
-                // BROADCAST MODE - send to multiple recipients (costs 100 VBMS per recipient)
+                // BROADCAST MODE - send to multiple recipients without VBMS spend.
                 if (sendMode === 'broadcast' && broadcastRecipients.length > 0) {
-                  const costPerRecipient = composerQuestData ? BigInt(questMailCost) : BigInt(Number(VIBEMAIL_COST_VBMS));
-                  const totalCost = BigInt(broadcastRecipients.length) * parseEther(String(costPerRecipient));
                   setIsSending(true);
                   setBroadcastResult(null);
                   try {
-                    // Transfer VBMS to contract (payment for broadcast — no ARB validation needed)
-                    const txHash = await transferVBMS(CONTRACTS.VBMSPoolTroll, totalCost);
-                    if (!txHash) {
-                      console.error('Broadcast payment failed');
-                      setBroadcastResult({ success: false, sent: 0, total: broadcastRecipients.length, failed: broadcastRecipients.length });
-                      setIsSending(false);
-                      return;
-                    }
-                    console.log('Broadcast payment TX:', txHash);
-
                     // Build final message with quest banner + design manifest
                     const broadcastMessage = (() => {
                       let msg = composerQuestData ? `[VQUEST:${JSON.stringify(composerQuestData)}]\n${composerMessage}` : composerMessage;
@@ -4374,18 +4373,11 @@ export function VibeMailInboxWithClaim({
                   return;
                 }
 
-                // RANDOM LIST MODE - send to random list (like broadcast)
+                // RANDOM LIST MODE - send to random list without VBMS spend.
                 if (sendMode === 'random' && randomList.length > 0) {
-                  const totalCost = BigInt(randomList.length) * parseEther(VIBEMAIL_COST_VBMS);
                   setIsSending(true);
                   setBroadcastResult(null);
                   try {
-                    const txHash = await transferVBMS(CONTRACTS.VBMSPoolTroll, totalCost);
-                    if (!txHash) {
-                      setBroadcastResult({ success: false, sent: 0, total: randomList.length, failed: randomList.length });
-                      setIsSending(false);
-                      return;
-                    }
                     const result = await broadcastMutation({
                       recipientFids: randomList.map(r => r.fid),
                       message: composerMessage,
@@ -4439,28 +4431,24 @@ export function VibeMailInboxWithClaim({
               ) : isForwarding ? (
                 <span className="flex items-center gap-2">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 10 20 15 15 20"/><path d="M4 4v7a4 4 0 0 0 4 4h12"/></svg>
-                  {hasFreemail ? 'Forward · Free' : `Forward · ${Number(VIBEMAIL_COST_VBMS).toLocaleString()} VBMS`}
+                  Forward · Free
                 </span>
               ) : sendMode === 'broadcast' ? (
                 <span className="flex items-center gap-2">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-                  {t.vibemailSendTo.replace('{count}', String(broadcastRecipients.length)).replace('{cost}', String(broadcastRecipients.length * (composerQuestData ? questMailCost : Number(VIBEMAIL_COST_VBMS))))}
+                  Send to {broadcastRecipients.length} · Free
                 </span>
               ) : sendMode === 'random' ? (
                 <span className="flex items-center gap-2">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/></svg>
                   {randomList.length > 0
-                    ? `${(t.vibemailSendToList || 'Send to List ({count})').replace('{count}', String(randomList.length))} (${randomList.length * (composerQuestData ? questMailCost : Number(VIBEMAIL_COST_VBMS))} VBMS)`
-                    : t.vibemailRandomCost}
+                    ? `${(t.vibemailSendToList || 'Send to List ({count})').replace('{count}', String(randomList.length))} · Free`
+                    : (t.vibemailRandomCost || 'Random') }
                 </span>
               ) : (
                 <span className="flex items-center gap-2">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-                  {hasFreemail
-                    ? `${t.vibemailSend || 'Send'} · ${t.vibemailFreeLabel || 'Free'} (${freeVotesRemaining?.remaining ?? 0}/${freeVotesRemaining?.max ?? 1})`
-                    : composerQuestData
-                      ? `${t.vibemailSend || 'Send'} · ${questMailCost.toLocaleString()} VBMS`
-                      : `${t.vibemailSend || 'Send'} · ${Number(VIBEMAIL_COST_VBMS).toLocaleString()} VBMS`}
+                  {t.vibemailSend || 'Send'} · {t.vibemailFreeLabel || 'Free'}
                 </span>
               )}
             </button>
@@ -4519,6 +4507,7 @@ export function VibeMailInboxWithClaim({
                 const parsed = parseQuestBanner(selectedMessage.message || '');
                 if (!parsed) return null;
                 const { questData } = parsed;
+                if (questData.disabled) return null;
                 const quests = questData.quests || [];
                 if (quests.length === 0) return null;
                 const idx = Math.min(questCarouselIdx, quests.length - 1);
@@ -4856,6 +4845,7 @@ export function VibeMailInboxWithClaim({
                 const parsed = parseQuestBanner(selectedMessage.message || '');
                 if (!parsed) return null;
                 const { questData } = parsed;
+                if (questData.disabled) return null;
                 const mailId = String(selectedMessage._id);
                 const isClaimed = claimedMailVbms.has(mailId);
                 const isClaiming = claimingMailId === mailId;
@@ -5149,12 +5139,12 @@ export function VibeMailInboxWithClaim({
                       <div className="flex flex-col gap-1.5">
                         {/* Quick select: VBMS */}
                         <button
-                          onClick={() => { setSettingsMiniapp('https://vibemostwanted.xyz'); setSettingsMiniappName('VBMS - Game and Wanted Cast'); setSettingsMiniappIcon('https://vibemostwanted.xyz/icon.gif'); setMaSearchQ(''); setMaSearchResults([]); }}
+                          onClick={() => { setSettingsMiniapp('https://vibemostwanted.xyz'); setSettingsMiniappName('VBMS - Game and VibeMail'); setSettingsMiniappIcon('https://vibemostwanted.xyz/icon.gif'); setMaSearchQ(''); setMaSearchResults([]); }}
                           className="flex items-center gap-2 px-2 py-1.5 bg-[#FFD700]/10 border border-[#FFD700]/40 hover:bg-[#FFD700]/20 text-left transition-colors"
                         >
                           <img src="https://vibemostwanted.xyz/icon.gif" className="w-7 h-7 rounded border border-[#FFD700]/50 flex-shrink-0" alt="" />
                           <div className="flex-1 min-w-0">
-                            <p className="text-[#FFD700] font-black text-[10px] uppercase tracking-wide">VBMS — Game &amp; Wanted Cast</p>
+                            <p className="text-[#FFD700] font-black text-[10px] uppercase tracking-wide">VBMS - Game &amp; VibeMail</p>
                             <p className="text-white/30 text-[9px]">vibemostwanted.xyz</p>
                           </div>
                           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#FFD700" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
@@ -5453,10 +5443,10 @@ export function VibeMailInboxWithClaim({
                         const hasGifInText = /\/img=https?:\/\/(media\.giphy|media[0-9]*\.giphy|giphy\.com)/i.test(msgText) || /\/img=\S+\.gif/i.test(msgText);
                         const hasImgInText = /\/img=/i.test(msgText) && !hasGifInText;
                         const hasSoundInText = /\/sound=/i.test(msgText);
-                        return (msg.imageId || msg.audioId || msg.castUrl || msg.giftNftImageUrl || msg.miniappUrl || hasGifInText || hasImgInText || hasSoundInText || parseQuestBanner(msgText));
+                        return (msg.imageId || msg.audioId || msg.castUrl || msg.giftNftImageUrl || msg.miniappUrl || hasGifInText || hasImgInText || hasSoundInText || (VIBEMAIL_SOCIAL_QUESTS_ENABLED && parseQuestBanner(msgText)));
                       })() && (
                         <div className="flex items-center gap-1 mt-1 flex-wrap">
-                          {parseQuestBanner(msg.message || '') && (
+                          {VIBEMAIL_SOCIAL_QUESTS_ENABLED && parseQuestBanner(msg.message || '') && (
                             <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-[#FFD700]/15 border border-[#FFD700]/40 text-[#FFD700] font-black text-[9px] uppercase tracking-wide">
                               <svg width="8" height="8" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
                               Quest
@@ -5584,10 +5574,12 @@ export function VibeMailInboxWithClaim({
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
               <span>Sent</span>
             </button>
+            {VIBEMAIL_SOCIAL_QUESTS_ENABLED && (
             <button onClick={() => setActiveTab('quests')} className={`flex-1 min-w-0 font-black uppercase transition-all px-1 py-2 flex flex-col items-center justify-center gap-0.5 text-[10px] leading-tight border-2 border-black ${activeTab === 'quests' ? 'vmt-quests-active shadow-none translate-x-[2px] translate-y-[2px]' : 'vmt-quests-inactive shadow-[3px_3px_0px_#000]'}`}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
               <span>Settings</span>
             </button>
+            )}
           </div>
         </div>
       )}

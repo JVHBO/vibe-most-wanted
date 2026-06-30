@@ -464,9 +464,9 @@ export function VibeFidSection({ fid, isOwnProfile, address, hasVibeBadge, onCar
             <button
               onClick={() => {
                 AudioManager.buttonClick();
-                if (isOwnCard) { router.push('/quests?tab=vibemail'); return; }
+                if (isOwnCard) { router.push('/fid/vibemail'); return; }
                 if (!viewerFid) {
-                  setError('Connect Farcaster to vibe');
+                  setError('Open VibeMail from your wallet profile');
                   setTimeout(() => setError(null), 3000);
                   return;
                 }

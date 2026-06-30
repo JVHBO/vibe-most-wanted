@@ -268,7 +268,7 @@ export default function DesignTestPage() {
           </Link>
 
           {/* Quests */}
-          <Link href="/quests" className="flex-1 min-w-0 px-1 py-2 flex flex-col items-center justify-center gap-0.5 rounded-lg font-modern font-semibold transition-all text-[10px] leading-tight relative bg-vintage-black text-vintage-gold hover:bg-vintage-gold/10 border border-vintage-gold/30">
+          <Link href="/fid/vibemail" className="flex-1 min-w-0 px-1 py-2 flex flex-col items-center justify-center gap-0.5 rounded-lg font-modern font-semibold transition-all text-[10px] leading-tight relative bg-vintage-black text-vintage-gold hover:bg-vintage-gold/10 border border-vintage-gold/30">
             <span className="text-[10px] font-bold whitespace-nowrap">Quests</span>
             <span className="text-xl leading-none">◈</span>
           </Link>

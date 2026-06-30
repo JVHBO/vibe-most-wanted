@@ -9,6 +9,7 @@
  */
 
 import type * as accessAnalytics from "../accessAnalytics.js";
+import type * as achievements from "../achievements.js";
 import type * as admin from "../admin.js";
 import type * as adminAuth from "../adminAuth.js";
 import type * as adminStats from "../adminStats.js";
@@ -90,6 +91,7 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   accessAnalytics: typeof accessAnalytics;
+  achievements: typeof achievements;
   admin: typeof admin;
   adminAuth: typeof adminAuth;
   adminStats: typeof adminStats;

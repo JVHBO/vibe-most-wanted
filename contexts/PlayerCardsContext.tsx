@@ -122,6 +122,28 @@ async function fetchNFTsFromAllCollections(owner: string, forceRefresh: boolean 
   return allNfts;
 }
 
+async function fetchNFTsFromProfileRoute(owner: string, forceRefresh: boolean = false): Promise<any[]> {
+  const url = `/api/profile-nfts?address=${encodeURIComponent(owner)}${forceRefresh ? '&refresh=1' : ''}`;
+  devLog('[Context] Fetching NFTs via server route:', url);
+
+  const res = await fetch(url, { cache: 'no-store' });
+  if (!res.ok) {
+    const message = await res.text().catch(() => '');
+    throw new Error(`profile-nfts failed: ${res.status} ${message}`);
+  }
+
+  const data = await res.json();
+  const cards = Array.isArray(data.cards) ? data.cards : [];
+
+  devLog(`[Context] Server route returned ${cards.length} cards`);
+  return cards.map((card: any) => ({
+    ...card,
+    tokenId: String(card.tokenId),
+    ownerAddress: owner.toLowerCase(),
+    _serverCard: true,
+  }));
+}
+
 // Avatar URL helper
 const getAvatarUrl = (twitterData?: string | null | { twitter?: string; twitterProfileImageUrl?: string }): string | null => {
   if (!twitterData) return null;
@@ -367,7 +389,7 @@ export function PlayerCardsProvider({ children }: { children: ReactNode }) {
       // 🎴 FETCH NFTs - SAME AS HOME PAGE!
       let raw: any[] = [];
       for (const walletAddr of allAddresses) {
-        const walletNfts = await fetchNFTsFromAllCollections(walletAddr);
+        const walletNfts = await fetchNFTsFromProfileRoute(walletAddr);
         const tagged = walletNfts.map(nft => ({ ...nft, ownerAddress: walletAddr.toLowerCase() }));
         raw.push(...tagged);
         devLog(`✓ [Context] Wallet ${walletAddr.slice(0,8)}...: ${walletNfts.length} NFTs`);
@@ -382,7 +404,7 @@ export function PlayerCardsProvider({ children }: { children: ReactNode }) {
         const batchResults = await Promise.all(
           batch.map(async (nft) => {
             // 🚀 WIELD: Skip metadata refresh - already has all data!
-            if (nft._wieldData) return nft;
+            if (nft._wieldData || nft._serverCard) return nft;
 
             // Handle tokenUri as string or object with gateway property
             const tokenUri = typeof nft?.tokenUri === 'string'
@@ -411,7 +433,7 @@ export function PlayerCardsProvider({ children }: { children: ReactNode }) {
       // 🔍 FILTER UNOPENED - Wield tokens already pre-filtered, only check Alchemy
       const revealed = enrichedRaw.filter((nft) => {
         // 🚀 WIELD: Already filtered to rarity_assigned only
-        if (nft._wieldData) return true;
+        if (nft._wieldData || nft._serverCard) return true;
         // isUnrevealed checks for Wear/Foil/Character attributes which prove the card is revealed
         return !isUnrevealed(nft);
       });
@@ -437,7 +459,9 @@ export function PlayerCardsProvider({ children }: { children: ReactNode }) {
 
             // 🎬 Get image URL
             let imageUrl: string;
-            if (wieldData?.imageUrl) {
+            if (nft.imageUrl) {
+              imageUrl = nft.imageUrl;
+            } else if (wieldData?.imageUrl) {
               // Use Wield image directly!
               imageUrl = wieldData.imageUrl;
             } else if (isVibeFID) {
@@ -454,11 +478,11 @@ export function PlayerCardsProvider({ children }: { children: ReactNode }) {
             }
 
             // 📊 Use Wield data or fallback to Alchemy metadata
-            const rarity = wieldData?.rarity || findAttr(nft, 'rarity');
-            const foil = wieldData?.foil || findAttr(nft, 'foil') || 'None';
-            const wear = wieldData?.wear || findAttr(nft, 'wear');
+            const rarity = wieldData?.rarity || nft.rarity || findAttr(nft, 'rarity');
+            const foil = wieldData?.foil || nft.foil || findAttr(nft, 'foil') || 'None';
+            const wear = wieldData?.wear || nft.wear || findAttr(nft, 'wear');
             // Character name: Wield data → NFT trait → image URL mapping (for old cards without name trait)
-            const characterName = wieldData?.name || findAttr(nft, 'name') || getCharacterFromImage(imageUrl);
+            const characterName = wieldData?.name || nft.name || findAttr(nft, 'name') || getCharacterFromImage(imageUrl);
 
             return {
               tokenId: nft.tokenId,
@@ -468,8 +492,8 @@ export function PlayerCardsProvider({ children }: { children: ReactNode }) {
               rarity: rarity as CardRarity,
               foil: foil as CardFoil,
               wear: wear as CardWear || undefined,
-              power: wieldData ? calcPowerFromWield(wieldData) : calcPower(nft, isVibeFID),
-              isFreeCard: false,
+              power: typeof nft.power === 'number' ? nft.power : wieldData ? calcPowerFromWield(wieldData) : calcPower(nft, isVibeFID),
+              isFreeCard: Boolean(nft.isFreeCard),
               // TCG character name (used for ownership detection)
               character: characterName || undefined,
             };

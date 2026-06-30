@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import { ConvexError } from "convex/values";
 import { query, mutation, internalMutation, internalQuery, QueryCtx, MutationCtx } from "./_generated/server";
-import { api, internal } from "./_generated/api";
+import { internal } from "./_generated/api";
 import { normalizeAddress, isValidAddress } from "./utils";
 import { isBlacklisted, getBlacklistInfo } from "./blacklist";
 import { requireInternalAdminKey } from "./adminAuth";
@@ -767,45 +767,13 @@ export const upsertProfileFromFarcaster = mutation({
       },
       attacksToday: 0,
       rematchesToday: 0,
+      hasReceivedWelcomePack: true,
+      hasReceivedWelcomeGift: true,
       createdAt: now,
       lastUpdated: now,
     });
 
-    // Give 100 welcome coins to new users
-    await ctx.scheduler.runAfter(0, internal.economy.addCoins, {
-      address,
-      amount: 100,
-      reason: "Welcome bonus"
-    });
-
-    // Create welcome_gift mission (500 coins claimable)
-    await ctx.db.insert("personalMissions", {
-      playerAddress: address,
-      date: "once", // One-time mission
-      missionType: "welcome_gift",
-      completed: true, // Auto-completed for new users
-      claimed: false, // Not claimed yet - player needs to claim
-      reward: 500,
-      completedAt: now,
-    });
-
-    // 🎁 AUTO WELCOME PACK: Give 1 Basic Pack to new users automatically
-    await ctx.db.insert("cardPacks", {
-      address,
-      packType: "basic",
-      unopened: 1,
-      sourceId: "welcome_pack_auto",
-      earnedAt: now,
-    });
-
-    // Mark welcome pack AND welcome gift as received on the profile
-    // 🔒 SECURITY FIX: hasReceivedWelcomeGift prevents duplicate welcome_gift exploit
-    await ctx.db.patch(newId, {
-      hasReceivedWelcomePack: true,
-      hasReceivedWelcomeGift: true,
-    });
-
-    console.log(`🆕 New profile created for FID ${args.fid} (@${username}) at ${address} - Welcome pack given!`);
+    console.log(`🆕 New profile created for FID ${args.fid} (@${username}) at ${address}`);
     return newId;
   },
 });
@@ -1928,24 +1896,10 @@ export const upsertProfile = mutation({
         },
         attacksToday: 0,
         rematchesToday: 0,
+        hasReceivedWelcomePack: true,
+        hasReceivedWelcomeGift: true,
         createdAt: now,
         lastUpdated: now,
-      });
-
-      await ctx.scheduler.runAfter(0, internal.economy.addCoins, {
-        address,
-        amount: 100,
-        reason: "Welcome bonus"
-      });
-
-      await ctx.db.insert("personalMissions", {
-        playerAddress: address,
-        date: "once",
-        missionType: "welcome_gift",
-        completed: true,
-        claimed: false,
-        reward: 500,
-        completedAt: now,
       });
 
       console.log(`✅ Wallet-only profile created for ${address} (@${username})`);

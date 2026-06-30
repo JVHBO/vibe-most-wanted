@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -93,42 +93,12 @@ export default function HomePage() {
     pendingConversionTimestamp: profileDashboard.pendingConversionTimestamp || null,
   } : null;
 
-  const raffleConfig = useQuery(api.raffle.getRaffleConfig);
-  const raffleEntries = useQuery(api.raffle.getRecentEntries, { limit: 20 });
-  const raffleTimeLeft = useMemo(() => {
-    if (!raffleConfig) return null;
-    const endsAt = (raffleConfig as any).updatedAt + (raffleConfig as any).durationDays * 86400_000;
-    const diff = endsAt - Date.now();
-    if (diff <= 0) return null;
-    const totalMins = Math.floor(diff / 60000);
-    const h = Math.floor(totalMins / 60);
-    const m = totalMins % 60;
-    return { h, m };
-  }, [raffleConfig]);
   const playerMissions = useQuery(api.missions.getPlayerMissions, address ? { playerAddress: address } : "skip");
   const hasClaimableMissions = (playerMissions ?? []).some((m: any) => m.completed && !m.claimed);
 
-  const RAFFLE_PRIZE_IMGS = [
-    "/images/baccarat/10%20clubs%2C%20horsefarts.png",
-    "/images/baccarat/10%20spades%2C%20jc%20denton.png",
-    "/images/baccarat/10%20diamonds%2C%20beeper.png",
-    "/images/baccarat/9%20spades%2C%20vibe%20intern.png",
-    "/images/baccarat/9%20hearts%2C%20sartocrates.png",
-    "/images/baccarat/jack%20clubs%2C%20brian%20armstrong.png",
-    "/images/baccarat/10%20hearts%2C%20jack%20the%20sniper.png",
-    "/images/baccarat/jack%20spades%2C%20nftkid.png",
-    "/images/baccarat/jack%20diamonds%2C%20slaterg.png",
-    "/images/baccarat/jack%20hearts%2C%20zurkchad.png",
-  ];
-  const [rafflePrizeIdx, setRafflePrizeIdx] = useState(0);
-  useEffect(() => {
-    const t = setInterval(() => setRafflePrizeIdx(i => (i + 1) % RAFFLE_PRIZE_IMGS.length), isBaseApp ? 4000 : 2500);
-    return () => clearInterval(t);
-  }, [isBaseApp]);
-
   // Prefetch most-visited pages so Base App navigation feels instant
   useEffect(() => {
-    const routes = ['/raffle', '/slot', '/tcg', '/baccarat', '/leaderboard', '/quests'];
+    const routes = ['/slot', '/tcg', '/baccarat', '/leaderboard', '/fid/vibemail'];
     routes.forEach(r => router.prefetch(r));
   }, []); // eslint-disable-line
 
@@ -325,8 +295,8 @@ export default function HomePage() {
           </div>
 
           {/* SPIN + SLOT row */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 7 }}>
-          <Link href="/roulette" style={{ display: 'block', borderRadius: 10, overflow: 'hidden', background: 'linear-gradient(135deg, #6D28D9, #9333EA)', border: 'none', animation: allowHomeMotion ? 'fadeInUp 0.3s ease' : undefined, minHeight: 80, textDecoration: 'none', position: 'relative' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 7 }}>
+          {false && (<Link href="/roulette" style={{ display: 'block', borderRadius: 10, overflow: 'hidden', background: 'linear-gradient(135deg, #6D28D9, #9333EA)', border: 'none', animation: allowHomeMotion ? 'fadeInUp 0.3s ease' : undefined, minHeight: 80, textDecoration: 'none', position: 'relative' }}>
             {/* Roulette wheel — full height, right side */}
             <div style={{ position: 'absolute', right: -8, top: '50%', transform: 'translate3d(0, -50%, 0)', animation: isBaseApp ? 'spinCW 20s linear infinite' : 'spinCW 6s linear infinite', opacity: 0.2, willChange: 'transform', contain: 'layout style' }}>
               <svg width="90" height="90" viewBox="0 0 110 110">
@@ -388,7 +358,7 @@ export default function HomePage() {
               <div style={{ fontSize: 24, fontWeight: 900, color: '#fff', lineHeight: 1, marginTop: 2 }}>{t('spinText')}</div>
               <div style={{ marginTop: 6, display: 'inline-block', padding: '2px 10px', background: '#22c55e', color: '#000', borderRadius: 4, fontSize: 9, fontWeight: 700 }}>{t('free')}</div>
             </div>
-          </Link>
+          </Link>)}
 
           {/* SLOT */}
           <Link href="/slot" style={{ display: 'block', borderRadius: 10, overflow: 'hidden', background: 'linear-gradient(135deg, #92400E, #D97706)', border: 'none', animation: allowHomeMotion ? 'fadeInUp 0.3s ease' : undefined, minHeight: 80, textDecoration: 'none', position: 'relative' }}>
@@ -595,62 +565,6 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* RAFFLE CATEGORY */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 16 }}>
-            <div style={{ width: 4, height: 4, borderRadius: '50%', background: '#FFD700', animation: allowHomeMotion ? 'pulseGlow 2s infinite' : undefined }} />
-            <span style={{ fontSize: 9, fontWeight: 700, color: '#fff', textTransform: 'uppercase', letterSpacing: 1 }}>Raffle</span>
-          </div>
-
-          {/* RAFFLE */}
-          <Link href="/raffle" style={{ borderRadius: 10, overflow: 'hidden', background: raffleTimeLeft ? 'linear-gradient(135deg, #FACC15, #B45309)' : 'linear-gradient(135deg, #4a3f1a, #2a1f0a)', animation: allowHomeMotion ? 'fadeInUp 0.5s ease' : undefined, minHeight: 50, textDecoration: 'none', position: 'relative', opacity: raffleTimeLeft ? 1 : 0.7 }}>
-            {/* Background ticker - pure decoration */}
-            <div style={{ position: 'absolute', right: 3, top: 0, bottom: 0, width: 140, overflow: 'hidden', opacity: 0.30, zIndex: 0 }}>
-
-              <div style={{ animation: allowHomeMotion ? 'tickerScroll 18s linear infinite' : undefined, display: 'flex', flexDirection: 'column', gap: 4 }}>
-                {((allowHomeMotion ? raffleEntries : ((raffleEntries || []) as any[]).slice(0, 6)) || [] as any[]).map((e: any) => {
-                  const u = e.username || e.address.slice(0, 6);
-                  const c = e.chain === 'base' ? 'BASE' : 'ARB';
-                  return (
-                    <div key={e._id} style={{ textAlign: 'right', whiteSpace: 'nowrap', fontSize: 6.5, fontWeight: 700, color: 'rgba(0,0,0,0.6)', padding: '0 4px' }}>
-                      {u} buy {e.tickets} ticket with {e.token} on {c}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-            <div style={{ padding: '12px 12px', position: 'relative', display: 'flex', alignItems: 'center', height: '100%' }}>
-              {/* Image */}
-              <div style={{ flex: 'none', width: 54, height: 72, borderRadius: 6, overflow: 'hidden', background: '#111', flexShrink: 0, zIndex: 1, position: 'relative' }}>
-                {RAFFLE_PRIZE_IMGS.map((src, i) => (
-                  <img key={src} src={src} alt="" loading="lazy" decoding="async" fetchPriority="low" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top', transition: allowHomeMotion ? 'opacity 0.5s ease' : undefined, opacity: i === rafflePrizeIdx ? 1 : 0 }} onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }} />
-                ))}
-              </div>
-              {/* Prize info */}
-              <div style={{ flex: 1, minWidth: 0, padding: '0 8px', zIndex: 1 }}>
-                <span style={{ fontSize: 11, fontWeight: 800, color: raffleTimeLeft ? '#000' : '#aaa', textTransform: 'uppercase', letterSpacing: 1, lineHeight: 1.1, display: 'block' }}>{(raffleConfig as any)?.prizeDescription || 'Raffle'}</span>
-                <div style={{ display: 'flex', gap: 6, marginTop: 3, flexWrap: 'wrap' }}>
-                  {(raffleConfig as any)?.cardValueUSD && (
-                    <span style={{ fontSize: 8, color: 'rgba(0,0,0,0.6)', fontWeight: 700, lineHeight: 1 }}>Card ~${(raffleConfig as any).cardValueUSD}</span>
-                  )}
-                  {(raffleConfig as any)?.ticketPriceUSD && (
-                    <span style={{ fontSize: 8, color: 'rgba(0,0,0,0.6)', fontWeight: 700, lineHeight: 1 }}>· Ticket ${(raffleConfig as any).ticketPriceUSD}</span>
-                  )}
-                </div>
-              </div>
-              {/* Timer */}
-              <div style={{ flex: 'none', width: 90, textAlign: 'right', position: 'relative', zIndex: 1 }}>
-                {raffleTimeLeft ? (
-                  <>
-                    <span style={{ fontSize: 10, fontWeight: 800, color: '#000', lineHeight: 1, display: 'block', position: 'relative', zIndex: 1 }}>{raffleTimeLeft.h}h {raffleTimeLeft.m}m</span>
-                    <span style={{ fontSize: 7, color: 'rgba(0,0,0,0.5)', textTransform: 'uppercase', lineHeight: 1, display: 'block', marginTop: 1, position: 'relative', zIndex: 1 }}>{t('timeLeft')}</span>
-                  </>
-                ) : (
-                  <span style={{ fontSize: 8, fontWeight: 800, color: 'rgba(0,0,0,0.5)', lineHeight: 1, display: 'block', position: 'relative', zIndex: 1 }}>{t('ended')}</span>
-                )}
-              </div>
-            </div>
-          </Link>
-
           {/* Spacer */}
           <div style={{ height: '10px' }} />
           </>
@@ -737,7 +651,7 @@ export default function HomePage() {
         {[
           { label: 'HOME',   icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>, onClick: () => { if (showCoinsInbox) setShowCoinsInbox(false); else safeNavigate('/'); }, isHome: !showCoinsInbox, hasDot: false },
           { label: 'REDEEM', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="10" width="18" height="12" rx="2"/><path d="M12 10V4"/><path d="M12 4c-2 0-4 2-4 4h4"/><path d="M12 4c2 0 4 2 4 4h-4"/><line x1="12" y1="10" x2="12" y2="22"/><line x1="3" y1="15" x2="21" y2="15"/></svg>, onClick: () => setShowCoinsInbox(true), isRedeem: showCoinsInbox, hasDot: ((inboxStatus?.coinsInbox ?? 0) > 0) || ((inboxStatus?.coins ?? 0) >= 100) },
-          { label: 'EARN',   icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>, onClick: () => safeNavigate('/quests'), hasDot: hasClaimableMissions },
+          { label: 'VIBEMAIL', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>, onClick: () => safeNavigate('/fid/vibemail'), hasDot: false },
           { label: 'SHOP',   icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>, onClick: () => safeNavigate('/shop'), isShop: true },
         ].map(({ label, icon, onClick, hasDot, isHome, isRedeem, isShop }: any) => {
           const active = isHome || isRedeem;

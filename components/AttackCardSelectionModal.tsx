@@ -376,20 +376,6 @@ export function AttackCardSelectionModal({
             setAttacksRemaining(maxAttacks - (result.profile.attacksToday || 0));
           }
 
-          // Send notification to defender
-          fetch('/api/notifications/send', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              type: 'defense_attacked',
-              data: {
-                defenderAddress: targetPlayer.address,
-                defenderUsername: targetPlayer.username || 'Unknown',
-                attackerUsername: userProfile.username || 'Unknown',
-                result: matchResult === 'win' ? 'lose' : 'win',
-              },
-            }),
-          }).catch(err => devError('Error sending notification:', err));
         } catch (error) {
           devError('Attack error:', error);
         }

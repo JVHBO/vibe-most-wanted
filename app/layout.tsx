@@ -9,10 +9,7 @@ import { Web3Provider } from "@/contexts/Web3Provider";
 import { ConvexClientProvider } from "@/contexts/ConvexClientProvider";
 import { PlayerCardsProvider } from "@/contexts/PlayerCardsContext";
 import { ProfileProvider } from "@/contexts/ProfileContext";
-import { FarcasterNotificationRegistration } from "@/components/FarcasterNotificationRegistration";
-import { BrowserNotifications } from "@/components/BrowserNotifications";
 import ErrorBoundary from "@/components/ErrorBoundary";
-import { NeynarMiniAppProvider } from "@/contexts/NeynarMiniAppProvider";
 import { MiniappFrame } from "@/components/MiniappFrame";
 import GlobalBanGuard from "@/components/GlobalBanGuard";
 import { GlobalProfileInit } from "@/components/GlobalProfileInit";
@@ -60,7 +57,6 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   title: "$VBMS - Meme Card Game",
   description: "Battle with meme cards in PvE and PvP modes. The most wanted meme card game on Base!",
-  manifest: "/.well-known/farcaster.json",
   icons: {
     icon: [
       { url: "/favicon-32x32.png?v=xmas2025", sizes: "32x32", type: "image/png" },
@@ -95,40 +91,7 @@ export const metadata: Metadata = {
     images: ["https://vibemostwanted.xyz/screenshot.jpg"],
   },
   other: {
-    // Base.dev App ID (REQUIRED FOR ANALYTICS)
-    "base:app_id": "6912770b47fdf84bd17202bc",
     "talentapp:project_verification": "5b696287433e72cbb5c551e18e2a464ef5d757a0c20076431c4334b927a6f3a426c8a7aaa5e2bd36e58e9c40d90e806b3fdfc5b5b1a1ba2f718315b9d2aa0662",
-    // Farcaster Mini App Meta Tag (REQUIRED FOR DISCOVERY)
-    // v=4 cache bust - more cards, removed coquettish/viberuto/baseball
-    "fc:miniapp": JSON.stringify({
-      "version": "1",
-      "imageUrl": "https://vibemostwanted.xyz/opengraph-image?v=4",
-      "button": {
-        "title": "Play Now",
-        "action": {
-          "type": "launch_miniapp",
-          "name": "$VBMS",
-          "url": "https://vibemostwanted.xyz",
-          "splashImageUrl": "https://vibemostwanted.xyz/splash-new.png",
-          "splashBackgroundColor": "#0C0C0C"
-        }
-      }
-    }),
-    // Backward compatibility with old frame spec
-    "fc:frame": JSON.stringify({
-      "version": "1",
-      "imageUrl": "https://vibemostwanted.xyz/opengraph-image?v=4",
-      "button": {
-        "title": "Play Now",
-        "action": {
-          "type": "launch_miniapp",
-          "name": "$VBMS",
-          "url": "https://vibemostwanted.xyz",
-          "splashImageUrl": "https://vibemostwanted.xyz/splash-new.png",
-          "splashBackgroundColor": "#0C0C0C"
-        }
-      }
-    }),
   }
 };
 
@@ -144,15 +107,12 @@ export default function RootLayout({
       >
         <ErrorBoundary>
           <ThemeProvider>
-          <NeynarMiniAppProvider>
             <ConvexClientProvider>
               <Web3Provider>
                 <ProfileProvider>
                   <PlayerCardsProvider>
                   <LanguageProvider>
                     <MusicProvider>
-                      <FarcasterNotificationRegistration />
-                      <BrowserNotifications />
                       <GlobalProfileInit />
                       <GlobalBanGuard>
                       <MiniappFrame>
@@ -165,7 +125,6 @@ export default function RootLayout({
                 </ProfileProvider>
               </Web3Provider>
             </ConvexClientProvider>
-          </NeynarMiniAppProvider>
           </ThemeProvider>
         </ErrorBoundary>
       <Analytics />

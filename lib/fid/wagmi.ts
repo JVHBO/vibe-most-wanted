@@ -36,10 +36,6 @@ const connectors = connectorsForWallets(
   }
 );
 
-if (!hasValidWalletConnectProjectId && typeof window !== 'undefined') {
-  console.warn('[wagmi/fid] Invalid NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID; WalletConnect/Rainbow connectors disabled.');
-}
-
 // Add Farcaster miniapp connector
 const allConnectors = [...connectors, farcasterMiniApp()];
 

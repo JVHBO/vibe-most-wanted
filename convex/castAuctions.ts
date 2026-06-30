@@ -1496,11 +1496,7 @@ export const activateFeaturedCast = internalMutation({
 
     // 🔔 Send notification to all users about the new featured cast (non-blocking)
     try {
-      await ctx.scheduler.runAfter(0, internal.notifications.sendFeaturedCastNotification, {
-        castAuthor: auction.castAuthorUsername || "unknown",
-        warpcastUrl: auction.warpcastUrl || "https://vibemostwanted.xyz",
-        winnerUsername: auction.bidderUsername,
-      });
+      // Notifications disabled.
     } catch (notifError) {
       console.error(`[CastAuction] ⚠️ Failed to schedule notification:`, notifError);
     }
@@ -1508,12 +1504,7 @@ export const activateFeaturedCast = internalMutation({
     // 🏆 Send notification to the WINNER specifically
     if (auction.bidderFid) {
       try {
-        await ctx.scheduler.runAfter(500, internal.notifications.sendWinnerNotification, {
-          winnerFid: auction.bidderFid,
-          winnerUsername: auction.bidderUsername || "winner",
-          bidAmount: auction.currentBid || 0,
-          castAuthor: auction.castAuthorUsername || "unknown",
-        });
+        // Notifications disabled.
       } catch (winnerNotifError) {
         console.error(`[CastAuction] ⚠️ Failed to send winner notification:`, winnerNotifError);
       }

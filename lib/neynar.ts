@@ -452,70 +452,11 @@ export async function sendNeynarNotification(
   deliveries: NotificationDelivery[];
   error?: string;
 }> {
-  if (!NEYNAR_API_KEY) {
-    console.error('[Neynar] NEYNAR_API_KEY is not configured');
-    return { success: false, deliveries: [], error: 'API key not configured' };
-  }
-
-  try {
-    // Validate and truncate to API limits
-    const validatedTitle = title.slice(0, 32);
-    const validatedBody = body.slice(0, 128);
-    const validatedUrl = targetUrl.slice(0, 256);
-
-    // Generate valid UUID v4 format for idempotency
-    const uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-      const r = Math.random() * 16 | 0;
-      const v = c === 'x' ? r : (r & 0x3 | 0x8);
-      return v.toString(16);
-    });
-
-    const payload = {
-      notification: {
-        title: validatedTitle,
-        body: validatedBody,
-        target_url: validatedUrl,
-        uuid,
-      },
-      target_fids: targetFids, // Empty array = all users with notifications enabled
-    };
-
-    console.log(`[Neynar] Sending notification: "${validatedTitle}" to ${targetFids.length || 'all'} users`);
-
-    const response = await fetch(
-      'https://api.neynar.com/v2/farcaster/frame/notifications/',
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': NEYNAR_API_KEY,
-        },
-        body: JSON.stringify(payload),
-      }
-    );
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`[Neynar] Notification API error: ${response.status}`, errorText);
-      return { success: false, deliveries: [], error: `API error: ${response.status} - ${errorText}` };
-    }
-
-    const data = await response.json();
-    const deliveries: NotificationDelivery[] = (data.notification_deliveries || []).map((d: { fid: number; status: string }) => ({
-      fid: d.fid,
-      status: d.status as NotificationDelivery['status'],
-    }));
-
-    const successCount = deliveries.filter(d => d.status === 'success').length;
-    const failedCount = deliveries.length - successCount;
-
-    console.log(`[Neynar] Notification sent: ${successCount} success, ${failedCount} failed`);
-
-    return { success: true, deliveries };
-  } catch (error) {
-    console.error('[Neynar] Error sending notification:', error);
-    return { success: false, deliveries: [], error: String(error) };
-  }
+  void title;
+  void body;
+  void targetFids;
+  void targetUrl;
+  return { success: true, deliveries: [], error: 'notifications_disabled' };
 }
 
 /**

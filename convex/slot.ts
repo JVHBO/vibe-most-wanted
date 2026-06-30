@@ -539,7 +539,7 @@ async function recordSlotSecurityEvent(
  * Deposit VBMS tokens to get coins (1 VBMS = 1 coin).
  * Public entrypoint is an action so the on-chain transfer can be verified before crediting.
  */
-export const depositVBMS: any = action({
+export const depositVBMS = action({
   args: { address: v.string(), amount: v.number(), txHash: v.string() },
   handler: async (ctx: any, { address, amount, txHash }: { address: string; amount: number; txHash: string }): Promise<any> => {
     if (isBlacklisted(address)) {

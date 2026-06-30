@@ -180,10 +180,7 @@ Good luck! 🚀`;
       });
 
       // Send notification
-      await ctx.scheduler.runAfter(0, internal.notifications.sendVibemailNotification, {
-        recipientFid: args.fid,
-        hasAudio: false,
-      });
+      // Notifications disabled.
 
       console.log(`📬 Welcome VibeMail sent to FID ${args.fid}`);
     } catch (error) {
@@ -809,6 +806,8 @@ export const claimVibeMailQuestCoins = mutation({
     vibemailId: v.string(),
   },
   handler: async (ctx, { address, vibemailId }) => {
+    return { success: false, reason: "vibemail_quest_rewards_disabled", coinsAwarded: 0 };
+
     const normalizedAddress = address.toLowerCase();
 
     // 🚫 Blacklist check
@@ -829,10 +828,10 @@ export const claimVibeMailQuestCoins = mutation({
     if (!profile) return { success: false, reason: "profile_not_found" };
 
     const REWARD = 100;
-    const currentCoins = profile.coins || 0;
+    const currentCoins = profile!.coins || 0;
     const newCoins = currentCoins + REWARD;
 
-    await ctx.db.patch(profile._id, { coins: newCoins });
+    await ctx.db.patch(profile!._id, { coins: newCoins });
     await ctx.db.insert("vibeMailQuestClaims", {
       address: normalizedAddress,
       vibemailId,

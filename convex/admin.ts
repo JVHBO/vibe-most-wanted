@@ -823,6 +823,84 @@ export const cleanupOldCoinTransactions = internalMutation({
   },
 });
 
+function isWelcomeBonusAdminDoc(doc: any): boolean {
+  const type = String(doc.type ?? "").toLowerCase();
+  const source = String(doc.source ?? "").toLowerCase();
+  const description = String(doc.description ?? "").toLowerCase();
+  const sourceId = String(doc.sourceId ?? "").toLowerCase();
+
+  return (
+    source.includes("welcome") ||
+    sourceId.includes("welcome_pack") ||
+    description.includes("welcome bonus") ||
+    description.includes("welcome gift") ||
+    description.includes("boas-vindas") ||
+    description.includes("boas vindas") ||
+    (type === "bonus" && source === "admin_add" && description.includes("welcome"))
+  );
+}
+
+/**
+ * Remove welcome bonus data and subtract those grants from profile balances.
+ * INTERNAL ONLY - run until every returned count is 0.
+ */
+export const removeWelcomeBonusDataBatch = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const welcomeTransactions = (await ctx.db
+      .query("coinTransactions")
+      .withIndex("by_source", (q) => q.eq("source", "admin_add"))
+      .take(100)).filter(isWelcomeBonusAdminDoc);
+
+    const subtractByAddress = new Map<string, number>();
+    for (const tx of welcomeTransactions) {
+      const amount = Math.max(0, Number(tx.amount ?? 0));
+      if (amount > 0) {
+        const address = String(tx.address ?? "").toLowerCase();
+        subtractByAddress.set(address, (subtractByAddress.get(address) ?? 0) + amount);
+      }
+      await ctx.db.delete(tx._id);
+    }
+
+    let profilesAdjusted = 0;
+    for (const [address, amount] of subtractByAddress) {
+      if (!address) continue;
+      const profile = await ctx.db
+        .query("profiles")
+        .withIndex("by_address", (q) => q.eq("address", address))
+        .first();
+      if (!profile) continue;
+
+      await ctx.db.patch(profile._id, {
+        coins: Math.max(0, (profile.coins ?? 0) - amount),
+        lifetimeEarned: Math.max(0, (profile.lifetimeEarned ?? 0) - amount),
+        hasReceivedWelcomeGift: true,
+        hasReceivedWelcomePack: true,
+        lastUpdated: Date.now(),
+      });
+      profilesAdjusted++;
+    }
+
+    const welcomeMissions = await ctx.db
+      .query("personalMissions")
+      .withIndex("by_type", (q) => q.eq("missionType", "welcome_gift"))
+      .take(100);
+    for (const mission of welcomeMissions) {
+      await ctx.db.delete(mission._id);
+    }
+
+    return {
+      welcomeTransactions: welcomeTransactions.length,
+      profilesAdjusted,
+      welcomeMissions: welcomeMissions.length,
+      welcomePacks: 0,
+      hasMore:
+        welcomeTransactions.length === 100 ||
+        welcomeMissions.length === 100,
+    };
+  },
+});
+
 /**
  * Delete old coin audit log entries (batch of 100)
  * INTERNAL ONLY - Keep 90 days by default
@@ -1255,36 +1333,14 @@ export const backfillBurnEarnings = internalMutation({
  */
 export const countNotificationTokens = internalQuery({
   args: {},
-  handler: async (ctx) => {
-    const allTokens = await ctx.db.query("notificationTokens").collect();
-    
-    const stats = {
-      total: allTokens.length,
-      byPlatform: {} as Record<string, number>,
-      byApp: {} as Record<string, number>,
-      withUrl: 0,
-      withoutUrl: 0,
-    };
-    
-    for (const token of allTokens) {
-      // Count by platform
-      const platform = token.platform || "unknown";
-      stats.byPlatform[platform] = (stats.byPlatform[platform] || 0) + 1;
-      
-      // Count by app
-      const app = token.app || "vbms";
-      stats.byApp[app] = (stats.byApp[app] || 0) + 1;
-      
-      // Count with/without URL
-      if (token.url) {
-        stats.withUrl++;
-      } else {
-        stats.withoutUrl++;
-      }
-    }
-    
-    return stats;
-  },
+  handler: async () => ({
+    total: 0,
+    byPlatform: {} as Record<string, number>,
+    byApp: {} as Record<string, number>,
+    withUrl: 0,
+    withoutUrl: 0,
+    notificationsDisabled: true,
+  }),
 });
 
 /**
@@ -1293,45 +1349,15 @@ export const countNotificationTokens = internalQuery({
  */
 export const getAppStats = internalQuery({
   args: {},
-  handler: async (ctx) => {
-    const allTokens = await ctx.db.query("notificationTokens").collect();
-    const now = Date.now();
-    const sevenDays = 7 * 24 * 60 * 60 * 1000;
-    const thirtyDays = 30 * 24 * 60 * 60 * 1000;
-
-    const stats = {
-      total: allTokens.length,
-      last7Days: 0,
-      last30Days: 0,
-      byDay: {} as Record<string, number>,
-      byPlatform: {} as Record<string, number>,
-      byApp: {} as Record<string, number>,
-    };
-
-    for (const token of allTokens) {
-      const age = now - token._creationTime;
-
-      // Recent counts
-      if (age < sevenDays) {
-        stats.last7Days++;
-        const date = new Date(token._creationTime).toISOString().split("T")[0];
-        stats.byDay[date] = (stats.byDay[date] || 0) + 1;
-      }
-      if (age < thirtyDays) {
-        stats.last30Days++;
-      }
-
-      // By platform
-      const platform = token.platform || "unknown";
-      stats.byPlatform[platform] = (stats.byPlatform[platform] || 0) + 1;
-
-      // By app
-      const app = token.app || "vbms";
-      stats.byApp[app] = (stats.byApp[app] || 0) + 1;
-    }
-
-    return stats;
-  },
+  handler: async () => ({
+    total: 0,
+    last7Days: 0,
+    last30Days: 0,
+    byDay: {} as Record<string, number>,
+    byPlatform: {} as Record<string, number>,
+    byApp: {} as Record<string, number>,
+    notificationsDisabled: true,
+  }),
 });
 
 /**
@@ -1340,16 +1366,7 @@ export const getAppStats = internalQuery({
  */
 export const getRecentTokens = internalQuery({
   args: {},
-  handler: async (ctx) => {
-    const tokens = await ctx.db.query("notificationTokens").order("desc").take(50);
-    return tokens.map(t => ({
-      fid: t.fid,
-      platform: t.platform || "unknown",
-      app: t.app || "vbms",
-      url: t.url ? (t.url.includes("neynar") ? "neynar" : "warpcast") : "no-url",
-      created: new Date(t._creationTime).toISOString().split("T")[0],
-    }));
-  },
+  handler: async () => [],
 });
 
 /**
